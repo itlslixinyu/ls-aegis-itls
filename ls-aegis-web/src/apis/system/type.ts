@@ -344,6 +344,7 @@ export interface BasicConfig {
   SITE_FAVICON: string
   SITE_LOGO: string
   SITE_TITLE: string
+  SITE_TITLE_SHORT: string
   SITE_COMPANY: string
   SITE_COPYRIGHT: string
   SITE_BEIAN: string
@@ -356,6 +357,7 @@ export interface SiteConfig {
   SITE_FAVICON: OptionResp
   SITE_LOGO: OptionResp
   SITE_TITLE: OptionResp
+  SITE_TITLE_SHORT: OptionResp
   SITE_COMPANY: OptionResp
   SITE_DESCRIPTION: OptionResp
   SITE_COPYRIGHT: OptionResp

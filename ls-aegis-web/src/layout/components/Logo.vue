@@ -1,21 +1,28 @@
 <template>
-  <section class="system-logo" :class="{ collapsed: props.collapsed }" @click="toHome">
-    <img v-if="logo" class="logo" :src="logo" alt="logo" />
-    <img v-else class="logo" src="/logo.svg" alt="logo" />
-    <span v-if="!props.hideName" class="system-name gi_line_1">{{ title }}</span>
+  <section
+    class="system-logo"
+    :class="{ collapsed: props.collapsed }"
+    @click="toHome"
+  >
+    <div class="system-logo__inner">
+      <img v-if="logo" class="logo" :src="logo" alt="logo" />
+      <img v-else class="logo" src="/logo.svg" alt="logo" />
+      <span v-if="!props.hideName" class="system-name gi_line_1">{{ title }}</span>
+    </div>
   </section>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores'
 
 const props = withDefaults(defineProps<Props>(), {
   collapsed: false,
   hideName: false,
-
 })
 const appStore = useAppStore()
-const title = computed(() => appStore.getTitle())
+const title = computed(() => appStore.getTitleShort())
 const logo = computed(() => appStore.getLogo())
 
 /** Props 类型定义 */
@@ -41,19 +48,24 @@ const toHome = () => {
   line-height: 1;
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
   cursor: pointer;
   user-select: none;
-  box-sizing: border-box;
 
   &.collapsed {
     padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     .system-name {
       display: none;
     }
+  }
+
+  &__inner {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
   }
 
   .logo {
@@ -72,6 +84,9 @@ const toHome = () => {
     line-height: 1.5;
     display: inline-flex;
     align-items: center;
+    max-width: 9em;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
     &:hover {
       color: $color-theme !important;

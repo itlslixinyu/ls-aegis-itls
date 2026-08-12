@@ -66,6 +66,7 @@ const storeSetup = () => {
       siteConfig.SITE_FAVICON = resMap.get('SITE_FAVICON')
       siteConfig.SITE_LOGO = resMap.get('SITE_LOGO')
       siteConfig.SITE_TITLE = resMap.get('SITE_TITLE')
+      siteConfig.SITE_TITLE_SHORT = resMap.get('SITE_TITLE_SHORT')
       siteConfig.SITE_COMPANY = resMap.get('SITE_COMPANY')
       siteConfig.SITE_COPYRIGHT = resMap.get('SITE_COPYRIGHT')
       siteConfig.SITE_BEIAN = resMap.get('SITE_BEIAN')
@@ -118,6 +119,14 @@ const storeSetup = () => {
     return siteConfig.SITE_TITLE
   }
 
+  const getTitleShort = () => {
+    const short = (siteConfig.SITE_TITLE_SHORT || '').trim()
+    if (short) {
+      return short.slice(0, 8)
+    }
+    return '雷铄御警'
+  }
+
   const getCompany = () => {
     return siteConfig.SITE_COMPANY
   }
@@ -151,6 +160,7 @@ const storeSetup = () => {
     getFavicon,
     getLogo,
     getTitle,
+    getTitleShort,
     getCompany,
     getCopyright,
     getForRecord,

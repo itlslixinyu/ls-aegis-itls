@@ -12,13 +12,29 @@
       <a-input v-model="tenantCode" placeholder="请输入租户编码（不输入时为默认租户）" allow-clear />
     </a-form-item>
     <a-form-item field="username" hide-label>
-      <a-input v-model="form.username" placeholder="请输入用户名" allow-clear />
+      <a-input
+        v-model="form.username"
+        placeholder="请输入用户名"
+        allow-clear
+        autocomplete="username"
+      />
     </a-form-item>
     <a-form-item field="password" hide-label>
-      <a-input-password v-model="form.password" placeholder="请输入密码" />
+      <a-input-password
+        v-model="form.password"
+        placeholder="请输入密码"
+        autocomplete="current-password"
+      />
     </a-form-item>
     <a-form-item v-if="isCaptchaEnabled" field="captcha" hide-label>
-      <a-input v-model="form.captcha" placeholder="请输入验证码" :max-length="4" allow-clear style="flex: 1 1" />
+      <a-input
+        v-model="form.captcha"
+        placeholder="请输入验证码"
+        :max-length="4"
+        allow-clear
+        style="flex: 1 1"
+        autocomplete="off"
+      />
       <div class="captcha-container" @click="getCaptcha">
         <img :src="captchaImgBase64" alt="验证码" class="captcha" />
         <div v-if="form.expired" class="overlay">

@@ -127,8 +127,19 @@ const emit = defineEmits<{
 }>()
 
 const formProps = computed(() => {
-  const baseProps = omit(props, ['columns', 'gridProps', 'gridItemProps', 'search', 'defaultCollapsed', 'searchBtnText', 'hideFoldBtn', 'suffix', 'layout'])
-  return { ...baseProps }
+  // 勿把 modelValue 绑到 a-form；且 disabled 只取组件显式传入值，避免与表单字段 disabled 混淆
+  return omit(props, [
+    'columns',
+    'gridProps',
+    'gridItemProps',
+    'search',
+    'defaultCollapsed',
+    'searchBtnText',
+    'hideFoldBtn',
+    'suffix',
+    'layout',
+    'modelValue',
+  ])
 })
 
 const defaultGridItemProps = computed(() => {
@@ -191,6 +202,8 @@ const getComponentBindProps = (item: ColumnItem) => {
     placeholder: getPlaceholder(item),
     options: getOptions(item),
     ...item.props,
+    // 控件级禁用，避免仅靠 form-item 时部分组件不继承
+    disabled: isDisabled(item) || !!props.disabled,
   }
 }
 
@@ -233,13 +246,15 @@ const isHide = (item: ColumnItem) => {
   }
 }
 
-/** 禁用表单项 */
+/** 禁用表单项（整表 disabled 优先；忽略 model 里的 disabled 字段） */
 const isDisabled = (item: ColumnItem) => {
+  if (props.disabled) return true
   if (item.disabled === undefined) return false
   if (typeof item.disabled === 'boolean') return item.disabled
   if (typeof item.disabled === 'function') {
-    return item.disabled(props.modelValue)
+    return !!item.disabled(props.modelValue)
   }
+  return false
 }
 
 props.columns.forEach((item) => {

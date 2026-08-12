@@ -68,40 +68,6 @@ export const systemRoutes: RouteRecordRaw[] = [
       },
     ],
   },
-  {
-    path: '/about',
-    name: 'About',
-    component: Layout,
-    meta: { title: '关于项目', icon: 'apps', hidden: false, sort: 999 },
-    redirect: '/about/document/api',
-    children: [
-      {
-        path: '/about/document/api',
-        component: () => import('@/views/about/document/api/index.vue'),
-        meta: { title: '接口文档', icon: 'swagger', hidden: false, keepAlive: true },
-      },
-      {
-        path: '/about/document/changelog',
-        component: () => import('@/views/about/document/changelog/index.vue'),
-        meta: { title: '更新日志', icon: 'calendar', hidden: false, keepAlive: true },
-      },
-      {
-        path: 'https://arco.design/vue/component/button',
-        meta: { title: 'Arco Design文档', icon: 'arco', hidden: false },
-      },
-      {
-        path: '/about/source',
-        name: 'AboutSource',
-        meta: { title: '项目信息', icon: 'github', hidden: false },
-        children: [
-          {
-            path: '/about/document/api',
-            meta: { title: '后端接口', icon: 'swagger', hidden: false },
-          },
-        ],
-      },
-    ],
-  },
 ]
 
 // 固定路由（默认路由）

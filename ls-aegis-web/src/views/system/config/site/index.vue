@@ -76,6 +76,14 @@
         <a-form-item class="input-item" field="SITE_TITLE" :label="siteConfig.SITE_TITLE?.name || '系统名称'" :help="siteConfig.SITE_TITLE?.description">
           <a-input v-model="form.SITE_TITLE" placeholder="请输入产品/项目名称" :max-length="48" show-word-limit />
         </a-form-item>
+        <a-form-item
+          class="input-item"
+          field="SITE_TITLE_SHORT"
+          :label="siteConfig.SITE_TITLE_SHORT?.name || '系统名称简称'"
+          help="显示在左侧栏 Logo 旁的系统简称（必填，最多 8 个字）"
+        >
+          <a-input v-model="form.SITE_TITLE_SHORT" placeholder="请输入系统名称简称" :max-length="8" show-word-limit />
+        </a-form-item>
         <a-form-item class="input-item" field="SITE_COMPANY" :label="siteConfig.SITE_COMPANY?.name || '公司名称'" :help="siteConfig.SITE_COMPANY?.description">
           <a-input v-model="form.SITE_COMPANY" placeholder="请输入公司名称" :max-length="32" show-word-limit />
         </a-form-item>
@@ -178,6 +186,7 @@ const [form] = useResetReactive({
   SITE_FAVICON: '',
   SITE_LOGO: '',
   SITE_TITLE: '',
+  SITE_TITLE_SHORT: '',
   SITE_COMPANY: '',
   SITE_DESCRIPTION: '',
   SITE_COPYRIGHT: '',
@@ -187,6 +196,10 @@ const [form] = useResetReactive({
 })
 const rules: FormInstance['rules'] = {
   SITE_TITLE: [{ required: true, message: '请输入系统名称' }],
+  SITE_TITLE_SHORT: [
+    { required: true, message: '请输入系统名称简称' },
+    { maxLength: 8, message: '系统名称简称最多 8 个字' },
+  ],
   SITE_DESCRIPTION: [{ required: true, message: '请输入系统描述' }],
   SITE_COPYRIGHT: [{ required: true, message: '请输入版权声明' }],
 }
@@ -195,6 +208,7 @@ const siteConfig = ref<SiteConfig>({
   SITE_FAVICON: {},
   SITE_LOGO: {},
   SITE_TITLE: {},
+  SITE_TITLE_SHORT: {},
   SITE_COMPANY: {},
   SITE_DESCRIPTION: {},
   SITE_COPYRIGHT: {},
@@ -211,6 +225,7 @@ const reset = () => {
   form.SITE_FAVICON = siteConfig.value.SITE_FAVICON?.value || ''
   form.SITE_LOGO = siteConfig.value.SITE_LOGO?.value || ''
   form.SITE_TITLE = siteConfig.value.SITE_TITLE?.value || ''
+  form.SITE_TITLE_SHORT = siteConfig.value.SITE_TITLE_SHORT?.value || ''
   form.SITE_COMPANY = siteConfig.value.SITE_COMPANY?.value || ''
   form.SITE_DESCRIPTION = siteConfig.value.SITE_DESCRIPTION?.value || ''
   form.SITE_COPYRIGHT = siteConfig.value.SITE_COPYRIGHT?.value || ''

@@ -77,7 +77,17 @@ const onOpen = async (id: string) => {
     await getRoleList()
   }
   const { data } = await getUser(id)
-  Object.assign(form, data)
+  const { disabled: _disabled, ...user } = data
+  Object.assign(form, user)
+  // 补全字典中被排除的已选角色（如超级管理员），避免只显示 ID
+  if (user.roleIds?.length) {
+    const exist = new Set(roleList.value.map((item) => String(item.value)))
+    user.roleIds.forEach((roleId, index) => {
+      if (exist.has(String(roleId))) return
+      roleList.value.push({ label: user.roleNames?.[index] || String(roleId), value: roleId })
+      exist.add(String(roleId))
+    })
+  }
   visible.value = true
 }
 

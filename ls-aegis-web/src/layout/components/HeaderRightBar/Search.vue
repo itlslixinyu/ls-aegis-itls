@@ -1,94 +1,106 @@
 <template>
-  <div class="search-trigger" @click="visible = true">
+  <div class="search-trigger" @click="openSearch">
     <icon-search :size="18" style="margin-right: 4px;" />
-    <span class="search-text">
-      搜索
-    </span>
-    <span class="shortcut-key">
-      Ctrl + K
-    </span>
+    <span class="search-text">搜索</span>
+    <span class="shortcut-key">Ctrl + K</span>
   </div>
-  <div class="search-modal">
-    <a-modal
-      :visible="visible"
-      :mask-closable="true"
-      :align-center="false"
-      :closable="false"
-      :render-to-body="false"
-      @cancel="visible = false"
-      @keydown="handleKeyDown"
-    >
-      <template #title>
-        <div class="search-input-wrapper">
-          <icon-search :size="24" />
-          <input ref="searchInput" v-model="searchKeyword" placeholder="搜索页面" class="search-input">
-          <div class="esc-tip">
-            ESC 退出
-          </div>
+
+  <a-modal
+    v-model:visible="visible"
+    class="layout-search-modal"
+    title-align="start"
+    :align-center="false"
+    :closable="false"
+    :mask-closable="true"
+    :footer="true"
+    :width="640"
+    modal-class="layout-search-modal-inner"
+    unmount-on-close
+    @cancel="closeSearch"
+  >
+    <template #title>
+      <div class="search-input-wrapper">
+        <icon-search :size="20" class="search-icon" />
+        <input
+          ref="searchInput"
+          v-model="searchKeyword"
+          type="text"
+          placeholder="搜索页面"
+          class="search-input"
+          autocomplete="off"
+          @keydown="handleKeyDown"
+        >
+        <div class="esc-tip" @click="closeSearch">ESC</div>
+      </div>
+    </template>
+
+    <div class="search-content">
+      <div v-if="searchKeyword && !searchResults.length" class="empty-tip">
+        未找到匹配页面
+      </div>
+
+      <div v-if="searchResults.length">
+        <div class="result-count">
+          搜索到 {{ searchResults.length }} 个结果
         </div>
-      </template>
-      <div class="search-content">
-        <div v-if="searchResults.length">
-          <div class="result-count">
-            搜索到 {{ searchResults.length }} 个结果
-          </div>
-          <div class="result-list">
-            <div
-              v-for="(item, index) in searchResults" :key="item.path" class="result-item"
-              :class="{ selected: selectedIndex === index }" @click="handleResultClick(item)"
-            >
-              <icon-file :size="18" style="margin-right: 6px;" />
-              <div class="result-title">
-                {{ item.title }}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div v-if="searchHistory.length" class="history-section">
-          <div class="history-header">
-            <div class="history-title">
-              搜索历史
-            </div>
-            <a-button type="text" size="small" class="text-xs" @click="clearHistory">
-              清空历史
-            </a-button>
-          </div>
-          <div class="history-list">
-            <div v-for="item in searchHistory" :key="item.path" class="history-item" @click="handleHistoryClick(item)">
-              <icon-history :size="18" style="margin-right: 6px;" />
-              <div class="result-title">
-                {{ item.title }}
-              </div>
-            </div>
+        <div class="result-list">
+          <div
+            v-for="(item, index) in searchResults"
+            :key="item.path"
+            class="result-item"
+            :class="{ selected: selectedIndex === index }"
+            @click="handleResultClick(item)"
+            @mouseenter="selectedIndex = index"
+          >
+            <icon-file :size="18" style="margin-right: 8px;" />
+            <div class="result-title">{{ item.title }}</div>
+            <div class="result-path">{{ item.path }}</div>
           </div>
         </div>
       </div>
-      <template #footer>
+
+      <div v-if="!searchKeyword && searchHistory.length" class="history-section">
+        <div class="history-header">
+          <div class="history-title">搜索历史</div>
+          <a-button type="text" size="small" @click="clearHistory">清空历史</a-button>
+        </div>
+        <div class="history-list">
+          <div
+            v-for="item in searchHistory"
+            :key="item.path"
+            class="history-item"
+            @click="handleHistoryClick(item)"
+          >
+            <icon-history :size="18" style="margin-right: 8px;" />
+            <div class="result-title">{{ item.title }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <template #footer>
+      <div class="shortcut-bar">
         <div class="shortcut">
           <GiSvgIcon name="select" :size="12" class="shortcut-icon" />
-          <div>切换</div>
+          <span>切换</span>
         </div>
         <div class="shortcut">
           <GiSvgIcon name="shortcut-enter" :size="12" class="shortcut-icon" />
-          <div>选择</div>
+          <span>选择</span>
         </div>
-      </template>
-    </a-modal>
-  </div>
+      </div>
+    </template>
+  </a-modal>
 </template>
 
 <script setup lang="ts">
-import { useEventListener } from '@vueuse/core'
+import { nextTick, ref, watch } from 'vue'
+import { useEventListener, useStorage } from '@vueuse/core'
 import { useRouter } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { useRouteStore } from '@/stores'
 
-interface SearchHistory {
-  title: string
-  path: string
-}
-
-interface SearchResult {
+interface SearchItem {
   title: string
   path: string
 }
@@ -99,51 +111,67 @@ const routeStore = useRouteStore()
 const visible = ref(false)
 const searchInput = ref<HTMLInputElement | null>(null)
 const searchKeyword = ref('')
-const searchHistory = ref<SearchHistory[]>([])
-const searchResults = ref<SearchResult[]>([])
+const searchHistory = useStorage<SearchItem[]>('layout-search-history', [])
+const searchResults = ref<SearchItem[]>([])
 const selectedIndex = ref(-1)
 
+const isHidden = (hidden: unknown) => hidden === true || hidden === 1 || hidden === '1'
+
 const searchRoutes = (keyword: string) => {
-  const result: SearchResult[] = []
+  const result: SearchItem[] = []
+  const key = keyword.trim().toLowerCase()
+  if (!key) {
+    return result
+  }
+
   const loop = (routes: RouteRecordRaw[]) => {
     routes.forEach((route) => {
-      if (route.meta?.title?.toLowerCase().includes(keyword.toLowerCase()) && !route.meta?.hidden) {
-        result.push({
-          title: route.meta.title,
-          path: route.path,
-        })
+      const title = String(route.meta?.title || '')
+      const path = route.path || ''
+      const canOpen = !!path && !path.startsWith('http') && !isHidden(route.meta?.hidden)
+      if (canOpen && title && title.toLowerCase().includes(key)) {
+        // 有子级的目录节点通常不可直达，优先收录叶子或可跳转项
+        if (!route.children?.length || route.component) {
+          result.push({ title, path })
+        }
       }
-      if (route.children && route.children.length > 0) {
+      if (route.children?.length) {
         loop(route.children)
       }
     })
   }
+
   loop(routeStore.routes)
-  return result
+  // 去重
+  const map = new Map<string, SearchItem>()
+  result.forEach((item) => map.set(item.path, item))
+  return [...map.values()]
 }
 
 const handleSearch = (keyword: string) => {
-  if (!keyword) {
-    searchResults.value = []
-    return
-  }
   searchResults.value = searchRoutes(keyword)
+  selectedIndex.value = searchResults.value.length ? 0 : -1
 }
 
-const handleResultClick = (item: SearchResult) => {
+const openSearch = () => {
+  visible.value = true
+}
+
+const closeSearch = () => {
+  visible.value = false
+}
+
+const handleResultClick = (item: SearchItem) => {
   if (!searchHistory.value.some((history) => history.path === item.path)) {
-    searchHistory.value.unshift(item)
-    if (searchHistory.value.length > 5) {
-      searchHistory.value.pop()
-    }
+    searchHistory.value = [item, ...searchHistory.value].slice(0, 8)
   }
   router.push(item.path)
-  visible.value = false
+  closeSearch()
 }
 
-const handleHistoryClick = (item: SearchHistory) => {
+const handleHistoryClick = (item: SearchItem) => {
   router.push(item.path)
-  visible.value = false
+  closeSearch()
 }
 
 const clearHistory = () => {
@@ -151,34 +179,39 @@ const clearHistory = () => {
 }
 
 useEventListener('keydown', (e) => {
-  if (e.ctrlKey && e.key.toLowerCase() === 'k') {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
     e.preventDefault()
-    visible.value = true
+    openSearch()
   }
 })
 
 const handleKeyDown = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
-    visible.value = false
+    e.preventDefault()
+    closeSearch()
   } else if (e.key === 'ArrowDown') {
-    if (selectedIndex.value < searchResults.value.length - 1) {
-      selectedIndex.value++
-    }
+    e.preventDefault()
+    if (!searchResults.value.length) return
+    selectedIndex.value = (selectedIndex.value + 1) % searchResults.value.length
   } else if (e.key === 'ArrowUp') {
-    if (selectedIndex.value > 0) {
-      selectedIndex.value--
-    }
+    e.preventDefault()
+    if (!searchResults.value.length) return
+    selectedIndex.value = selectedIndex.value <= 0
+      ? searchResults.value.length - 1
+      : selectedIndex.value - 1
   } else if (e.key === 'Enter') {
+    e.preventDefault()
     if (selectedIndex.value >= 0 && selectedIndex.value < searchResults.value.length) {
       handleResultClick(searchResults.value[selectedIndex.value])
     }
   }
 }
 
-watch(visible, (newValue) => {
-  if (newValue) {
+watch(visible, (open) => {
+  if (open) {
     nextTick(() => {
       searchInput.value?.focus()
+      searchInput.value?.select()
     })
   } else {
     searchResults.value = []
@@ -187,165 +220,204 @@ watch(visible, (newValue) => {
   }
 })
 
-watch(searchKeyword, (newValue) => {
-  handleSearch(newValue)
+watch(searchKeyword, (value) => {
+  handleSearch(value)
 })
 </script>
 
 <style scoped lang="scss">
 .search-trigger {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  padding: 0.5rem 1rem;
-  margin-right: 1rem;
-  border-radius: 0.5rem;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 6px;
   cursor: pointer;
-  background-color: var(--color-bg-4);
+  background-color: var(--color-fill-2);
+  border: 1px solid var(--color-border-2);
+  transition: background-color 0.2s, border-color 0.2s;
+
+  &:hover {
+    background-color: var(--color-fill-3);
+    border-color: var(--color-border-3);
+  }
 }
 
 .search-text {
   line-height: 1;
+  font-size: 13px;
   color: var(--color-text-3);
 }
 
 .shortcut-key {
-  margin-left: 1rem;
+  margin-left: 10px;
   padding: 2px 6px;
-  font-size: 10px;
+  font-size: 11px;
+  line-height: 1.2;
   border-radius: 4px;
-  background-color: var(--color-bg-3);
+  background-color: var(--color-bg-1);
+  border: 1px solid var(--color-border-2);
   color: var(--color-text-3);
-}
-
-.search-modal {
-  :deep(.arco-modal-header) {
-    height: 64px;
-  }
-
-  :deep(.arco-modal-body) {
-    .search-content {
-      max-height: 50vh;
-      overflow-y: auto;
-    }
-  }
 }
 
 .search-input-wrapper {
   width: 100%;
   display: flex;
   align-items: center;
+  gap: 8px;
   position: relative;
 }
 
+.search-icon {
+  color: var(--color-text-3);
+  flex-shrink: 0;
+}
+
 .search-input {
-  width: 100%;
-  padding: 0.5rem 4rem 0.5rem 0.5rem;
+  flex: 1;
+  min-width: 0;
+  height: 36px;
   border: none;
   outline: none;
-  background-color: transparent;
-  color: var(--color-text-3);
+  background: transparent;
+  font-size: 15px;
+  color: var(--color-text-1);
+
+  &::placeholder {
+    color: var(--color-text-3);
+  }
 }
 
 .esc-tip {
-  position: absolute;
-  right: 0.75rem;
-  display: flex;
-  align-items: center;
-  padding: 0.25rem 0.375rem;
-  font-size: 0.75rem;
-  border-radius: 0.375rem;
+  flex-shrink: 0;
+  padding: 2px 8px;
+  font-size: 12px;
+  border-radius: 4px;
   background-color: var(--color-fill-2);
   color: var(--color-text-3);
+  cursor: pointer;
+  user-select: none;
+}
+
+.search-content {
+  min-height: 120px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.empty-tip {
+  padding: 24px 0;
+  text-align: center;
+  color: var(--color-text-3);
+  font-size: 13px;
 }
 
 .result-count {
-  font-size: 0.875rem;
+  font-size: 12px;
   color: var(--color-text-3);
-  margin-bottom: 0.5rem;
+  margin-bottom: 8px;
 }
 
-.result-list {
+.result-list,
+.history-list {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 4px;
 }
 
-.result-item {
+.result-item,
+.history-item {
   display: flex;
   align-items: center;
-  padding: 0.5rem;
-  border-radius: 0.5rem;
+  padding: 10px 12px;
+  border-radius: 8px;
   cursor: pointer;
-  color: var(--color-text-3);
+  color: var(--color-text-2);
 
-  &:hover {
-    background-color: var(--color-bg-4);
+  &:hover,
+  &.selected {
+    background-color: var(--color-fill-2);
     color: var(--color-text-1);
   }
 }
 
+.result-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-path {
+  margin-left: 12px;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--color-text-3);
+}
+
 .history-section {
-  margin-top: 1rem;
+  margin-top: 4px;
 }
 
 .history-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 8px;
 }
 
 .history-title {
-  font-size: 0.875rem;
+  font-size: 12px;
   color: var(--color-text-3);
 }
 
-.clear-history {
-  font-size: 0.75rem;
-}
-
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.history-item {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  color: var(--color-text-3);
-
-  &:hover {
-    background-color: var(--color-bg-4);
-    color: var(--color-text-1);
-  }
-}
-
-.selected {
-  background-color: var(--color-bg-4);
-}
-
-:deep(.arco-modal-footer){
+.shortcut-bar {
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1.5rem;
+  gap: 24px;
 }
 
-.shortcut{
-  display: flex;
-  justify-items: center;
+.shortcut {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
+  color: var(--color-text-3);
+  font-size: 12px;
+}
 
-  &-icon{
-    padding: 4px;
-    background-color:var(--color-fill-2);
-    border-radius: 6px;
-    color: var(--color-text-1);
+.shortcut-icon {
+  padding: 4px;
+  background-color: var(--color-fill-2);
+  border-radius: 6px;
+  color: var(--color-text-1);
+}
+</style>
+
+<style lang="scss">
+/* 挂到 body 的弹层：避开 header overflow:hidden 裁剪 */
+.layout-search-modal-inner {
+  top: 72px !important;
+  padding: 0;
+
+  .arco-modal-header {
+    height: auto;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-border-2);
+  }
+
+  .arco-modal-body {
+    padding: 12px 16px 8px;
+  }
+
+  .arco-modal-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--color-border-2);
   }
 }
 </style>
