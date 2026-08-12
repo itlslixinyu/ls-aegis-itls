@@ -1,0 +1,105 @@
+# Compose 工程名：Docker Desktop / docker compose ls 中显示为 ls-aegis
+# 容器默认命名：ls-aegis-<服务名>-1（不要写死 container_name，否则会脱离项目分组）
+name: ls-aegis
+
+services:
+  mysql:
+    image: mysql:8.0.42
+    restart: always
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: ls_aegis
+    command:
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+      --explicit_defaults_for_timestamp=true
+      --lower_case_table_names=1
+    networks:
+      - net
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-p123456']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7.2.8
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - ./redis/conf/redis.conf:/usr/local/redis/config/redis.conf
+      - redis-data:/data
+    environment:
+      TZ: Asia/Shanghai
+    command: 'redis-server /usr/local/redis/config/redis.conf --appendonly yes'
+    networks:
+      - net
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', '123456', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  server:
+    build: ./ls-aegis-server
+    restart: always
+    ports:
+      - '18000:18000'
+      - '1789:1789'
+    volumes:
+      - ./data/ls-aegis-server/config/:/app/config/
+      - ./data/ls-aegis-server/data/file/:/app/data/file/
+      - ./data/ls-aegis-server/logs/:/app/logs/
+    environment:
+      TZ: Asia/Shanghai
+      APPLICATION_URL: http://localhost:8080
+      # 服务名即 DNS 名（同项目网络内）
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PWD: 123456
+      DB_NAME: ls_aegis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PWD: 123456
+      REDIS_DB: 0
+      SNAIL_JOB_ENABLED: 'false'
+      # 与 application.yml 一致：关闭多租户
+      CONTINEW_STARTER_TENANT_ENABLED: 'false'
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - net
+
+  web:
+    image: nginx:1.27.0
+    restart: always
+    ports:
+      - '8080:80'
+    volumes:
+      - ./nginx/conf/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/web/:/usr/share/nginx/html/
+    environment:
+      TZ: Asia/Shanghai
+    depends_on:
+      - server
+    networks:
+      - net
+
+volumes:
+  mysql-data:
+  redis-data:
+
+networks:
+  net:
+    name: ls-aegis-net
