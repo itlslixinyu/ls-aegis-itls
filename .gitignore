@@ -57,3 +57,7 @@ Thumbs.db
 # Cursor 缓存（保留 rules）
 .cursor/*
 !.cursor/rules/
+
+# 忽略编译产出jar包
+*.jar
+docker/**/bin/*.jar

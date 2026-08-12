@@ -1,0 +1,33 @@
+---
+description: Git 提交时自动维护语义化版本号（VERSION / 前后端版本同步）
+alwaysApply: true
+---
+
+# Git 提交与版本号
+
+用户要求「git 提交 / 提交 / commit」时，除常规提交流程外，必须同步打版本号。
+
+## 版本文件（以根目录为准）
+
+1. 根目录 `VERSION`（纯文本，如 `1.0.0`）为唯一权威版本
+2. 同步：`ls-aegis-web/package.json` 的 `version`
+3. 同步：`ls-aegis-platform/pom.xml` 中 `<revision>...</revision>`
+4. 提交信息带版本：`release: vX.Y.Z …` 或 `chore(release): vX.Y.Z …`
+5. 正式发布（用户说发布/打 tag/release）时：`git tag -a vX.Y.Z -m "vX.Y.Z"` 并在可推送时 `git push origin main --tags`
+
+## 升版规则（默认 patch）
+
+| 用户意图 | 升版 |
+|---------|------|
+| 未说明 / 普通提交 / fix / 文档 | patch：`1.0.0` → `1.0.1` |
+| 新功能 / feature / 增强 | minor：`1.0.1` → `1.1.0`（patch 归零） |
+| 破坏性变更 / major / 不兼容 | major：`1.1.0` → `2.0.0`（minor/patch 归零） |
+| 明确指定版本号 | 使用用户给出的版本，不再自动推算 |
+
+首次建立仓库或 `VERSION` 不存在时，从 `1.0.0` 起。
+
+## 注意
+
+- 仅在用户明确要求提交时才 commit；提交前仍按仓库规范检查 status/diff/log
+- 不要把密钥、`docker/data`、`node_modules`、`target` 打进版本
+- Shell 推送失败时：完成本地 commit/tag，告知用户自行 `git push`
