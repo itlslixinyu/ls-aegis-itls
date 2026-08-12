@@ -1,0 +1,59 @@
+# 依赖与构建
+node_modules/
+dist/
+dist-ssr/
+coverage/
+target/
+build/
+.flattened-pom.xml
+
+# 本地环境与密钥（勿提交真实密钥）
+.env.local
+.env.*.local
+*.pem
+*.key
+**/credentials*
+
+# Docker 运行时数据（体积大且含证书）
+**/docker/data/
+
+# 日志与临时文件
+logs/
+*.log
+*.log.gz
+*.logs
+*.cache
+*.diff
+*.patch
+*.tmp
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE / 编辑器
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# Cursor 缓存（保留 rules）
+.cursor/*
+!.cursor/rules/
