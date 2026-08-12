@@ -73,21 +73,57 @@
             </a-upload>
           </template>
         </a-form-item>
-        <a-form-item class="input-item" field="SITE_TITLE" :label="siteConfig.SITE_TITLE.name" :help="siteConfig.SITE_TITLE.description">
-          <a-input v-model="form.SITE_TITLE" placeholder="请输入系统名称" :max-length="18" show-word-limit />
+        <a-form-item class="input-item" field="SITE_TITLE" :label="siteConfig.SITE_TITLE?.name || '系统名称'" :help="siteConfig.SITE_TITLE?.description">
+          <a-input v-model="form.SITE_TITLE" placeholder="请输入产品/项目名称" :max-length="48" show-word-limit />
         </a-form-item>
-        <a-form-item class="input-item" field="SITE_DESCRIPTION" :label="siteConfig.SITE_DESCRIPTION.name" :help="siteConfig.SITE_DESCRIPTION.description">
+        <a-form-item class="input-item" field="SITE_COMPANY" :label="siteConfig.SITE_COMPANY?.name || '公司名称'" :help="siteConfig.SITE_COMPANY?.description">
+          <a-input v-model="form.SITE_COMPANY" placeholder="请输入公司名称" :max-length="32" show-word-limit />
+        </a-form-item>
+        <a-form-item class="input-item" field="SITE_DESCRIPTION" :label="siteConfig.SITE_DESCRIPTION?.name || '系统描述'" :help="siteConfig.SITE_DESCRIPTION?.description">
           <a-textarea
             v-model="form.SITE_DESCRIPTION"
             placeholder="请输入系统描述"
             :auto-size="{ minRows: 1, maxRows: 3 }"
           />
         </a-form-item>
-        <a-form-item class="input-item" field="SITE_COPYRIGHT" :label="siteConfig.SITE_COPYRIGHT.name" :help="siteConfig.SITE_COPYRIGHT.description">
+        <a-form-item class="input-item" field="SITE_COPYRIGHT" :label="siteConfig.SITE_COPYRIGHT?.name || '版权声明'" :help="siteConfig.SITE_COPYRIGHT?.description">
           <a-input v-model="form.SITE_COPYRIGHT" placeholder="请输入版权声明" />
         </a-form-item>
-        <a-form-item field="SITE_BEIAN" :label="siteConfig.SITE_BEIAN.name" :help="siteConfig.SITE_BEIAN.description">
-          <a-input v-model="form.SITE_BEIAN" placeholder="请输入备案号" :max-length="30" show-word-limit />
+        <a-form-item field="SITE_BEIAN" :label="siteConfig.SITE_BEIAN?.name || 'ICP备案号'" :help="siteConfig.SITE_BEIAN?.description">
+          <a-input v-model="form.SITE_BEIAN" placeholder="请输入ICP备案号" :max-length="40" show-word-limit />
+        </a-form-item>
+        <a-form-item field="SITE_BEIAN_GONGAN" :label="siteConfig.SITE_BEIAN_GONGAN?.name || '公安备案号'" :help="siteConfig.SITE_BEIAN_GONGAN?.description">
+          <a-input v-model="form.SITE_BEIAN_GONGAN" placeholder="请输入公安备案号" :max-length="48" show-word-limit />
+        </a-form-item>
+        <a-form-item class="image-item" field="SITE_BEIAN_GONGAN_ICON" hide-label>
+          {{ siteConfig.SITE_BEIAN_GONGAN_ICON?.name || '公安备案图标' }}
+          <template #extra>
+            {{ siteConfig.SITE_BEIAN_GONGAN_ICON?.description }}
+            <br />
+            <a-upload
+              :file-list="gonganIconFile ? [gonganIconFile] : []" accept="image/*" :show-file-list="false"
+              :custom-request="handleUploadGonganIcon" @change="handleChangeGonganIcon"
+            >
+              <template #upload-button>
+                <div
+                  :class="`arco-upload-list-item${gonganIconFile && gonganIconFile.status === 'error' ? ' arco-upload-list-item-error' : ''
+                  }`"
+                >
+                  <div v-if="gonganIconFile && gonganIconFile.url" class="arco-upload-list-picture custom-upload-avatar favicon">
+                    <img :src="gonganIconFile.url" alt="公安备案图标" />
+                    <div v-if="isUpdate" class="arco-upload-list-picture-mask favicon">
+                      <IconEdit />
+                    </div>
+                  </div>
+                  <div v-else class="arco-upload-picture-card favicon">
+                    <div class="arco-upload-picture-card-text">
+                      <icon-upload />
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </a-upload>
+          </template>
         </a-form-item>
         <a-space style="margin-top: 16px">
           <a-button v-if="!isUpdate" v-permission="['system:siteConfig:update']" type="primary" @click="onUpdate">
@@ -142,7 +178,12 @@ const [form] = useResetReactive({
   SITE_FAVICON: '',
   SITE_LOGO: '',
   SITE_TITLE: '',
+  SITE_COMPANY: '',
+  SITE_DESCRIPTION: '',
   SITE_COPYRIGHT: '',
+  SITE_BEIAN: '',
+  SITE_BEIAN_GONGAN: '',
+  SITE_BEIAN_GONGAN_ICON: '',
 })
 const rules: FormInstance['rules'] = {
   SITE_TITLE: [{ required: true, message: '请输入系统名称' }],
@@ -154,23 +195,31 @@ const siteConfig = ref<SiteConfig>({
   SITE_FAVICON: {},
   SITE_LOGO: {},
   SITE_TITLE: {},
+  SITE_COMPANY: {},
   SITE_DESCRIPTION: {},
   SITE_COPYRIGHT: {},
   SITE_BEIAN: {},
+  SITE_BEIAN_GONGAN: {},
+  SITE_BEIAN_GONGAN_ICON: {},
 })
 const faviconFile = ref<FileItem>({ uid: '-1' })
 const logoFile = ref<FileItem>({ uid: '-2' })
+const gonganIconFile = ref<FileItem>({ uid: '-3' })
 // 重置
 const reset = () => {
   formRef.value?.resetFields()
-  form.SITE_FAVICON = siteConfig.value.SITE_FAVICON.value || ''
-  form.SITE_LOGO = siteConfig.value.SITE_LOGO.value || ''
-  form.SITE_TITLE = siteConfig.value.SITE_TITLE.value || ''
-  form.SITE_DESCRIPTION = siteConfig.value.SITE_DESCRIPTION.value || ''
-  form.SITE_COPYRIGHT = siteConfig.value.SITE_COPYRIGHT.value || ''
-  form.SITE_BEIAN = siteConfig.value.SITE_BEIAN.value || ''
-  faviconFile.value.url = siteConfig.value.SITE_FAVICON.value
-  logoFile.value.url = siteConfig.value.SITE_LOGO.value
+  form.SITE_FAVICON = siteConfig.value.SITE_FAVICON?.value || ''
+  form.SITE_LOGO = siteConfig.value.SITE_LOGO?.value || ''
+  form.SITE_TITLE = siteConfig.value.SITE_TITLE?.value || ''
+  form.SITE_COMPANY = siteConfig.value.SITE_COMPANY?.value || ''
+  form.SITE_DESCRIPTION = siteConfig.value.SITE_DESCRIPTION?.value || ''
+  form.SITE_COPYRIGHT = siteConfig.value.SITE_COPYRIGHT?.value || ''
+  form.SITE_BEIAN = siteConfig.value.SITE_BEIAN?.value || ''
+  form.SITE_BEIAN_GONGAN = siteConfig.value.SITE_BEIAN_GONGAN?.value || ''
+  form.SITE_BEIAN_GONGAN_ICON = siteConfig.value.SITE_BEIAN_GONGAN_ICON?.value || ''
+  faviconFile.value.url = siteConfig.value.SITE_FAVICON?.value
+  logoFile.value.url = siteConfig.value.SITE_LOGO?.value
+  gonganIconFile.value.url = siteConfig.value.SITE_BEIAN_GONGAN_ICON?.value || '/beian-gongan.png'
 }
 
 const isUpdate = ref(false)
@@ -206,9 +255,11 @@ const handleSave = async () => {
   const isInvalid = await formRef.value?.validate()
   if (isInvalid) return false
   await updateOption(
-    Object.entries(form).map(([key, value]) => {
-      return { id: siteConfig.value[key].id, code: key, value }
-    }),
+    Object.entries(form)
+      .filter(([key]) => siteConfig.value[key as keyof SiteConfig]?.id)
+      .map(([key, value]) => {
+        return { id: siteConfig.value[key as keyof SiteConfig].id, code: key, value }
+      }),
   )
   appStore.setSiteConfig(form)
   await getDataList()
@@ -290,6 +341,37 @@ const handleUploadLogo = (options: RequestOption) => {
 }
 const handleChangeLogo = (_: any, currentFile: any) => {
   logoFile.value = {
+    ...currentFile,
+  }
+}
+
+// 上传公安备案图标
+const handleUploadGonganIcon = (options: RequestOption) => {
+  const controller = new AbortController()
+  ;(async function requestWrap() {
+    const { onProgress, onError, onSuccess, fileItem } = options
+    onProgress(20)
+    if (!fileItem.file) {
+      return
+    }
+    fileToBase64(fileItem.file).then()
+      .then((res) => {
+        onSuccess()
+        form.SITE_BEIAN_GONGAN_ICON = res
+        Message.success('上传成功')
+      })
+      .catch((error) => {
+        onError(error)
+      })
+  })()
+  return {
+    abort() {
+      controller.abort()
+    },
+  }
+}
+const handleChangeGonganIcon = (_: any, currentFile: any) => {
+  gonganIconFile.value = {
     ...currentFile,
   }
 }

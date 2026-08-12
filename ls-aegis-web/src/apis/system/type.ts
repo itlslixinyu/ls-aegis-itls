@@ -344,8 +344,11 @@ export interface BasicConfig {
   SITE_FAVICON: string
   SITE_LOGO: string
   SITE_TITLE: string
+  SITE_COMPANY: string
   SITE_COPYRIGHT: string
   SITE_BEIAN: string
+  SITE_BEIAN_GONGAN: string
+  SITE_BEIAN_GONGAN_ICON: string
 }
 
 /** 基础配置类型 */
@@ -353,9 +356,12 @@ export interface SiteConfig {
   SITE_FAVICON: OptionResp
   SITE_LOGO: OptionResp
   SITE_TITLE: OptionResp
+  SITE_COMPANY: OptionResp
   SITE_DESCRIPTION: OptionResp
   SITE_COPYRIGHT: OptionResp
   SITE_BEIAN: OptionResp
+  SITE_BEIAN_GONGAN: OptionResp
+  SITE_BEIAN_GONGAN_ICON: OptionResp
 }
 
 /** 安全配置类型 */

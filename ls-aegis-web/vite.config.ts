@@ -4,6 +4,7 @@ import createVitePlugins from './config/plugins'
 
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd()) as ImportMetaEnv
+  const apiPrefix = env.VITE_API_PREFIX || '/api'
 
   return {
     // 开发或生产环境服务的公共基础路径
@@ -24,47 +25,93 @@ export default defineConfig(({ command, mode }) => {
         },
       },
     },
-    // 添加需要vite优化的依赖
+    // 依赖预构建：加快冷启动与 HMR
     optimizeDeps: {
-      include: ['vue-draggable-plus'],
+      include: [
+        'vue',
+        'vue-router',
+        'pinia',
+        'axios',
+        'dayjs',
+        'lodash-es',
+        'echarts',
+        '@arco-design/web-vue',
+        '@arco-design/web-vue/es/icon',
+        'vue-draggable-plus',
+        '@vueuse/core',
+        'query-string',
+        'nprogress',
+      ],
     },
     server: {
-      // 服务启动时是否自动打开浏览器
+      host: true,
+      port: 5173,
+      strictPort: false,
       open: true,
-      // 本地跨域代理 -> 代理到服务器的接口地址
+      // 热更新
+      hmr: {
+        overlay: true,
+      },
+      // /api → Docker 后端 18000（见 .env.development）
       proxy: {
-        [env.VITE_API_PREFIX]: {
-          target: env.VITE_API_BASE_URL, // 后台服务器地址
-          changeOrigin: true, // 是否允许不同源
-          secure: false, // 支持https
-          rewrite: (path) => path.replace(new RegExp(`^${env.VITE_API_PREFIX}`), ''),
+        [apiPrefix]: {
+          target: env.VITE_API_BASE_URL,
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(new RegExp(`^${apiPrefix}`), ''),
         },
       },
     },
     plugins: createVitePlugins(env, command === 'build'),
-    // 构建
+    // 构建（仅部署上线时执行 npm run build）
     build: {
-      chunkSizeWarningLimit: 2000, // 消除打包大小超过500kb警告
-      outDir: 'dist', // 指定打包路径，默认为项目根目录下的dist目录
-      minify: 'terser', // Vite 2.6.x 以上需要配置 minify："terser"，terserOptions才能生效
-      terserOptions: {
-        compress: {
-          keep_infinity: true, // 防止 Infinity 被压缩成 1/0，这可能会导致 Chrome 上的性能问题
-          drop_console: true, // 生产环境去除 console
-          drop_debugger: true, // 生产环境去除 debugger
-        },
-        format: {
-          comments: false, // 删除注释
-        },
-      },
-      // 静态资源打包到dist下的不同目录
+      outDir: 'dist',
+      sourcemap: false,
+      // 关闭 gzip 体积统计，加快打包
+      reportCompressedSize: false,
+      chunkSizeWarningLimit: 2000,
+      // esbuild 压缩明显快于 terser
+      minify: 'esbuild',
+      target: 'es2015',
+      cssCodeSplit: true,
       rollupOptions: {
         output: {
           chunkFileNames: 'static/js/[name]-[hash].js',
           entryFileNames: 'static/js/[name]-[hash].js',
           assetFileNames: 'static/[ext]/[name]-[hash].[ext]',
+          manualChunks(id) {
+            if (!id.includes('node_modules')) {
+              return
+            }
+            if (id.includes('echarts') || id.includes('zrender')) {
+              return 'echarts'
+            }
+            if (id.includes('@arco-design')) {
+              return 'arco'
+            }
+            if (
+              id.includes('/vue/')
+              || id.includes('/vue-router/')
+              || id.includes('/pinia/')
+              || id.includes('/@vue/')
+            ) {
+              return 'vue-vendor'
+            }
+            if (
+              id.includes('lodash-es')
+              || id.includes('dayjs')
+              || id.includes('axios')
+              || id.includes('query-string')
+            ) {
+              return 'utils'
+            }
+          },
         },
       },
+    },
+    esbuild: {
+      // 生产构建去掉 console / debugger
+      drop: command === 'build' ? ['console', 'debugger'] : [],
     },
     // 以 envPrefix 开头的环境变量会通过 import.meta.env 暴露在你的客户端源码中。
     envPrefix: ['VITE', 'FILE'],

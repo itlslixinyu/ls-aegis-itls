@@ -1,22 +1,63 @@
 <template>
-  <div v-if="isDesktop" class="login pc">
-    <h3 class="login-logo">
-      <img v-if="logo" :src="logo" alt="logo" />
-      <img v-else src="/logo.svg" alt="logo" />
-      <span>{{ title }}</span>
-    </h3>
-
-    <a-row align="stretch" class="login-box">
-      <a-col :xs="0" :sm="12" :md="13">
-        <div class="login-left">
-          <img class="login-left__img" src="@/assets/images/banner.png" alt="banner" />
+  <div class="login-page" :class="{ desktop: isDesktop, mobile: !isDesktop }">
+    <header class="login-header">
+      <div class="brand">
+        <div class="brand-logo">
+          <img :src="logo || '/logo.svg'" alt="logo" />
         </div>
-      </a-col>
-      <a-col :xs="24" :sm="12" :md="11">
-        <div class="login-right">
-          <h3 v-if="isEmailLogin" class="login-right__title">邮箱登录</h3>
+        <div class="brand-text">
+          <span v-if="company" class="company">{{ company }}</span>
+          <span v-if="company && title" class="divider" />
+          <span v-if="title" class="product">{{ title }}</span>
+        </div>
+      </div>
+      <div v-if="isDesktop" class="clock-pill">
+        <icon-clock-circle />
+        <span>{{ nowText }}</span>
+      </div>
+    </header>
+
+    <main class="login-main">
+      <div class="login-card">
+        <aside v-if="isDesktop" class="login-card__left">
+          <div class="hero-illust" aria-hidden="true">
+            <svg viewBox="0 0 200 200" class="shield">
+              <defs>
+                <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+                  <stop offset="100%" stop-color="#d6e8ff" stop-opacity="0.85" />
+                </linearGradient>
+              </defs>
+              <circle cx="40" cy="50" r="4" fill="#fff" opacity="0.55" />
+              <circle cx="170" cy="70" r="3" fill="#fff" opacity="0.45" />
+              <circle cx="155" cy="150" r="5" fill="#fff" opacity="0.35" />
+              <path
+                d="M100 28 L148 48 V98 C148 132 128 158 100 172 C72 158 52 132 52 98 V48 Z"
+                fill="url(#shieldGrad)"
+              />
+              <path
+                d="M78 102 L94 118 L128 80"
+                fill="none"
+                stroke="#1e6fff"
+                stroke-width="10"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <h2 class="hero-title">国密合规 · 安全运营</h2>
+          <p class="hero-sub">SM2 / SM3 / SM4 全链路加密保护</p>
+          <ul class="hero-points">
+            <li><icon-lock /> 零信任架构</li>
+            <li><icon-user-group /> RBAC 三权分立</li>
+            <li><icon-mind-mapping /> 可视化态势感知</li>
+          </ul>
+        </aside>
+
+        <section class="login-card__right">
+          <h3 class="form-title">{{ isEmailLogin ? '邮箱登录' : '欢迎登录' }}</h3>
           <EmailLogin v-if="isEmailLogin" />
-          <a-tabs v-else v-model:activeKey="activeTab" class="login-right__form">
+          <a-tabs v-else v-model:activeKey="activeTab" class="login-tabs">
             <a-tab-pane key="1" title="账号登录">
               <component :is="AccountLogin" v-if="activeTab === '1'" />
             </a-tab-pane>
@@ -24,80 +65,52 @@
               <component :is="PhoneLogin" v-if="activeTab === '2'" />
             </a-tab-pane>
           </a-tabs>
-          <div class="login-right__oauth">
+
+          <div class="login-oauth">
             <a-divider orientation="center">其他登录方式</a-divider>
-            <div class="list">
-              <div v-if="isEmailLogin" class="mode item" @click="toggleLoginMode"><icon-user /> 账号/手机号登录</div>
-              <div v-else class="mode item" @click="toggleLoginMode"><icon-email /> 邮箱登录</div>
-              <a class="item" title="使用 Gitee 账号登录" @click="onOauth('gitee')">
-                <GiSvgIcon name="gitee" :size="24" />
+            <div class="oauth-list">
+              <div v-if="isEmailLogin" class="oauth-item mode" @click="toggleLoginMode">
+                <icon-user /> 账号/手机号登录
+              </div>
+              <div v-else class="oauth-item mode" @click="toggleLoginMode">
+                <icon-email /> 邮箱登录
+              </div>
+              <a class="oauth-item" title="使用 Gitee 账号登录" @click="onOauth('gitee')">
+                <GiSvgIcon name="gitee" :size="22" />
               </a>
-              <a class="item" title="使用 GitHub 账号登录" @click="onOauth('github')">
-                <GiSvgIcon name="github" :size="24" />
+              <a class="oauth-item" title="使用 GitHub 账号登录" @click="onOauth('github')">
+                <GiSvgIcon name="github" :size="22" />
               </a>
-              <a class="item" title="使用微信账号登录" @click="onOauth('wechat_open')">
-                <GiSvgIcon name="wechat" :size="24" />
+              <a class="oauth-item" title="使用微信账号登录" @click="onOauth('wechat_open')">
+                <GiSvgIcon name="wechat" :size="22" />
               </a>
             </div>
           </div>
-        </div>
-      </a-col>
-    </a-row>
-
-    <div v-if="isDesktop" class="footer">
-      <div class="beian">
-        <div class="below text">{{ appStore.getCopyright() }}{{ appStore.getForRecord() ? ` · ${appStore.getForRecord()}` : '' }}</div>
+        </section>
       </div>
-    </div>
+    </main>
 
-    <GiThemeBtn class="theme-btn" />
-    <Background />
-  </div>
-
-  <div v-else class="login h5">
-    <div class="login-logo">
-      <img v-if="logo" :src="logo" alt="logo" />
-      <img v-else src="/logo.svg" alt="logo" />
-      <span>{{ title }}</span>
-    </div>
-    <a-row align="stretch" class="login-box">
-      <a-col :xs="24" :sm="12" :md="11">
-        <div class="login-right">
-          <h3 v-if="isEmailLogin" class="login-right__title">邮箱登录</h3>
-          <EmailLogin v-if="isEmailLogin" />
-          <a-tabs v-else v-model:activeKey="activeTab" class="login-right__form">
-            <a-tab-pane key="1" title="账号登录">
-              <component :is="AccountLogin" v-if="activeTab === '1'" />
-            </a-tab-pane>
-            <a-tab-pane key="2" title="手机号登录">
-              <component :is="PhoneLogin" v-if="activeTab === '2'" />
-            </a-tab-pane>
-          </a-tabs>
-        </div>
-      </a-col>
-    </a-row>
-    <div class="login-right__oauth">
-      <a-divider orientation="center">其他登录方式</a-divider>
-      <div class="list">
-        <div v-if="isEmailLogin" class="mode item" @click="toggleLoginMode"><icon-user /> 账号/手机号登录</div>
-        <div v-else class="mode item" @click="toggleLoginMode"><icon-email /> 邮箱登录</div>
-        <a class="item" title="使用 Gitee 账号登录" @click="onOauth('gitee')">
-          <GiSvgIcon name="gitee" :size="24" />
-        </a>
-        <a class="item" title="使用 GitHub 账号登录" @click="onOauth('github')">
-          <GiSvgIcon name="github" :size="24" />
-        </a>
-        <a class="item" title="使用微信账号登录" @click="onOauth('wechat_open')">
-          <GiSvgIcon name="wechat" :size="24" />
+    <footer class="login-footer">
+      <div v-if="copyright" class="copyright">{{ copyright }}</div>
+      <div class="beian-row">
+        <a v-if="beianIcp" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">{{ beianIcp }}</a>
+        <a
+          v-if="beianGongan"
+          class="gongan"
+          href="https://www.beian.gov.cn/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img :src="beianGonganIcon" alt="公安备案" />
+          <span>{{ beianGongan }}</span>
         </a>
       </div>
-    </div>
+    </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import Background from './components/background/index.vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import AccountLogin from './components/account/index.vue'
 import PhoneLogin from './components/phone/index.vue'
 import EmailLogin from './components/email/index.vue'
@@ -111,442 +124,375 @@ defineOptions({ name: 'Login' })
 
 const appStore = useAppStore()
 const tenantStore = useTenantStore()
-
 const { isDesktop } = useDevice()
-const title = computed(() => appStore.getTitle())
+
 const logo = computed(() => appStore.getLogo())
+const title = computed(() => appStore.getTitle())
+const company = computed(() => appStore.getCompany())
+const copyright = computed(() => appStore.getCopyright())
+const beianIcp = computed(() => appStore.getForRecord())
+const beianGongan = computed(() => appStore.getBeianGongan())
+const beianGonganIcon = computed(() => appStore.getBeianGonganIcon())
 
 const isEmailLogin = ref(false)
 const activeTab = ref('1')
+const nowText = ref('')
+let clockTimer: ReturnType<typeof setInterval> | undefined
 
-// 切换登录模式
+const weekMap = ['日', '一', '二', '三', '四', '五', '六']
+
+const formatNow = () => {
+  const d = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} 星期${weekMap[d.getDay()]} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
 const toggleLoginMode = () => {
   isEmailLogin.value = !isEmailLogin.value
 }
 
-// 第三方登录授权
 const onOauth = async (source: string) => {
   const { data } = await socialAuth(source)
   window.location.href = data.authorizeUrl
 }
 
-// 查询租户状态和租户编码
 const onGetTenant = async () => {
   const { data } = await getTenantStatus()
   tenantStore.setTenantEnable(data)
-  // 开启租户 根据地址(域名)查询租户code
   if (data) {
     const domain = window.location.hostname
     const { data: tenantId } = await getTenantIdByDomain(domain)
     tenantStore.setTenantId(tenantId)
   }
 }
+
 onMounted(() => {
+  nowText.value = formatNow()
+  clockTimer = setInterval(() => {
+    nowText.value = formatNow()
+  }, 1000)
   onGetTenant()
+})
+
+onUnmounted(() => {
+  if (clockTimer) {
+    clearInterval(clockTimer)
+  }
 })
 </script>
 
 <style scoped lang="scss">
-@media screen and (max-width: 570px) {
-  .pc {
-    display: none !important;
-    background-color: white !important;
+.login-page {
+  --brand-blue: #1e6fff;
+  --brand-blue-deep: #0d4fd6;
+  --brand-blue-soft: #3b8bff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(255, 255, 255, 0.18), transparent 55%),
+    radial-gradient(900px 500px at 90% 10%, rgba(90, 170, 255, 0.35), transparent 50%),
+    linear-gradient(160deg, #1a5fff 0%, #1e6fff 45%, #0f4fd4 100%);
+}
+
+.login-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 100px 100px 0;
+  z-index: 2;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.brand-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
   }
+}
 
-  .login {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: start;
-    align-items: center;
-    background-color: var(--color-bg-5);
-    color: #121314;
+.brand-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
 
-    &-logo {
-      width: 100%;
-      height: 104px;
-      font-weight: 700;
-      font-size: 20px;
-      line-height: 32px;
-      display: flex;
-      padding: 0 20px;
-      align-items: center;
-      justify-content: start;
-      background-image: url('/src/assets/images/login_h5.jpg');
-      background-size: 100% 100%;
-      box-sizing: border-box;
+.company {
+  white-space: nowrap;
+}
 
-      img {
-        width: 34px;
-        height: 34px;
-        margin-right: 8px;
-      }
-    }
+.divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.55);
+  flex-shrink: 0;
+}
 
-    &-box {
-      width: 100%;
-      display: flex;
-      z-index: 999;
-    }
-  }
+.product {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-  .login-right {
+.clock-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  font-size: 25px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.login-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px 16px;
+  z-index: 2;
+}
+
+.login-card {
+  width: min(1000px, 100%);
+  min-height: 520px;
+  display: grid;
+  grid-template-columns: 6fr 4fr;
+  border-radius: 18px;
+  overflow: hidden;
+  // 卡片底色跟左栏蓝一致，避免圆角抗锯齿透出白边
+  background: #1a62ef;
+  box-shadow: 0 24px 60px rgba(8, 40, 110, 0.28);
+  isolation: isolate;
+}
+
+.login-card__left {
+  padding: 48px 40px;
+  background:
+    radial-gradient(420px 280px at 50% 18%, rgba(255, 255, 255, 0.16), transparent 60%),
+    linear-gradient(165deg, #1f73ff 0%, #1a62ef 55%, #1554d8 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #fff;
+  // 盖住与右栏接缝处的亚像素缝
+  margin-right: -1px;
+}
+
+.hero-illust {
+  width: 200px;
+  height: 200px;
+  margin-bottom: 28px;
+
+  .shield {
     width: 100%;
     height: 100%;
+    filter: drop-shadow(0 12px 24px rgba(0, 30, 90, 0.28));
+  }
+}
+
+.hero-title {
+  margin: 0;
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.35;
+}
+
+.hero-sub {
+  margin: 14px 0 36px;
+  opacity: 0.92;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+}
+
+.hero-points {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  font-size: 18px;
+
+  li {
     display: flex;
-    flex-direction: column;
-    padding: 30px 30px 0;
-    box-sizing: border-box;
-
-    &__title {
-      color: var(--color-text-1);
-      font-weight: 500;
-      font-size: 20px;
-      line-height: 32px;
-      margin-bottom: 20px;
-    }
-
-    &__form {
-      :deep(.arco-tabs-nav-tab) {
-        display: flex;
-        justify-content: start;
-        align-items: center;
-      }
-
-      :deep(.arco-tabs-tab) {
-        color: var(--color-text-2);
-        margin: 0 20px 0 0;
-      }
-
-      :deep(.arco-tabs-tab-title) {
-        font-size: 16px;
-        font-weight: 500;
-        line-height: 22px;
-      }
-
-      :deep(.arco-tabs-content) {
-        margin-top: 10px;
-      }
-
-      :deep(.arco-tabs-tab-active),
-      :deep(.arco-tabs-tab-title:hover) {
-        color: rgb(var(--arcoblue-6));
-      }
-
-      :deep(.arco-tabs-nav::before) {
-        display: none;
-      }
-
-      :deep(.arco-tabs-tab-title:before) {
-        display: none;
-      }
-    }
-
-    &__oauth {
-      width: 100%;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      padding-bottom: 20px;
-
-      // margin-top: auto;
-      // margin-bottom: 20px;
-      :deep(.arco-divider-text) {
-        color: var(--color-text-4);
-        font-size: 12px;
-        font-weight: 400;
-        line-height: 20px;
-      }
-
-      .list {
-        align-items: center;
-        display: flex;
-        justify-content: center;
-        width: 100%;
-
-        .item {
-          margin-right: 15px;
-        }
-
-        .mode {
-          color: var(--color-text-2);
-          font-size: 12px;
-          font-weight: 400;
-          line-height: 20px;
-          padding: 6px 10px;
-          align-items: center;
-          border: 1px solid var(--color-border-3);
-          border-radius: 32px;
-          box-sizing: border-box;
-          display: flex;
-          height: 32px;
-          justify-content: center;
-          cursor: pointer;
-
-          .icon {
-            width: 21px;
-            height: 20px;
-          }
-        }
-
-        .mode svg {
-          font-size: 16px;
-          margin-right: 10px;
-        }
-
-        .mode:hover,
-        .mode svg:hover {
-          background: rgba(var(--primary-6), 0.05);
-          border: 1px solid rgb(var(--primary-3));
-          color: rgb(var(--arcoblue-6));
-        }
-      }
-    }
-  }
-
-  .theme-btn {
-    position: fixed;
-    top: 20px;
-    right: 30px;
-    z-index: 999;
-  }
-
-  // 新增弹窗层级设置
-  .arco-modal-wrapper {
-    z-index: 1000;
-  }
-
-  .footer {
     align-items: center;
-    box-sizing: border-box;
-    position: absolute;
-    bottom: 10px;
-    z-index: 999;
+    justify-content: center;
+    gap: 12px;
+  }
+}
 
-    .beian {
-      .text {
-        font-size: 12px;
-        font-weight: 400;
-        letter-spacing: 0.2px;
-        line-height: 20px;
-        text-align: center;
-      }
+.login-card__right {
+  padding: 40px 42px 28px;
+  background: #fff;
+  color: #1d2129;
+  display: flex;
+  flex-direction: column;
+}
 
-      .below {
-        align-items: center;
-        display: flex;
-      }
+.form-title {
+  margin: 0 0 18px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #163a8a;
+}
+
+.login-tabs {
+  flex: 1;
+
+  :deep(.arco-tabs-nav-type-line .arco-tabs-tab) {
+    color: #86909c;
+  }
+
+  :deep(.arco-tabs-nav-type-line .arco-tabs-tab-active) {
+    color: var(--brand-blue);
+  }
+
+  :deep(.arco-tabs-nav-ink) {
+    background-color: var(--brand-blue);
+  }
+
+  :deep(.arco-btn-primary) {
+    background: var(--brand-blue);
+    border-color: var(--brand-blue);
+  }
+
+  :deep(.arco-btn-primary:hover) {
+    background: var(--brand-blue-soft);
+    border-color: var(--brand-blue-soft);
+  }
+}
+
+.login-oauth {
+  margin-top: 8px;
+
+  :deep(.arco-divider-text) {
+    color: #86909c;
+    font-size: 12px;
+  }
+}
+
+.oauth-list {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.oauth-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #4e5969;
+  cursor: pointer;
+  font-size: 13px;
+
+  &.mode:hover {
+    color: var(--brand-blue);
+  }
+}
+
+.login-footer {
+  z-index: 2;
+  padding: 8px 20px 20px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.beian-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  a {
+    color: rgba(255, 255, 255, 0.88);
+    text-decoration: none;
+
+    &:hover {
+      color: #fff;
+      text-decoration: underline;
+    }
+  }
+
+  .gongan {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    img {
+      width: 14px;
+      height: 14px;
+      object-fit: contain;
     }
   }
 }
 
-@media screen and (min-width: 571px) {
-  .h5 {
-    display: none !important;
+.login-page.mobile {
+  .login-header {
+    padding: 24px 24px 0;
   }
 
-  .login {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background-color: var(--color-bg-5);
-
-    &-logo {
-      position: fixed;
-      top: 20px;
-      left: 30px;
-      z-index: 9999;
-      color: var(--color-text-1);
-      font-weight: 500;
-      font-size: 20px;
-      line-height: 32px;
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-
-      img {
-        width: 34px;
-        height: 34px;
-        margin-right: 8px;
-      }
-    }
-
-    &-box {
-      width: 86%;
-      max-width: 850px;
-      display: flex;
-      z-index: 999;
-      box-shadow: 0 2px 4px 2px rgba(0, 0, 0, 0.08);
-    }
+  .brand-text {
+    font-size: 16px;
   }
 
-  .login-left {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
-    background: linear-gradient(60deg, rgb(var(--primary-6)), rgb(var(--primary-3)));
-
-    &__img {
-      width: 100%;
-      position: absolute;
-      bottom: 0;
-      right: 0;
-      top: 50%;
-      left: 50%;
-      transform: translateX(-50%) translateY(-50%);
-      transition: all 0.3s;
-      object-fit: cover;
-    }
+  .clock-pill {
+    font-size: 14px;
   }
 
-  .login-right {
-    width: 100%;
-    height: 100%;
-    background: var(--color-bg-1);
-    display: flex;
-    flex-direction: column;
-    padding: 30px 30px 0;
-    box-sizing: border-box;
-
-    &__title {
-      color: var(--color-text-1);
-      font-weight: 500;
-      font-size: 20px;
-      line-height: 32px;
-      margin-bottom: 20px;
-    }
-
-    &__form {
-      :deep(.arco-tabs-nav-tab) {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-
-      :deep(.arco-tabs-tab) {
-        color: var(--color-text-2);
-      }
-
-      :deep(.arco-tabs-tab-title) {
-        font-size: 16px;
-        font-weight: 500;
-        line-height: 22px;
-      }
-
-      :deep(.arco-tabs-content) {
-        margin-top: 10px;
-      }
-
-      :deep(.arco-tabs-tab-active),
-      :deep(.arco-tabs-tab-title:hover) {
-        color: rgb(var(--arcoblue-6));
-      }
-
-      :deep(.arco-tabs-nav::before) {
-        display: none;
-      }
-
-      :deep(.arco-tabs-tab-title:before) {
-        display: none;
-      }
-    }
-
-    &__oauth {
-      margin-top: auto;
-      margin-bottom: 20px;
-
-      :deep(.arco-divider-text) {
-        color: var(--color-text-4);
-        font-size: 12px;
-        font-weight: 400;
-        line-height: 20px;
-      }
-
-      .list {
-        align-items: center;
-        display: flex;
-        justify-content: center;
-        width: 100%;
-
-        .item {
-          margin-right: 15px;
-        }
-
-        .mode {
-          color: var(--color-text-2);
-          font-size: 12px;
-          font-weight: 400;
-          line-height: 20px;
-          padding: 6px 10px;
-          align-items: center;
-          border: 1px solid var(--color-border-3);
-          border-radius: 32px;
-          box-sizing: border-box;
-          display: flex;
-          height: 32px;
-          justify-content: center;
-          cursor: pointer;
-
-          .icon {
-            width: 21px;
-            height: 20px;
-          }
-        }
-
-        .mode svg {
-          font-size: 16px;
-          margin-right: 10px;
-        }
-
-        .mode:hover {
-          background: rgba(var(--primary-6), 0.05);
-          border: 1px solid rgb(var(--primary-3));
-          color: rgb(var(--arcoblue-6));
-        }
-      }
-    }
+  .login-card {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    width: min(440px, 100%);
+    background: #fff;
   }
 
-  .theme-btn {
-    position: fixed;
-    top: 20px;
-    right: 30px;
-    z-index: 999;
+  .login-card__left {
+    margin-right: 0;
   }
 
-  // 新增弹窗层级设置
-  .arco-modal-wrapper {
-    z-index: 1000;
+  .login-card__right {
+    padding: 28px 22px 20px;
   }
 
-  .footer {
-    align-items: center;
-    box-sizing: border-box;
-    position: absolute;
-    bottom: 10px;
-    z-index: 999;
-
-    .beian {
-      .text {
-        font-size: 12px;
-        font-weight: 400;
-        letter-spacing: 0.2px;
-        line-height: 20px;
-        text-align: center;
-      }
-
-      .below {
-        align-items: center;
-        display: flex;
-      }
-    }
+  .form-title {
+    font-size: 22px;
   }
 }
 </style>

@@ -66,8 +66,11 @@ const storeSetup = () => {
       siteConfig.SITE_FAVICON = resMap.get('SITE_FAVICON')
       siteConfig.SITE_LOGO = resMap.get('SITE_LOGO')
       siteConfig.SITE_TITLE = resMap.get('SITE_TITLE')
+      siteConfig.SITE_COMPANY = resMap.get('SITE_COMPANY')
       siteConfig.SITE_COPYRIGHT = resMap.get('SITE_COPYRIGHT')
       siteConfig.SITE_BEIAN = resMap.get('SITE_BEIAN')
+      siteConfig.SITE_BEIAN_GONGAN = resMap.get('SITE_BEIAN_GONGAN')
+      siteConfig.SITE_BEIAN_GONGAN_ICON = resMap.get('SITE_BEIAN_GONGAN_ICON')
       document.title = resMap.get('SITE_TITLE')
       document
         .querySelector('link[rel="shortcut icon"]')
@@ -115,12 +118,24 @@ const storeSetup = () => {
     return siteConfig.SITE_TITLE
   }
 
+  const getCompany = () => {
+    return siteConfig.SITE_COMPANY
+  }
+
   const getCopyright = () => {
     return siteConfig.SITE_COPYRIGHT
   }
 
   const getForRecord = () => {
     return siteConfig.SITE_BEIAN
+  }
+
+  const getBeianGongan = () => {
+    return siteConfig.SITE_BEIAN_GONGAN
+  }
+
+  const getBeianGonganIcon = () => {
+    return siteConfig.SITE_BEIAN_GONGAN_ICON || '/beian-gongan.png'
   }
   return {
     ...toRefs(settingConfig),
@@ -136,8 +151,11 @@ const storeSetup = () => {
     getFavicon,
     getLogo,
     getTitle,
+    getCompany,
     getCopyright,
     getForRecord,
+    getBeianGongan,
+    getBeianGonganIcon,
   }
 }
 
