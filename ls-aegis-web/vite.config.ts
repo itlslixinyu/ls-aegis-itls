@@ -86,14 +86,14 @@ export default defineConfig(({ command, mode }) => {
             if (id.includes('echarts') || id.includes('zrender')) {
               return 'echarts'
             }
-            if (id.includes('@arco-design')) {
-              return 'arco'
-            }
+            // vue 与 arco 必须同 chunk：拆开会形成循环依赖，运行时报
+            // Cannot access 'xx' before initialization（页面一直转圈）
             if (
               id.includes('/vue/')
               || id.includes('/vue-router/')
               || id.includes('/pinia/')
               || id.includes('/@vue/')
+              || id.includes('@arco-design')
             ) {
               return 'vue-vendor'
             }

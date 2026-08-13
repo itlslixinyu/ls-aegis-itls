@@ -1,5 +1,6 @@
 # Compose 工程名：Docker Desktop / docker compose ls 中显示为 ls-aegis
 # 容器默认命名：ls-aegis-<服务名>-1（不要写死 container_name，否则会脱离项目分组）
+# 密钥请放 docker/.env（已 gitignore），模板见 docker/.env.example
 name: ls-aegis
 
 services:
@@ -12,7 +13,7 @@ services:
       - mysql-data:/var/lib/mysql
     environment:
       TZ: Asia/Shanghai
-      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ls_aegis
     command:
       --default-authentication-plugin=mysql_native_password
@@ -23,7 +24,7 @@ services:
     networks:
       - net
     healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-p123456']
+      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD']
       interval: 5s
       timeout: 5s
       retries: 20
@@ -38,11 +39,13 @@ services:
       - redis-data:/data
     environment:
       TZ: Asia/Shanghai
-    command: 'redis-server /usr/local/redis/config/redis.conf --appendonly yes'
+      REDIS_PWD: ${REDIS_PWD}
+    # 口令由环境变量注入，禁止在 conf 写死弱口令
+    command: 'redis-server /usr/local/redis/config/redis.conf --appendonly yes --requirepass ${REDIS_PWD}'
     networks:
       - net
     healthcheck:
-      test: ['CMD', 'redis-cli', '-a', '123456', 'ping']
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PWD" ping']
       interval: 5s
       timeout: 3s
       retries: 20
@@ -59,18 +62,25 @@ services:
       - ./data/ls-aegis-server/logs/:/app/logs/
     environment:
       TZ: Asia/Shanghai
-      APPLICATION_URL: http://localhost:8080
-      # 服务名即 DNS 名（同项目网络内）
+      APPLICATION_URL: ${APPLICATION_URL:-http://localhost:8080}
       DB_HOST: mysql
       DB_PORT: 3306
       DB_USER: root
-      DB_PWD: 123456
+      DB_PWD: ${DB_PWD}
       DB_NAME: ls_aegis
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      REDIS_PWD: 123456
+      REDIS_PWD: ${REDIS_PWD}
       REDIS_DB: 0
-      SNAIL_JOB_ENABLED: 'false'
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      ENCRYPT_AES_PASSWORD: ${ENCRYPT_AES_PASSWORD:-}
+      ENCRYPT_RSA_PUBLIC_KEY: ${ENCRYPT_RSA_PUBLIC_KEY:-}
+      ENCRYPT_RSA_PRIVATE_KEY: ${ENCRYPT_RSA_PRIVATE_KEY:-}
+      SNAIL_JOB_ENABLED: ${SNAIL_JOB_ENABLED:-false}
+      SCHEDULE_TOKEN: ${SCHEDULE_TOKEN:-}
+      SCHEDULE_USERNAME: ${SCHEDULE_USERNAME:-}
+      SCHEDULE_PASSWORD: ${SCHEDULE_PASSWORD:-}
+      JUSTAUTH_ENABLED: ${JUSTAUTH_ENABLED:-false}
       # 与 application.yml 一致：关闭多租户
       CONTINEW_STARTER_TENANT_ENABLED: 'false'
     depends_on:

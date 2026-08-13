@@ -75,15 +75,7 @@
               <div v-else class="oauth-item mode" @click="toggleLoginMode">
                 <icon-email /> 邮箱登录
               </div>
-              <a class="oauth-item" title="使用 Gitee 账号登录" @click="onOauth('gitee')">
-                <GiSvgIcon name="gitee" :size="22" />
-              </a>
-              <a class="oauth-item" title="使用 GitHub 账号登录" @click="onOauth('github')">
-                <GiSvgIcon name="github" :size="22" />
-              </a>
-              <a class="oauth-item" title="使用微信账号登录" @click="onOauth('wechat_open')">
-                <GiSvgIcon name="wechat" :size="22" />
-              </a>
+              <!-- 社交登录默认关闭（justauth.enabled=false），开启并配置后取消注释 -->
             </div>
           </div>
         </section>
@@ -114,7 +106,6 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import AccountLogin from './components/account/index.vue'
 import PhoneLogin from './components/phone/index.vue'
 import EmailLogin from './components/email/index.vue'
-import { socialAuth } from '@/apis/auth'
 import { useAppStore } from '@/stores'
 import { useTenantStore } from '@/stores/modules/tenant'
 import { useDevice } from '@/hooks'
@@ -149,11 +140,6 @@ const formatNow = () => {
 
 const toggleLoginMode = () => {
   isEmailLogin.value = !isEmailLogin.value
-}
-
-const onOauth = async (source: string) => {
-  const { data } = await socialAuth(source)
-  window.location.href = data.authorizeUrl
 }
 
 const onGetTenant = async () => {

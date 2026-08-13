@@ -78,13 +78,18 @@ export async function ensureGmPublicKey() {
 
 /**
  * SM2 传输加密（C1C3C2）
+ * sm-crypto 输出不含未压缩点前缀 04，BouncyCastle SM2Engine 解密需要带 04，此处统一补齐。
  */
 export function encryptBySm2(txt: string) {
   if (!sm2PublicKeyHex) {
     console.error('国密 SM2 公钥未加载，无法加密传输')
     return ''
   }
-  return sm2.doEncrypt(txt, sm2PublicKeyHex, 1)
+  const cipher = sm2.doEncrypt(txt, sm2PublicKeyHex, 1)
+  if (!cipher) {
+    return ''
+  }
+  return cipher.startsWith('04') ? cipher : `04${cipher}`
 }
 
 /** 异步：先确保公钥再 SM2 加密（登录/改密请用此方法） */

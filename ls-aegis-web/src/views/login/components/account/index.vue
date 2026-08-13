@@ -65,10 +65,8 @@ import { encryptTransport } from '@/utils/encrypt'
 
 const loginConfig = useStorage('login-config', {
   rememberMe: true,
-  username: 'admin', // 演示默认值
-  password: 'admin123', // 演示默认值
-  // username: debug ? 'admin' : '', // 演示默认值
-  // password: debug ? 'admin123' : '', // 演示默认值
+  username: '',
+  password: '',
 })
 // 是否启用验证码
 const isCaptchaEnabled = ref(true)

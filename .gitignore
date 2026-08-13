@@ -63,3 +63,6 @@ Thumbs.db
 # 忽略编译产出jar包
 *.jar
 docker/**/bin/*.jar
+
+docker/.env
+
