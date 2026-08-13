@@ -28,7 +28,7 @@
     </a-form-item>
     <a-form-item>
       <a-space direction="vertical" fill class="w-full">
-        <a-button disabled class="btn" type="primary" :loading="loading" html-type="submit" size="large" long>立即登录</a-button>
+        <a-button class="btn" type="primary" :loading="loading" html-type="submit" size="large" long>立即登录</a-button>
       </a-space>
     </a-form-item>
     <Verify
@@ -44,7 +44,7 @@
 <script setup lang="ts">
 import { type FormInstance, Message } from '@arco-design/web-vue'
 import type { BehaviorCaptchaReq } from '@/apis'
-// import { type BehaviorCaptchaReq, getEmailCaptcha } from '@/apis'
+import { getEmailCaptcha } from '@/apis'
 import { useTabsStore, useTenantStore, useUserStore } from '@/stores'
 import * as Regexp from '@/utils/regexp'
 
@@ -125,18 +125,15 @@ const resetCaptcha = () => {
   captchaDisable.value = false
 }
 
-// 获取验证码
-// eslint-disable-next-line unused-imports/no-unused-vars
 const getCaptcha = async (captchaReq: BehaviorCaptchaReq) => {
   try {
     captchaLoading.value = true
     captchaBtnName.value = '发送中...'
-    // await getEmailCaptcha(form.email, captchaReq)
+    await getEmailCaptcha(form.email, captchaReq, 'login')
     captchaLoading.value = false
     captchaDisable.value = true
     captchaBtnName.value = `获取验证码(${(captchaTime.value -= 1)}s)`
-    // Message.success('邮件发送成功')
-    Message.success('仅提供效果演示，实际使用请查看代码取消相关注释')
+    Message.success('验证码已发送，请查收邮箱')
     captchaTimer.value = window.setInterval(() => {
       captchaTime.value -= 1
       captchaBtnName.value = `获取验证码(${captchaTime.value}s)`

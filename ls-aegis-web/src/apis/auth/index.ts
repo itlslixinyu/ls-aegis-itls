@@ -5,7 +5,7 @@ export type * from './type'
 
 const BASE_URL = '/auth'
 
-const login = (req: T.AccountLoginReq | T.PhoneLoginReq | T.EmailLoginReq, tenantCode?: string) => {
+const login = (req: T.AccountLoginReq | T.EmailLoginReq, tenantCode?: string) => {
   const headers = {}
   if (tenantCode) {
     headers['X-Tenant-Code'] = tenantCode
@@ -23,21 +23,6 @@ export function accountLogin(req: T.AccountLoginReq, tenantCode?: string) {
 /** @desc 邮箱登录 */
 export function emailLogin(req: T.EmailLoginReq, tenantCode?: string) {
   return login(req, tenantCode)
-}
-
-/** @desc 手机号登录 */
-export function phoneLogin(req: T.PhoneLoginReq, tenantCode?: string) {
-  return login(req, tenantCode)
-}
-
-/** @desc 三方账号登录 */
-export function socialLogin(req: any) {
-  return http.post<T.LoginResp>(`${BASE_URL}/login`, req)
-}
-
-/** @desc 三方账号登录授权 */
-export function socialAuth(source: string) {
-  return http.get<T.SocialAuthAuthorizeResp>(`${BASE_URL}/${source}`)
 }
 
 /** @desc 退出登录 */
@@ -58,4 +43,9 @@ export const getUserRoute = () => {
 /** @desc 国密 SM2 公钥（仅公钥） */
 export const getGmPublicKey = () => {
   return http.get<T.GmPublicKeyResp>(`${BASE_URL}/gm/public-key`)
+}
+
+/** @desc 邮箱验证码自助找回密码 */
+export function forgotPassword(req: T.ForgotPasswordReq) {
+  return http.post(`${BASE_URL}/forgot-password`, req)
 }

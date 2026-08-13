@@ -1,4 +1,3 @@
-import type * as T from './type'
 import http from '@/utils/http'
 
 const BASE_URL = '/user/profile'
@@ -26,19 +25,4 @@ export function updateUserPhone(data: { phone: string, captcha: string, oldPassw
 /** @desc 修改邮箱 */
 export function updateUserEmail(data: { email: string, captcha: string, oldPassword: string }) {
   return http.patch(`${BASE_URL}/email`, data)
-}
-
-/** @desc 获取绑定的三方账号 */
-export function listUserSocial() {
-  return http.get<T.BindSocialAccountRes[]>(`${BASE_URL}/social`)
-}
-
-/** @desc 绑定三方账号 */
-export function bindSocialAccount(source: string, data: any) {
-  return http.post(`${BASE_URL}/social/${source}`, data)
-}
-
-/** @desc 解绑三方账号 */
-export function unbindSocialAccount(source: string) {
-  return http.del(`${BASE_URL}/social/${source}`)
 }

@@ -1,16 +1,36 @@
 <template>
   <a-form
-    ref="formRef" :model="form" :rules="rules" layout="vertical" :label-col-style="{ lineHeight: '10px' }"
-    :wrapper-col-style="{ flex: 1 }" size="large" @submit="onModify"
+    ref="formRef"
+    :model="form"
+    :rules="rules"
+    :label-col-style="{ display: 'none' }"
+    :wrapper-col-style="{ flex: 1 }"
+    size="large"
+    @submit="onModify"
   >
-    <a-form-item field="oldPassword" label="当前密码">
-      <a-input-password v-model="form.oldPassword" placeholder="请输入当前密码" allow-clear />
+    <a-form-item field="oldPassword" hide-label>
+      <a-input-password
+        v-model="form.oldPassword"
+        placeholder="请输入当前密码"
+        allow-clear
+        autocomplete="current-password"
+      />
     </a-form-item>
-    <a-form-item field="newPassword" label="新密码">
-      <a-input-password v-model="form.newPassword" placeholder="请输入新密码" allow-clear />
+    <a-form-item field="newPassword" hide-label>
+      <a-input-password
+        v-model="form.newPassword"
+        placeholder="请输入新密码"
+        allow-clear
+        autocomplete="new-password"
+      />
     </a-form-item>
-    <a-form-item field="confirmPassword" label="确认密码">
-      <a-input-password v-model="form.confirmPassword" placeholder="请再次输入新密码" allow-clear />
+    <a-form-item field="confirmPassword" hide-label>
+      <a-input-password
+        v-model="form.confirmPassword"
+        placeholder="请再次输入新密码"
+        allow-clear
+        autocomplete="new-password"
+      />
     </a-form-item>
     <a-form-item>
       <a-space direction="vertical" fill class="w-full">
@@ -26,6 +46,7 @@
 import { type FormInstance, Message } from '@arco-design/web-vue'
 import { updateUserPassword } from '@/apis/system'
 import { encryptTransport } from '@/utils/encrypt'
+import { useUserStore } from '@/stores'
 
 interface Form {
   oldPassword: string
@@ -65,9 +86,9 @@ const rules: FormInstance['rules'] = {
   }],
 }
 const router = useRouter()
+const userStore = useUserStore()
 const loading = ref(false)
 
-// 登录
 const onModify = async () => {
   const isInvalid = await formRef.value?.validate()
   if (isInvalid) return
@@ -78,12 +99,11 @@ const onModify = async () => {
       newPassword: await encryptTransport(form.newPassword) || '',
     }
     await updateUserPassword(params)
-    router.push({
-      path: '/login',
-    })
-    Message.success('修改成功')
+    await userStore.logoutCallBack()
+    Message.success('修改成功，请使用新密码重新登录')
+    await router.replace({ path: '/login' })
   } catch (error) {
-
+    console.error(error)
   } finally {
     loading.value = false
   }
@@ -115,13 +135,6 @@ const onModify = async () => {
 
 .arco-input-wrapper:hover {
   border-color: rgb(var(--arcoblue-6));
-}
-
-.captcha-btn {
-  height: 40px;
-  margin-left: 12px;
-  min-width: 98px;
-  border-radius: 4px;
 }
 
 .btn {

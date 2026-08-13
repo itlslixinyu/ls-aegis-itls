@@ -15,6 +15,7 @@
 
 <script setup lang="tsx">
 import { Message } from '@arco-design/web-vue'
+import type { LabelValue } from '@arco-design/web-vue/es/tree-select/interface'
 import { useWindowSize } from '@vueuse/core'
 import { addClient, getClient, updateClient } from '@/apis/system/client'
 import { type ColumnItem, GiForm } from '@/components/GiForm'
@@ -33,6 +34,10 @@ const isUpdate = computed(() => !!dataId.value)
 const title = computed(() => (isUpdate.value ? '修改客户端' : '新增客户端'))
 const formRef = ref<InstanceType<typeof GiForm>>()
 const { client_type, auth_type_enum } = useDict('auth_type_enum', 'client_type')
+/** 登录仅开放账号、邮箱认证 */
+const loginAuthTypeOptions = computed(() =>
+  (auth_type_enum.value || []).filter((d: LabelValue) => ['ACCOUNT', 'EMAIL'].includes(String(d.value))),
+)
 
 const [form, resetForm] = useResetReactive({
   activeTimeout: 1800,
@@ -59,7 +64,7 @@ const columns: ColumnItem[] = reactive([
     required: true,
     span: 12,
     props: {
-      options: auth_type_enum,
+      options: loginAuthTypeOptions,
       multiple: true,
       maxTagCount: 2,
     },

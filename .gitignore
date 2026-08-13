@@ -1,4 +1,4 @@
-# 依赖与构建
+# ====================== 依赖与构建产物 ======================
 node_modules/
 dist/
 dist-ssr/
@@ -7,19 +7,53 @@ target/
 build/
 .flattened-pom.xml
 
-# 本地环境与密钥（勿提交真实密钥）
+# spring-boot-maven-plugin fat-jar 打包临时目录
+tmp-jar/
+
+# maven 本地生成文件
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# gradle（如果后续用到gradle也防护）
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# ====================== 本地环境与密钥 严禁提交 ======================
 .env.local
 .env.*.local
 *.pem
 *.key
+*.crt
+*.csr
 **/credentials*
 **/data/gm/
 data/gm/
 
-# Docker 运行时数据（体积大且含证书）
+# docker 运行时数据、本地环境文件
 **/docker/data/
+docker/.env
+*.env
 
-# 日志与临时文件
+# ====================== 编译产出jar/war/zip 包 ======================
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+docker/**/bin/*.jar
+
+# ====================== 日志、缓存、临时文件 ======================
 logs/
 *.log
 *.log.gz
@@ -28,12 +62,17 @@ logs/
 *.diff
 *.patch
 *.tmp
+*.temp
+*.bak
+*.backup
+
+# js包管理器日志
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# IDE / 编辑器
+# ====================== IDE / 编辑器配置 ======================
 .idea/
 *.iml
 *.iws
@@ -44,6 +83,8 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# eclipse
 .apt_generated
 .classpath
 .factorypath
@@ -52,17 +93,31 @@ pnpm-debug.log*
 .springBeans
 .sts4-cache
 
-# 系统文件
-.DS_Store
-Thumbs.db
+# IntelliJ run配置
+.idea/**/runConfigurations/
+.idea/**/artifacts/
 
-# Cursor 缓存（保留 rules）
+# Cursor IDE：忽略缓存，保留rules自定义规则
 .cursor/*
 !.cursor/rules/
 
-# 忽略编译产出jar包
-*.jar
-docker/**/bin/*.jar
+# ====================== 操作系统残留文件 ======================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-docker/.env
+# ====================== 测试报告、jacoco、输出报告 ======================
+**/site/
+**/jacoco/
+**/test-output/
+**/allure-results/
+**/allure-report/
 
+# ====================== 其他本地运行生成文件 ======================
+spring-boot-devtools.properties
+hs_err_pid*
+replay_pid*

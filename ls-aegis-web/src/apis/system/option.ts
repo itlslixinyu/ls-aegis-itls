@@ -19,3 +19,8 @@ export function updateOption(data: any) {
 export function resetOptionValue(query: T.OptionQuery) {
   return http.patch(`${BASE_URL}/value`, query)
 }
+
+/** @desc 发送测试邮件 */
+export function sendTestMail(to: string) {
+  return http.post(`${BASE_URL}/mail/test`, { to })
+}

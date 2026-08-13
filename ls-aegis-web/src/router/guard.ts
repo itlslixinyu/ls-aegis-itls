@@ -70,7 +70,7 @@ const compareTag = async () => {
 }
 
 /** 免登录白名单 */
-const whiteList = ['/login', '/social/callback', '/pwdExpired']
+const whiteList = ['/login', '/pwdExpired', '/forgot-password']
 
 /** 是否已经生成过路由表 */
 let hasRouteFlag = false
@@ -94,7 +94,7 @@ export const setupRouterGuard = (router: Router) => {
           try {
             await userStore.getInfo()
             if (userStore.userInfo.pwdExpired && to.path !== '/pwdExpired') {
-              Message.warning('密码已过期，请修改密码')
+              Message.warning('密码已过期或为初始密码，请先修改后再使用系统')
               hasRouteFlag = true
               next('/pwdExpired')
               return

@@ -45,7 +45,7 @@
     <a-form-item>
       <a-row justify="space-between" align="center" class="w-full">
         <a-checkbox v-model="loginConfig.rememberMe">记住我</a-checkbox>
-        <a-link>忘记密码</a-link>
+        <a-link @click="onForgotPassword">忘记密码</a-link>
       </a-row>
     </a-form-item>
     <a-form-item>
@@ -68,6 +68,13 @@ const loginConfig = useStorage('login-config', {
   username: '',
   password: '',
 })
+
+/** 跳转邮箱验证码自助找回 */
+const onForgotPassword = (e: Event) => {
+  e.preventDefault()
+  router.push('/forgot-password')
+}
+
 // 是否启用验证码
 const isCaptchaEnabled = ref(true)
 // 验证码图片

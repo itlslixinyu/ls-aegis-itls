@@ -55,27 +55,33 @@
         </aside>
 
         <section class="login-card__right">
-          <h3 class="form-title">{{ isEmailLogin ? '邮箱登录' : '欢迎登录' }}</h3>
-          <EmailLogin v-if="isEmailLogin" />
-          <a-tabs v-else v-model:activeKey="activeTab" class="login-tabs">
-            <a-tab-pane key="1" title="账号登录">
-              <component :is="AccountLogin" v-if="activeTab === '1'" />
-            </a-tab-pane>
-            <a-tab-pane key="2" title="手机号登录">
-              <component :is="PhoneLogin" v-if="activeTab === '2'" />
-            </a-tab-pane>
-          </a-tabs>
-
-          <div class="login-oauth">
-            <a-divider orientation="center">其他登录方式</a-divider>
-            <div class="oauth-list">
-              <div v-if="isEmailLogin" class="oauth-item mode" @click="toggleLoginMode">
-                <icon-user /> 账号/手机号登录
-              </div>
-              <div v-else class="oauth-item mode" @click="toggleLoginMode">
-                <icon-email /> 邮箱登录
-              </div>
-              <!-- 社交登录默认关闭（justauth.enabled=false），开启并配置后取消注释 -->
+          <div class="login-form-wrap">
+            <h3 class="form-title">欢迎登录</h3>
+            <div class="login-mode" role="tablist" aria-label="登录方式">
+              <button
+                type="button"
+                role="tab"
+                class="login-mode__item"
+                :class="{ active: activeTab === 'account' }"
+                :aria-selected="activeTab === 'account'"
+                @click="activeTab = 'account'"
+              >
+                账号登录
+              </button>
+              <button
+                type="button"
+                role="tab"
+                class="login-mode__item"
+                :class="{ active: activeTab === 'email' }"
+                :aria-selected="activeTab === 'email'"
+                @click="activeTab = 'email'"
+              >
+                邮箱登录
+              </button>
+            </div>
+            <div class="login-form-body">
+              <AccountLogin v-if="activeTab === 'account'" />
+              <EmailLogin v-else />
             </div>
           </div>
         </section>
@@ -104,7 +110,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import AccountLogin from './components/account/index.vue'
-import PhoneLogin from './components/phone/index.vue'
 import EmailLogin from './components/email/index.vue'
 import { useAppStore } from '@/stores'
 import { useTenantStore } from '@/stores/modules/tenant'
@@ -125,8 +130,7 @@ const beianIcp = computed(() => appStore.getForRecord())
 const beianGongan = computed(() => appStore.getBeianGongan())
 const beianGonganIcon = computed(() => appStore.getBeianGonganIcon())
 
-const isEmailLogin = ref(false)
-const activeTab = ref('1')
+const activeTab = ref('account')
 const nowText = ref('')
 let clockTimer: ReturnType<typeof setInterval> | undefined
 
@@ -136,10 +140,6 @@ const formatNow = () => {
   const d = new Date()
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} 星期${weekMap[d.getDay()]} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
-}
-
-const toggleLoginMode = () => {
-  isEmailLogin.value = !isEmailLogin.value
 }
 
 const onGetTenant = async () => {
@@ -345,29 +345,64 @@ onUnmounted(() => {
   color: #1d2129;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-form-wrap {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .form-title {
-  margin: 0 0 18px;
+  margin: 0 0 28px;
   font-size: 26px;
   font-weight: 700;
   color: #163a8a;
+  text-align: center;
 }
 
-.login-tabs {
-  flex: 1;
+.login-mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 28px;
+  padding: 4px;
+  border-radius: 12px;
+  background: #f2f3f5;
+}
 
-  :deep(.arco-tabs-nav-type-line .arco-tabs-tab) {
-    color: #86909c;
+.login-mode__item {
+  appearance: none;
+  border: none;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: transparent;
+  color: #86909c;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover:not(.active) {
+    color: #4e5969;
   }
 
-  :deep(.arco-tabs-nav-type-line .arco-tabs-tab-active) {
+  &.active {
     color: var(--brand-blue);
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(22, 58, 138, 0.12);
+    font-weight: 600;
   }
+}
 
-  :deep(.arco-tabs-nav-ink) {
-    background-color: var(--brand-blue);
-  }
+.login-form-body {
+  width: 100%;
 
   :deep(.arco-btn-primary) {
     background: var(--brand-blue);
@@ -377,36 +412,6 @@ onUnmounted(() => {
   :deep(.arco-btn-primary:hover) {
     background: var(--brand-blue-soft);
     border-color: var(--brand-blue-soft);
-  }
-}
-
-.login-oauth {
-  margin-top: 8px;
-
-  :deep(.arco-divider-text) {
-    color: #86909c;
-    font-size: 12px;
-  }
-}
-
-.oauth-list {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.oauth-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #4e5969;
-  cursor: pointer;
-  font-size: 13px;
-
-  &.mode:hover {
-    color: var(--brand-blue);
   }
 }
 

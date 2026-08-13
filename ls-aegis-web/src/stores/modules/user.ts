@@ -6,14 +6,11 @@ import {
   type AccountLoginReq,
   AuthTypeConstants,
   type EmailLoginReq,
-  type PhoneLoginReq,
   type UserInfo,
   accountLogin as accountLoginApi,
   emailLogin as emailLoginApi,
   getUserInfo as getUserInfoApi,
   logout as logoutApi,
-  phoneLogin as phoneLoginApi,
-  socialLogin as socialLoginApi,
 } from '@/apis'
 import { clearToken, getToken, setToken } from '@/utils/auth'
 import { resetHasRouteFlag } from '@/router/guard'
@@ -67,22 +64,6 @@ const storeSetup = () => {
     token.value = res.data.token
   }
 
-  // 手机号登录
-  const phoneLogin = async (req: PhoneLoginReq, tenantCode?: string) => {
-    const res = await phoneLoginApi({ ...req, clientId: import.meta.env.VITE_CLIENT_ID, authType: AuthTypeConstants.PHONE }, tenantCode)
-    setToken(res.data.token)
-    tenantStore.setTenantId(res.data.tenantId)
-    token.value = res.data.token
-  }
-
-  // 三方账号登录
-  const socialLogin = async (source: string, req: any) => {
-    const res: any = await socialLoginApi({ ...req, source, clientId: import.meta.env.VITE_CLIENT_ID, authType: AuthTypeConstants.SOCIAL })
-    setToken(res.data.token)
-    tenantStore.setTenantId(res.data.tenantId)
-    token.value = res.data.token
-  }
-
   // 退出登录回调
   const logoutCallBack = async () => {
     roles.value = []
@@ -126,8 +107,6 @@ const storeSetup = () => {
     pwdExpiredShow,
     accountLogin,
     emailLogin,
-    phoneLogin,
-    socialLogin,
     logout,
     logoutCallBack,
     getInfo,

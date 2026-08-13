@@ -16,8 +16,9 @@ export function getSmsCaptcha(phone: string, captchaReq: T.BehaviorCaptchaReq) {
 }
 
 /** @desc 获取邮箱验证码 */
-export function getEmailCaptcha(email: string, captchaReq: T.BehaviorCaptchaReq) {
-  return http.get<boolean>(`${BASE_URL}/mail?email=${email}&captchaVerification=${encodeURIComponent(captchaReq.captchaVerification || '')}`)
+export function getEmailCaptcha(email: string, captchaReq: T.BehaviorCaptchaReq, purpose?: 'login' | 'forgot' | 'bind') {
+  const purposeQuery = purpose ? `&purpose=${purpose}` : ''
+  return http.get<boolean>(`${BASE_URL}/mail?email=${email}&captchaVerification=${encodeURIComponent(captchaReq.captchaVerification || '')}${purposeQuery}`)
 }
 
 /** @desc 获取行为验证码 */

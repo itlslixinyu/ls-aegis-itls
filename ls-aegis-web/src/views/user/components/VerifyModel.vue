@@ -192,7 +192,7 @@ const getCaptcha = async (captchaReq: BehaviorCaptchaReq) => {
     if (verifyType.value === 'phone') {
       await getSmsCaptcha(form.phone, captchaReq)
     } else if (verifyType.value === 'email') {
-      await getEmailCaptcha(form.email, captchaReq)
+      await getEmailCaptcha(form.email, captchaReq, 'bind')
     }
     captchaLoading.value = false
     captchaDisable.value = true

@@ -42,14 +42,12 @@ export interface RouteItem {
   affix: boolean
 }
 
-/** 认证类型 */
-export type AuthType = 'ACCOUNT' | 'PHONE' | 'EMAIL' | 'SOCIAL'
+/** 认证类型（登录页仅开放账号/邮箱） */
+export type AuthType = 'ACCOUNT' | 'EMAIL'
 
 export const AuthTypeConstants = {
   ACCOUNT: 'ACCOUNT',
-  PHONE: 'PHONE',
   EMAIL: 'EMAIL',
-  SOCIAL: 'SOCIAL',
 } as const
 
 /** 基础认证请求接口 */
@@ -66,12 +64,6 @@ export interface AccountLoginReq extends AuthReq {
   uuid: string
 }
 
-/** 手机号登录请求参数 */
-export interface PhoneLoginReq extends AuthReq {
-  phone: string
-  captcha: string
-}
-
 /** 邮箱登录请求参数 */
 export interface EmailLoginReq extends AuthReq {
   email: string
@@ -84,15 +76,17 @@ export interface LoginResp {
   tenantId: string
 }
 
-/** 第三方登录授权类型 */
-export interface SocialAuthAuthorizeResp {
-  authorizeUrl: string
-}
-
 /** 国密公钥（仅公钥） */
 export interface GmPublicKeyResp {
   enable: boolean
   algorithm: string
   publicKeyHex: string
   publicKeyBase64: string
+}
+
+/** 邮箱验证码自助找回密码 */
+export interface ForgotPasswordReq {
+  email: string
+  captcha: string
+  newPassword: string
 }

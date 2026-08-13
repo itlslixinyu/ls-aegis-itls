@@ -449,12 +449,6 @@ export interface SmsLogQuery {
 }
 export interface SmsLogPageQuery extends SmsLogQuery, PageQuery {}
 
-/** 绑定三方账号信息 */
-export interface BindSocialAccountRes {
-  source: string
-  description: string
-}
-
 /** 系统消息类型 */
 export interface MessageResp {
   id: string

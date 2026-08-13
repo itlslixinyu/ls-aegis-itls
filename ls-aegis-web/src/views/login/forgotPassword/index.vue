@@ -23,7 +23,7 @@
           <div class="hero-illust" aria-hidden="true">
             <svg viewBox="0 0 200 200" class="shield">
               <defs>
-                <linearGradient id="pwdShieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id="forgotShieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
                   <stop offset="100%" stop-color="#d6e8ff" stop-opacity="0.85" />
                 </linearGradient>
@@ -33,7 +33,7 @@
               <circle cx="155" cy="150" r="5" fill="#fff" opacity="0.35" />
               <path
                 d="M100 28 L148 48 V98 C148 132 128 158 100 172 C72 158 52 132 52 98 V48 Z"
-                fill="url(#pwdShieldGrad)"
+                fill="url(#forgotShieldGrad)"
               />
               <path
                 d="M78 102 L94 118 L128 80"
@@ -45,21 +45,21 @@
               />
             </svg>
           </div>
-          <h2 class="hero-title">账号安全加固</h2>
-          <p class="hero-sub">请修改初始或过期密码后继续使用</p>
+          <h2 class="hero-title">自助找回密码</h2>
+          <p class="hero-sub">通过绑定邮箱验证码安全重置</p>
           <ul class="hero-points">
-            <li><icon-safe /> 定期更换强口令</li>
+            <li><icon-email /> 邮箱验证身份</li>
+            <li><icon-safe /> 行为验证防刷</li>
             <li><icon-lock /> 国密传输保护</li>
-            <li><icon-user /> 禁止复用旧密码</li>
           </ul>
         </aside>
 
         <section class="login-card__right">
           <div class="login-form-wrap">
-            <h3 class="form-title">修改密码</h3>
-            <p class="form-tip">密码已过期或为初始密码，请先修改后再使用系统</p>
+            <h3 class="form-title">忘记密码</h3>
+            <p class="form-tip">请使用账号已绑定的邮箱接收验证码并设置新密码</p>
             <div class="login-form-body">
-              <ModifyPassword />
+              <ForgotPasswordForm />
             </div>
           </div>
         </section>
@@ -87,11 +87,11 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import ModifyPassword from '../components/modifyPassword/index.vue'
+import ForgotPasswordForm from '../components/forgotPassword/index.vue'
 import { useAppStore } from '@/stores'
 import { useDevice } from '@/hooks'
 
-defineOptions({ name: 'PwdExpired' })
+defineOptions({ name: 'ForgotPassword' })
 
 const { isDesktop } = useDevice()
 const appStore = useAppStore()
@@ -329,7 +329,7 @@ onUnmounted(() => {
   text-align: center;
   font-size: 13px;
   line-height: 1.6;
-  color: #f53f3f;
+  color: #86909c;
 }
 
 .login-form-body {

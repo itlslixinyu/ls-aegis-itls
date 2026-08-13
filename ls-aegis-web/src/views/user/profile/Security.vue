@@ -48,7 +48,7 @@ modeList.value = [
     title: '安全手机',
     icon: 'phone-color',
     value: userInfo.value.phone,
-    subtitle: `${userInfo.value.phone ? '' : '手机号'}可用于登录、身份验证、密码找回、通知接收`,
+    subtitle: `${userInfo.value.phone ? '' : '手机号'}可用于身份验证、密码找回、通知接收`,
     type: 'phone',
     jumpMode: 'modal',
     status: !!userInfo.value.phone,
