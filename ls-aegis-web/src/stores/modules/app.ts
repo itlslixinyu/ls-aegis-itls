@@ -68,6 +68,7 @@ const storeSetup = () => {
       siteConfig.SITE_TITLE = resMap.get('SITE_TITLE')
       siteConfig.SITE_TITLE_SHORT = resMap.get('SITE_TITLE_SHORT')
       siteConfig.SITE_COMPANY = resMap.get('SITE_COMPANY')
+      siteConfig.SITE_COMPANY_SHORT = resMap.get('SITE_COMPANY_SHORT')
       siteConfig.SITE_COPYRIGHT = resMap.get('SITE_COPYRIGHT')
       siteConfig.SITE_BEIAN = resMap.get('SITE_BEIAN')
       siteConfig.SITE_BEIAN_GONGAN = resMap.get('SITE_BEIAN_GONGAN')
@@ -131,6 +132,11 @@ const storeSetup = () => {
     return siteConfig.SITE_COMPANY
   }
 
+  const getCompanyShort = () => {
+    const short = (siteConfig.SITE_COMPANY_SHORT || '').trim()
+    return short ? short.slice(0, 8) : siteConfig.SITE_COMPANY
+  }
+
   const getCopyright = () => {
     return siteConfig.SITE_COPYRIGHT
   }
@@ -162,6 +168,7 @@ const storeSetup = () => {
     getTitle,
     getTitleShort,
     getCompany,
+    getCompanyShort,
     getCopyright,
     getForRecord,
     getBeianGongan,

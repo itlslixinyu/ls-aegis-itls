@@ -346,6 +346,7 @@ export interface BasicConfig {
   SITE_TITLE: string
   SITE_TITLE_SHORT: string
   SITE_COMPANY: string
+  SITE_COMPANY_SHORT: string
   SITE_COPYRIGHT: string
   SITE_BEIAN: string
   SITE_BEIAN_GONGAN: string
@@ -359,6 +360,7 @@ export interface SiteConfig {
   SITE_TITLE: OptionResp
   SITE_TITLE_SHORT: OptionResp
   SITE_COMPANY: OptionResp
+  SITE_COMPANY_SHORT: OptionResp
   SITE_DESCRIPTION: OptionResp
   SITE_COPYRIGHT: OptionResp
   SITE_BEIAN: OptionResp
