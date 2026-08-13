@@ -13,17 +13,24 @@ alwaysApply: true
 
 权威约定见 `reports/README.md`。新增报告后须在该 README「现有报告」表中登记一行。
 
+主题子目录建议：
+
+- `reports/安全/`：安全审计、外连扫描、加固回写
+- `reports/国密/`：国密功能验证
+
+也可继续平铺在 `reports/` 根下，但同一主题报告优先归入对应子目录。
+
 ## 禁止
 
 - 写到仓库根目录、`ls-aegis-platform/docs/`（`docs/sql/init.sql` 除外）、`ls-aegis-web/`、`docker/`、`.cursor/`、模块内 `doc/` 等其它路径
-- 用 `.json`、临时 `.txt`、仅 Canvas 作为正式报告落盘（Canvas 可作 IDE 可视化副本，正式结论仍须同步 `reports/*.md`）
-- 探针/会话产物（如 `*-tmp.json`、`gm-verification-report.json`）当作正式报告；需要保留时写入对应 md 附录
+- 用 `.json`、临时 `.txt`、仅 Canvas 作为正式报告落盘（Canvas 可作 IDE 可视化副本，正式结论仍须同步 `reports/**/*.md`）
+- 探针/会话产物（如 `*-tmp.json`、`gm-verification-report.json`）当作正式报告；需要保留时写入对应 md 附录；验证日志（如根目录 `gm-verify-*.log`）勿入库，应删除或忽略
 
 ## 文件名与内容
 
 1. 建议：`主题.md` 或 `主题-YYYYMMDD.md`（例：`安全审计与修复报告.md`、`国密功能测试报告.md`）
 2. 默认中文；含结论、统计、明细，便于复盘
-3. 用户说「写报告 / 落盘报告 / 报告写进本地」→ **直接写入 `reports/`**，不要先放到别的目录再挪
+3. 用户说「写报告 / 落盘报告 / 报告写进本地」→ **直接写入 `reports/` 对应主题子目录**，不要先放到别的目录再挪
 
 ## 与 SQL 文档区分
 
