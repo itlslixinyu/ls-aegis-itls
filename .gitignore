@@ -44,6 +44,9 @@ data/gm/
 docker/.env
 *.env
 
+# 换机迁移备份（含密钥/库 dump，禁止入库）
+backups/
+
 # ====================== 编译产出jar/war/zip 包 ======================
 *.jar
 *.war
