@@ -24,7 +24,7 @@ import type { Gender, LabelValueState, Status } from '@/types/global'
 import { GenderList } from '@/constant/common'
 import { useResetReactive } from '@/hooks'
 import { useDept, useRole } from '@/hooks/app'
-import { encryptByRsa } from '@/utils/encrypt'
+import { encryptTransport } from '@/utils/encrypt'
 
 const emit = defineEmits<{
   (e: 'save-success'): void
@@ -232,7 +232,7 @@ const save = async () => {
       Message.success('修改成功')
     } else {
       if (rawPassword) {
-        payload.password = encryptByRsa(rawPassword) || ''
+        payload.password = await encryptTransport(rawPassword) || ''
       }
       await addUser(payload)
       Message.success('新增成功')

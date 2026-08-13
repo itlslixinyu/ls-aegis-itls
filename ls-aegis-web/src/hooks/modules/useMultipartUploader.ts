@@ -22,7 +22,7 @@ export interface FileTask {
   fileName: string // 文件名
   fileType: string // 文件类型
   fileSize: number // 文件大小
-  fileMd5?: string // 文件MD5
+  fileMd5?: string // 文件指纹（国密 SM3，接口字段名保持 fileMd5）
   uploadId?: string // 分片上传ID
   path?: string // 文件路径（由后端返回）
   partETags: Array<{ partNumber: number, eTag: string }> // 分片ETag列表
@@ -71,7 +71,7 @@ export function useMultipartUploader(props: {
   const uploadQueue = ref<Array<{ task: FileTask, chunkNumber: number }>>([])
   const activeUploads = ref<Set<string>>(new Set()) // 正在上传的分片ID集合
 
-  const md5CalculatingTaskUid = ref<string | null>(null) // MD5计算中的任务ID
+  const md5CalculatingTaskUid = ref<string | null>(null) // 文件指纹（SM3）计算中的任务 ID
   const performanceStats = ref<{
     md5StartTime: number
     md5EndTime: number
@@ -80,8 +80,8 @@ export function useMultipartUploader(props: {
     totalTime: number
   } | null>(null)
 
-  // MD5 Worker实例
-  let md5Worker: Worker | null = null
+  // 文件指纹 Worker（SM3）
+  let digestWorker: Worker | null = null
 
   /** 节流的进度更新函数 */
   const updateTaskProgress = throttle((task: FileTask, totalChunks: number) => {
@@ -94,26 +94,27 @@ export function useMultipartUploader(props: {
   }, 150)
 
   /**
-   * 初始化MD5 Worker
+   * 初始化文件指纹 Worker（SM3）
    */
-  function initMd5Worker() {
-    if (typeof Worker !== 'undefined' && !md5Worker) {
+  function initDigestWorker() {
+    if (typeof Worker !== 'undefined' && !digestWorker) {
       // eslint-disable-next-line no-console
-      console.log('[Hooks] 初始化MD5 Worker...')
-      md5Worker = new Worker(new URL('../../utils/md5-worker.ts', import.meta.url), { type: 'module' })
-      md5Worker.onmessage = function (e) {
-        const { type, taskId, md5, error } = e.data
+      console.log('[Hooks] 初始化文件指纹 Worker（SM3）...')
+      digestWorker = new Worker(new URL('../../utils/file-digest-worker.ts', import.meta.url), { type: 'module' })
+      digestWorker.onmessage = function (e) {
+        const { type, taskId, digest, md5, error } = e.data
+        const value = digest || md5
 
-        if (type === 'complete' && md5) {
+        if (type === 'complete' && value) {
           const task = fileTasks.value.find((t) => t.uid === taskId)
           if (task) {
-            task.fileMd5 = md5
+            task.fileMd5 = value
             md5CalculatingTaskUid.value = null
             // eslint-disable-next-line no-console
-            console.log(`[Hooks] MD5计算完成: ${task.fileName}, MD5: ${md5}`)
+            console.log(`[Hooks] SM3 指纹计算完成: ${task.fileName}, digest: ${value}`)
           }
         } else if (type === 'error') {
-          console.error('MD5计算失败:', error)
+          console.error('文件指纹计算失败:', error)
           md5CalculatingTaskUid.value = null
         }
       }
@@ -121,18 +122,17 @@ export function useMultipartUploader(props: {
   }
 
   /**
-   * 计算文件MD5（使用Web Worker - 优化版本）
+   * 计算文件指纹（国密 SM3，Web Worker）
    */
   function calcFileMd5(file: File, taskUid: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      if (!md5Worker) {
-        initMd5Worker()
+      if (!digestWorker) {
+        initDigestWorker()
       }
 
-      if (md5Worker) {
+      if (digestWorker) {
         md5CalculatingTaskUid.value = taskUid
 
-        // 记录MD5计算开始时间
         performanceStats.value = {
           md5StartTime: Date.now(),
           md5EndTime: 0,
@@ -141,57 +141,47 @@ export function useMultipartUploader(props: {
           totalTime: 0,
         }
 
-        // 根据文件大小动态调整分块和分片大小（优化：使用更小的分片以降低内存占用）
         let blockSize: number
-        let chunkSize: number
-
         if (file.size > 500 * 1024 * 1024) {
-          // 超大文件（> 500MB）
-          blockSize = 50 * 1024 * 1024 // 50MB块
-          chunkSize = 5 * 1024 * 1024 // 5MB分片
+          blockSize = 50 * 1024 * 1024
         } else if (file.size > 100 * 1024 * 1024) {
-          // 大文件（100MB - 500MB）
-          blockSize = 30 * 1024 * 1024 // 30MB块
-          chunkSize = 3 * 1024 * 1024 // 3MB分片
+          blockSize = 30 * 1024 * 1024
         } else if (file.size > 10 * 1024 * 1024) {
-          // 中等文件（10MB - 100MB）
-          blockSize = 10 * 1024 * 1024 // 10MB块
-          chunkSize = 1 * 1024 * 1024 // 1MB分片
+          blockSize = 10 * 1024 * 1024
         } else {
-          // 小文件（< 10MB）
-          blockSize = 5 * 1024 * 1024 // 5MB块
-          chunkSize = 512 * 1024 // 512KB分片
+          blockSize = 5 * 1024 * 1024
         }
 
         // eslint-disable-next-line no-console
-        console.log(`[Hooks] 发送文件到Worker: ${file.name}, 大小: ${(file.size / 1024 / 1024).toFixed(2)}MB, 块大小: ${(blockSize / 1024 / 1024).toFixed(2)}MB, 分片大小: ${(chunkSize / 1024 / 1024).toFixed(2)}MB`)
+        console.log(`[Hooks] 发送文件到 SM3 Worker: ${file.name}, 大小: ${(file.size / 1024 / 1024).toFixed(2)}MB, 块大小: ${(blockSize / 1024 / 1024).toFixed(2)}MB`)
 
-        md5Worker.postMessage({
+        digestWorker.postMessage({
           file,
           taskId: taskUid,
           blockSize,
-          chunkSize,
         })
 
-        // 监听完成事件
         const handleComplete = (e: MessageEvent) => {
-          const { type, taskId, md5 } = e.data
+          const { type, taskId, digest, md5, error } = e.data
+          if (type === 'error' && taskId === taskUid) {
+            digestWorker?.removeEventListener('message', handleComplete)
+            reject(error || new Error('文件指纹计算失败'))
+            return
+          }
           if (type === 'complete' && taskId === taskUid) {
-            md5Worker?.removeEventListener('message', handleComplete)
-
-            // 记录MD5计算结束时间
+            digestWorker?.removeEventListener('message', handleComplete)
+            const value = digest || md5
             if (performanceStats.value) {
               performanceStats.value.md5EndTime = Date.now()
-              const md5Time = performanceStats.value.md5EndTime - performanceStats.value.md5StartTime
+              const cost = performanceStats.value.md5EndTime - performanceStats.value.md5StartTime
               // eslint-disable-next-line no-console
-              console.log(`MD5计算完成，耗时: ${md5Time}ms，文件大小: ${formatFileSize(file.size)}`)
+              console.log(`SM3 指纹计算完成，耗时: ${cost}ms，文件大小: ${formatFileSize(file.size)}`)
             }
-
-            resolve(md5)
+            resolve(value)
           }
         }
 
-        md5Worker.addEventListener('message', handleComplete)
+        digestWorker.addEventListener('message', handleComplete)
       } else {
         reject(new Error('Web Worker not supported'))
       }
@@ -404,15 +394,15 @@ export function useMultipartUploader(props: {
       if (!task.uploadId) {
         // eslint-disable-next-line no-console
         console.log(`[Hooks] 任务 ${task.fileName} 没有 uploadId，准备调用 initMultipartUpload`)
-        // 若没有MD5，先计算
+        // 若没有文件指纹，先计算 SM3
         if (!task.fileMd5) {
           // eslint-disable-next-line no-console
-          console.log(`[Hooks] 任务 ${task.fileName} 没有 MD5，开始计算...`)
+          console.log(`[Hooks] 任务 ${task.fileName} 没有文件指纹，开始计算 SM3...`)
           task.fileMd5 = await calcFileMd5(task.file, task.uid)
         }
 
         // eslint-disable-next-line no-console
-        console.log(`[Hooks] 调用 initMultipartUpload: ${task.fileName}, MD5: ${task.fileMd5}, 路径: ${task.parentPath}`)
+        console.log(`[Hooks] 调用 initMultipartUpload: ${task.fileName}, digest: ${task.fileMd5}, 路径: ${task.parentPath}`)
 
         // 确保parentPath不是空字符串，如果是则使用"/"
         const parentPath = task.parentPath && task.parentPath !== '' ? task.parentPath : '/'
@@ -675,11 +665,12 @@ export function useMultipartUploader(props: {
         _retryCount: new Map(), // 初始化重试计数器
       }
 
-      // 立即开始计算MD5，但不自动开始上传
-      calcFileMd5(file, task.uid).then((md5) => {
-        task.fileMd5 = md5
+      // 立即开始计算 SM3 指纹，但不自动开始上传
+      calcFileMd5(file, task.uid).then((digest) => {
+        task.fileMd5 = digest
       }).catch((_error) => {
         task.status = 'failed'
+        task.errorMessage = '文件指纹（SM3）计算失败'
       })
 
       fileTasks.value.push(task)
@@ -781,9 +772,9 @@ export function useMultipartUploader(props: {
       }
     })
 
-    if (md5Worker) {
-      md5Worker.terminate()
-      md5Worker = null
+    if (digestWorker) {
+      digestWorker.terminate()
+      digestWorker = null
     }
   })
 

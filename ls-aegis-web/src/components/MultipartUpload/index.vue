@@ -38,7 +38,7 @@
             >
               <template #progress="{ record }">
                 <template v-if="md5CalculatingTaskUid === record.uid">
-                  <span style="color: #888;">正在计算MD5...</span>
+                  <span style="color: #888;">正在计算文件指纹(SM3)...</span>
                 </template>
                 <template v-else>
                   <a-progress :percent="record.progress" :animation="true" size="large" />

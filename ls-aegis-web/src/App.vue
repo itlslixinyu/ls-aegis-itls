@@ -18,12 +18,15 @@
 
 <script setup lang="ts">
 import { useAppStore, useUserStore } from '@/stores'
+import { loadGmPublicKey } from '@/utils/encrypt'
 
 defineOptions({ name: 'App' })
 const userStore = useUserStore()
 const appStore = useAppStore()
 appStore.initTheme()
 appStore.initSiteConfig()
+// 启动时加载 SM2 公钥，供登录/改密等传输加密
+loadGmPublicKey()
 </script>
 
 <style scoped lang="scss">

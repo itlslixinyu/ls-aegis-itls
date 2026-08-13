@@ -77,7 +77,7 @@ import {
   getBehaviorCaptcha,
 } from '@/apis/common/captcha'
 import { resetSize } from '@/utils/verify'
-import { encryptByAes } from '@/utils/encrypt'
+import { encryptByCaptcha, loadGmPublicKey } from '@/utils/encrypt'
 
 export default {
   name: 'VerifyPoints',
@@ -139,7 +139,8 @@ export default {
     const bindingClick = ref(true)
 
     // 请求背景图片和验证图片
-    function getPicture() {
+    async function getPicture() {
+      await loadGmPublicKey()
       const data = {
         captchaType: captchaType.value,
       }
@@ -224,7 +225,7 @@ export default {
         setTimeout(() => {
           // 发送后端请求
           const captchaVerification = secretKey.value
-            ? encryptByAes(
+            ? encryptByCaptcha(
                   `${backToken.value}---${JSON.stringify(checkPosArr)}`,
                   secretKey.value,
             )
@@ -232,7 +233,7 @@ export default {
           const data = {
             captchaType: captchaType.value,
             pointJson: secretKey.value
-              ? encryptByAes(JSON.stringify(checkPosArr), secretKey.value)
+              ? encryptByCaptcha(JSON.stringify(checkPosArr), secretKey.value)
               : JSON.stringify(checkPosArr),
             token: backToken.value,
           }

@@ -54,3 +54,8 @@ export const getUserInfo = () => {
 export const getUserRoute = () => {
   return http.get<T.RouteItem[]>(`${BASE_URL}/user/route`)
 }
+
+/** @desc 国密 SM2 公钥（仅公钥） */
+export const getGmPublicKey = () => {
+  return http.get<T.GmPublicKeyResp>(`${BASE_URL}/gm/public-key`)
+}

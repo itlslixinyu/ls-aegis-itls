@@ -19,7 +19,7 @@ import { useWindowSize } from '@vueuse/core'
 import { addTenant, getTenant, updateTenant } from '@/apis/tenant/management'
 import { type ColumnItem, GiForm } from '@/components/GiForm'
 import { useResetReactive } from '@/hooks'
-import { encryptByRsa } from '@/utils/encrypt'
+import { encryptTransport } from '@/utils/encrypt'
 import { listTenantPackageDict } from '@/apis/tenant'
 import type { LabelValueState } from '@/types/global'
 
@@ -169,7 +169,7 @@ const save = async () => {
     } else {
       await addTenant({
         ...form,
-        adminPassword: encryptByRsa(form.adminPassword),
+        adminPassword: await encryptTransport(form.adminPassword),
       })
       Message.success('新增成功')
     }

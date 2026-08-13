@@ -26,7 +26,7 @@ import { addStorage, getStorage, updateStorage } from '@/apis/system/storage'
 import { type ColumnItem, GiForm } from '@/components/GiForm'
 import { useResetReactive } from '@/hooks'
 import { useDict } from '@/hooks/app'
-import { encryptByRsa } from '@/utils/encrypt'
+import { encryptTransport } from '@/utils/encrypt'
 
 const emit = defineEmits<{
   (e: 'save-success'): void
@@ -197,13 +197,13 @@ const save = async () => {
     if (isUpdate.value) {
       await updateStorage({
         ...form,
-        secretKey: form.type === 2 && form.secretKey ? encryptByRsa(form.secretKey) || '' : null,
+        secretKey: form.type === 2 && form.secretKey ? await encryptTransport(form.secretKey) || '' : null,
       }, dataId.value)
       Message.success('修改成功')
     } else {
       await addStorage({
         ...form,
-        secretKey: form.type === 2 ? encryptByRsa(form.secretKey) || '' : form.secretKey,
+        secretKey: form.type === 2 ? await encryptTransport(form.secretKey) || '' : form.secretKey,
       })
       Message.success('新增成功')
     }

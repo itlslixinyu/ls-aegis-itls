@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import { type FormInstance, Message } from '@arco-design/web-vue'
 import { updateUserPassword } from '@/apis/system'
-import { encryptByRsa } from '@/utils/encrypt'
+import { encryptTransport } from '@/utils/encrypt'
 
 interface Form {
   oldPassword: string
@@ -74,8 +74,8 @@ const onModify = async () => {
   try {
     loading.value = true
     const params = {
-      oldPassword: encryptByRsa(form.oldPassword) || '',
-      newPassword: encryptByRsa(form.newPassword) || '',
+      oldPassword: await encryptTransport(form.oldPassword) || '',
+      newPassword: await encryptTransport(form.newPassword) || '',
     }
     await updateUserPassword(params)
     router.push({

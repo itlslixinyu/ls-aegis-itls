@@ -88,3 +88,11 @@ export interface LoginResp {
 export interface SocialAuthAuthorizeResp {
   authorizeUrl: string
 }
+
+/** 国密公钥（仅公钥） */
+export interface GmPublicKeyResp {
+  enable: boolean
+  algorithm: string
+  publicKeyHex: string
+  publicKeyBase64: string
+}

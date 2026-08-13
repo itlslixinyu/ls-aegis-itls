@@ -19,7 +19,7 @@ import { useWindowSize } from '@vueuse/core'
 import { resetUserPwd } from '@/apis/system'
 import { type ColumnItem, GiForm } from '@/components/GiForm'
 import { useResetReactive } from '@/hooks'
-import { encryptByRsa } from '@/utils/encrypt'
+import { encryptTransport } from '@/utils/encrypt'
 
 const emit = defineEmits<{
   (e: 'save-success'): void
@@ -47,7 +47,7 @@ const save = async () => {
   try {
     const isInvalid = await formRef.value?.formRef?.validate()
     if (isInvalid) return false
-    await resetUserPwd({ newPassword: encryptByRsa(form.newPassword) || '' }, dataId.value)
+    await resetUserPwd({ newPassword: await encryptTransport(form.newPassword) || '' }, dataId.value)
     Message.success('重置成功')
     emit('save-success')
     return true

@@ -19,7 +19,7 @@ import { useWindowSize } from '@vueuse/core'
 import { updateTenantAdminUserPwd } from '@/apis/tenant/management'
 import { type ColumnItem, GiForm } from '@/components/GiForm'
 import { useResetReactive } from '@/hooks'
-import { encryptByRsa } from '@/utils/encrypt'
+import { encryptTransport } from '@/utils/encrypt'
 
 const emit = defineEmits<{
   (e: 'save-success'): void
@@ -60,7 +60,7 @@ const save = async () => {
     const isInvalid = await formRef.value?.formRef?.validate()
     if (isInvalid) return false
     await updateTenantAdminUserPwd({
-      password: encryptByRsa(form.password) || '',
+      password: await encryptTransport(form.password) || '',
     }, dataId.value)
     Message.success('修改成功')
     emit('save-success')

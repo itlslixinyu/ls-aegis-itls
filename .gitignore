@@ -13,6 +13,8 @@ build/
 *.pem
 *.key
 **/credentials*
+**/data/gm/
+data/gm/
 
 # Docker 运行时数据（体积大且含证书）
 **/docker/data/

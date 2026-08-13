@@ -26,7 +26,7 @@ import { useWindowSize } from '@vueuse/core'
 import { Message } from '@arco-design/web-vue'
 import NProgress from 'nprogress'
 import { type BehaviorCaptchaReq, getEmailCaptcha, getSmsCaptcha, updateUserEmail, updateUserPassword, updateUserPhone } from '@/apis'
-import { encryptByRsa } from '@/utils/encrypt'
+import { encryptTransport } from '@/utils/encrypt'
 import { useUserStore } from '@/stores'
 import { type ColumnItem, GiForm } from '@/components/GiForm'
 import { useResetReactive } from '@/hooks'
@@ -222,14 +222,14 @@ const save = async () => {
       await updateUserPhone({
         phone: form.phone,
         captcha: form.captcha,
-        oldPassword: encryptByRsa(form.oldPassword) as string,
+        oldPassword: await encryptTransport(form.oldPassword) as string,
       })
       Message.success('修改成功')
     } else if (verifyType.value === 'email') {
       await updateUserEmail({
         email: form.email,
         captcha: form.captcha,
-        oldPassword: encryptByRsa(form.oldPassword) as string,
+        oldPassword: await encryptTransport(form.oldPassword) as string,
       })
       Message.success('修改成功')
     } else if (verifyType.value === 'password') {
@@ -242,8 +242,8 @@ const save = async () => {
         return false
       }
       await updateUserPassword({
-        oldPassword: encryptByRsa(form.oldPassword) || '',
-        newPassword: encryptByRsa(form.newPassword) || '',
+        oldPassword: await encryptTransport(form.oldPassword) || '',
+        newPassword: await encryptTransport(form.newPassword) || '',
       })
     }
     return true

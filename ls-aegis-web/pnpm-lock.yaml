@@ -68,9 +68,6 @@ importers:
       echarts:
         specifier: ^5.4.2
         version: 5.5.0
-      jsencrypt:
-        specifier: ^3.3.2
-        version: 3.3.2
       lint-staged:
         specifier: ^15.2.10
         version: 15.2.10
@@ -98,9 +95,9 @@ importers:
       query-string:
         specifier: ^9.0.0
         version: 9.0.0
-      spark-md5:
-        specifier: ^3.0.2
-        version: 3.0.2
+      sm-crypto:
+        specifier: ^0.5.5
+        version: 0.5.5
       v-viewer:
         specifier: ^3.0.10
         version: 3.0.13(viewerjs@1.11.6)(vue@3.5.12(typescript@5.0.4))
@@ -165,9 +162,6 @@ importers:
       '@types/query-string':
         specifier: ^6.3.0
         version: 6.3.0
-      '@types/spark-md5':
-        specifier: ^3.0.5
-        version: 3.0.5
       '@vitejs/plugin-vue':
         specifier: ^5.2.1
         version: 5.2.1(vite@5.2.11(@types/node@20.12.12)(less@4.2.0)(sass@1.77.2)(terser@5.31.0))(vue@3.5.12(typescript@5.0.4))
@@ -1190,9 +1184,6 @@ packages:
 
   '@types/sortablejs@1.15.8':
     resolution: {integrity: sha512-b79830lW+RZfwaztgs1aVPgbasJ8e7AXtZYHTELNXZPsERt4ymJdjV4OccDbHQAvHrCcFpbF78jkm0R6h/pZVg==}
-
-  '@types/spark-md5@3.0.5':
-    resolution: {integrity: sha512-lWf05dnD42DLVKQJZrDHtWFidcLrHuip01CtnC2/S6AMhX4t9ZlEUj4iuRlAnts0PQk7KESOqKxeGE/b6sIPGg==}
 
   '@types/svgo@2.6.4':
     resolution: {integrity: sha512-l4cmyPEckf8moNYHdJ+4wkHvFxjyW6ulm9l4YGaOxeyBWPhBOT0gvni1InpFPdzx1dKf/2s62qGITwxNWnPQng==}
@@ -3103,12 +3094,12 @@ packages:
     resolution: {integrity: sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==}
     hasBin: true
 
+  jsbn@1.1.0:
+    resolution: {integrity: sha512-4bYVV3aAMtDTTu4+xsDYa6sy9GyJ69/amsu9sYF2zqjiEoZA5xJi3BrfX3uY+/IekIu7MwdObdbDWpoZdBv3/A==}
+
   jsdoc-type-pratt-parser@4.0.0:
     resolution: {integrity: sha512-YtOli5Cmzy3q4dP26GraSOeAhqecewG04hoO8DY56CH4KJ9Fvv5qKWUCCo3HZob7esJQHCv6/+bnTy72xZZaVQ==}
     engines: {node: '>=12.0.0'}
-
-  jsencrypt@3.3.2:
-    resolution: {integrity: sha512-arQR1R1ESGdAxY7ZheWr12wCaF2yF47v5qpB76TtV64H1pyGudk9Hvw8Y9tb/FiTIaaTRUyaSnm5T/Y53Ghm/A==}
 
   jsesc@0.5.0:
     resolution: {integrity: sha512-uZz5UnB7u4T9LvwmFqXii7pZSouaRPorGs5who1Ip7VO0wxanFvBL7GkM6dTHlgX+jhBApRetaWpnDabOeTcnA==}
@@ -4043,6 +4034,9 @@ packages:
     resolution: {integrity: sha512-bSiSngZ/jWeX93BqeIAbImyTbEihizcwNjFoRUIY/T1wWQsfsm2Vw1agPKylXvQTU7iASGdHhyqRlqQzfz+Htg==}
     engines: {node: '>=18'}
 
+  sm-crypto@0.5.5:
+    resolution: {integrity: sha512-C9KG6UgKPvMjd3YwDNsj3Aj9XincYfQ445vPaDHBXpp+lGklm3bUbqz/rVp78UaIyt/4uMXrkYM3MskRNHKrJQ==}
+
   snake-case@3.0.4:
     resolution: {integrity: sha512-LAOh4z89bGQvl9pFfNF8V146i7o7/CqFPbqzYgP+yYzDIDeS9HaNFtXABamRW+AQzEVODcvE79ljJ+8a9YSdMg==}
 
@@ -4092,9 +4086,6 @@ packages:
   sourcemap-codec@1.4.8:
     resolution: {integrity: sha512-9NykojV5Uih4lgo5So5dtw+f0JgJX30KCNI8gwhz2J9A15wD0Ml6tjHKwf6fTSa6fAdVBdZeNOs9eJ71qCk8vA==}
     deprecated: Please use @jridgewell/sourcemap-codec instead
-
-  spark-md5@3.0.2:
-    resolution: {integrity: sha512-wcFzz9cDfbuqe0FZzfi2or1sgyIrsDwmPwfZC4hiNidPdPINjeUwNfv5kldczoEAcjl9Y1L3SM7Uz2PUEQzxQw==}
 
   spdx-correct@3.2.0:
     resolution: {integrity: sha512-kN9dJbvnySHULIluDHy32WHRUu3Og7B9sbY7tsFLctQkIqnMh3hErYgdMjTYuqmcXX+lK5T1lnUt3G7zNswmZA==}
@@ -5776,8 +5767,6 @@ snapshots:
       query-string: 9.0.0
 
   '@types/sortablejs@1.15.8': {}
-
-  '@types/spark-md5@3.0.5': {}
 
   '@types/svgo@2.6.4':
     dependencies:
@@ -7977,9 +7966,9 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  jsdoc-type-pratt-parser@4.0.0: {}
+  jsbn@1.1.0: {}
 
-  jsencrypt@3.3.2: {}
+  jsdoc-type-pratt-parser@4.0.0: {}
 
   jsesc@0.5.0: {}
 
@@ -9000,6 +8989,10 @@ snapshots:
       ansi-styles: 6.2.1
       is-fullwidth-code-point: 5.0.0
 
+  sm-crypto@0.5.5:
+    dependencies:
+      jsbn: 1.1.0
+
   snake-case@3.0.4:
     dependencies:
       dot-case: 3.0.4
@@ -9056,8 +9049,6 @@ snapshots:
   source-map@0.6.1: {}
 
   sourcemap-codec@1.4.8: {}
-
-  spark-md5@3.0.2: {}
 
   spdx-correct@3.2.0:
     dependencies:

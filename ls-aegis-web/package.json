@@ -1,7 +1,7 @@
 {
   "name": "ls-aegis-web",
   "type": "module",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "private": "true",
   "scripts": {
     "bootstrap": "pnpm install --registry=https://registry.npmmirror.com",
@@ -34,7 +34,6 @@
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.4",
     "echarts": "^5.4.2",
-    "jsencrypt": "^3.3.2",
     "lint-staged": "^15.2.10",
     "lodash-es": "^4.17.21",
     "mitt": "^3.0.0",
@@ -44,7 +43,7 @@
     "pinia-plugin-persistedstate": "^3.1.0",
     "qs": "^6.11.2",
     "query-string": "^9.0.0",
-    "spark-md5": "^3.0.2",
+    "sm-crypto": "^0.5.5",
     "v-viewer": "^3.0.10",
     "viewerjs": "^1.11.6",
     "vite-plugin-vue-devtools": "^7.0.27",
@@ -68,7 +67,6 @@
     "@types/lodash-es": "^4.17.12",
     "@types/node": "^20.2.5",
     "@types/query-string": "^6.3.0",
-    "@types/spark-md5": "^3.0.5",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vitejs/plugin-vue-jsx": "^3.1.0",
     "@vue/tsconfig": "^0.1.3",

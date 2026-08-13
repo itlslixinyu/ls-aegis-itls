@@ -61,7 +61,7 @@ import { type FormInstance, Message } from '@arco-design/web-vue'
 import { useStorage } from '@vueuse/core'
 import { getImageCaptcha } from '@/apis/common'
 import { useTabsStore, useTenantStore, useUserStore } from '@/stores'
-import { encryptByRsa } from '@/utils/encrypt'
+import { encryptTransport } from '@/utils/encrypt'
 
 const loginConfig = useStorage('login-config', {
   rememberMe: true,
@@ -138,7 +138,7 @@ const handleLogin = async () => {
 
     await userStore.accountLogin({
       username: form.username,
-      password: encryptByRsa(form.password) || '',
+      password: await encryptTransport(form.password),
       captcha: form.captcha,
       uuid: form.uuid,
     }, tenantCode.value)
