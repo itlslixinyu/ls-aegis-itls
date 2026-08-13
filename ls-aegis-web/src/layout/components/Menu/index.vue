@@ -21,6 +21,7 @@ import type { CSSProperties } from 'vue'
 import MenuItem from './MenuItem.vue'
 import { useAppStore, useRouteStore } from '@/stores'
 import { isExternal } from '@/utils/validate'
+import { openSafeExternal } from '@/utils/safeUrl'
 import { useDevice } from '@/hooks'
 
 defineOptions({ name: 'AppMenu' })
@@ -64,7 +65,7 @@ const activeMenu = computed(() => {
 // 菜单项点击事件
 const onMenuItemClick = (key: string) => {
   if (isExternal(key)) {
-    window.open(key)
+    openSafeExternal(key)
     return
   }
   router.push({ path: key })

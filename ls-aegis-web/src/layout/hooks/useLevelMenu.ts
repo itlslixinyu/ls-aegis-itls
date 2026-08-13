@@ -4,6 +4,7 @@ import { useRouteListener } from '@/hooks'
 import { useRouteStore } from '@/stores'
 import { filterTree } from '@/utils'
 import { isExternal } from '@/utils/validate'
+import { openSafeExternal } from '@/utils/safeUrl'
 
 /** 获取一级菜单，二级菜单的hooks */
 export function useLevelMenu() {
@@ -61,7 +62,7 @@ export function useLevelMenu() {
       path = item.children?.[0]?.path
     }
     if (isExternal(path)) {
-      window.open(path)
+      openSafeExternal(path)
       return
     }
     if (item.redirect === 'noRedirect') {
@@ -74,7 +75,7 @@ export function useLevelMenu() {
   // 菜单点击事件
   function handleMenuItemClickByPath(path: string) {
     if (isExternal(path)) {
-      window.open(path)
+      openSafeExternal(path)
       return
     }
     const obj = oneLevelMenus.value.find((i) => i.path === path)

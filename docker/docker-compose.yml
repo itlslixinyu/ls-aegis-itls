@@ -8,7 +8,8 @@ services:
     image: mysql:8.0.42
     restart: always
     ports:
-      - '3306:3306'
+      # 仅绑定本机，避免数据库端口对局域网暴露
+      - '127.0.0.1:3306:3306'
     volumes:
       - mysql-data:/var/lib/mysql
     environment:
@@ -33,7 +34,8 @@ services:
     image: redis:7.2.8
     restart: always
     ports:
-      - '6379:6379'
+      # 仅绑定本机；容器内仍 bind 0.0.0.0 供 compose 网络互访
+      - '127.0.0.1:6379:6379'
     volumes:
       - ./redis/conf/redis.conf:/usr/local/redis/config/redis.conf
       - redis-data:/data
@@ -77,6 +79,7 @@ services:
       ENCRYPT_RSA_PUBLIC_KEY: ${ENCRYPT_RSA_PUBLIC_KEY:-}
       ENCRYPT_RSA_PRIVATE_KEY: ${ENCRYPT_RSA_PRIVATE_KEY:-}
       SNAIL_JOB_ENABLED: ${SNAIL_JOB_ENABLED:-false}
+      SNAIL_JOB_URL: ${SNAIL_JOB_URL:-http://127.0.0.1:8001/snail-job}
       SCHEDULE_TOKEN: ${SCHEDULE_TOKEN:-}
       SCHEDULE_USERNAME: ${SCHEDULE_USERNAME:-}
       SCHEDULE_PASSWORD: ${SCHEDULE_PASSWORD:-}
