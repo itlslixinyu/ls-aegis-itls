@@ -28,6 +28,28 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+# Vite 预构建缓存、sourcemap 映射文件
+ls-aegis-web/.vite/
+*.map
+
+# 本地临时探针 / 跳转残留（含历史 .tmp-wchk*）
+.tmp*/
+.tmp-*/
+anniu.html
+
+# 散落编译产物（Maven target 已忽略；防手工解压/探针残留）
+*.class
+*.jar.original
+
+# 包管理器 / 前端本地缓存
+.pnpm-store/
+**/.pnpm-store/
+.turbo/
+**/.turbo/
+
+# 国密验证临时日志（勿入库）
+gm-verify*.log
+
 # ====================== 本地环境与密钥 严禁提交 ======================
 .env.local
 .env.*.local

@@ -14,7 +14,7 @@
       <a-space wrap>
         <!-- 上传文件按钮改为下拉菜单，包含普通上传和分片上传 -->
         <a-dropdown trigger="click">
-          <a-button type="primary" shape="round">
+          <a-button type="primary">
             <icon-upload />
             上传文件
           </a-button>
@@ -52,7 +52,7 @@
 
         <a-input-group>
           <a-input v-model="queryForm.originalName" :placeholder="queryForm.type && queryForm.type !== '0' ? '请输入名称' : '在当前目录下搜索名称'" allow-clear style="width: 200px" />
-          <a-button type="primary" @click="search">
+          <a-button @click="search">
             <template #icon>
               <icon-search />
             </template>
@@ -72,13 +72,13 @@
           </template>
         </a-button>
 
-        <a-button v-permission="['system:file:delete']" type="primary" @click="isBatchMode = !isBatchMode">
+        <a-button v-permission="['system:file:delete']" @click="isBatchMode = !isBatchMode">
           <template #icon>
             <icon-select-all />
           </template>
           <template #default>{{ isBatchMode ? '取消批量' : '批量操作' }}</template>
         </a-button>
-        <a-button v-permission="['system:fileRecycle:list']" type="primary" @click="onRecycleBin">
+        <a-button v-permission="['system:fileRecycle:list']" @click="onRecycleBin">
           <template #icon>
             <icon-delete />
           </template>

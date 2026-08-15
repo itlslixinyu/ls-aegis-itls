@@ -44,10 +44,10 @@
         <template #icon><icon-delete /></template>
         删除
       </a-button>
-      <a-button type="primary" :disabled="!selectedKeys.length" :title="!selectedKeys.length ? '请选择' : ''" @click="onRead">
+      <a-button :disabled="!selectedKeys.length" :title="!selectedKeys.length ? '请选择' : ''" @click="onRead">
         标记已读
       </a-button>
-      <a-button type="primary" :disabled="selectedKeys.length > 0" :title="!selectedKeys.length ? '请选择' : ''" @click="onReadAll">
+      <a-button :disabled="selectedKeys.length > 0" :title="!selectedKeys.length ? '请选择' : ''" @click="onReadAll">
         全部已读
       </a-button>
     </template>

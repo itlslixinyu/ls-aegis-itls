@@ -102,9 +102,9 @@ interface Props {
   columns: ColumnItem[]
   gridProps?: GridProps
   gridItemProps?: GridItemProps
-  search?: boolean // 搜索模式
+  search?: boolean // 查询模式
   defaultCollapsed?: boolean // 折叠按钮默认折叠
-  searchBtnText?: string // 搜索按钮文字
+  searchBtnText?: string // 查询按钮文字
   hideFoldBtn?: boolean // 隐藏展开收起按钮，在表单项少的时候手动隐藏
   suffix?: boolean
 }
@@ -115,7 +115,7 @@ const props = withDefaults(defineProps<Props>(), {
   defaultCollapsed: false,
   search: false,
   gridItemProps: { span: { xs: 24, sm: 8, xxl: 8 } },
-  searchBtnText: '搜索',
+  searchBtnText: '查询',
   hideFoldBtn: false,
   suffix: true,
 })

@@ -417,7 +417,8 @@ export interface WeatherNowResp {
   kind: string
   label: string
   temp: number
-  humidity: number
+  aqi?: number | null
+  aqiCategory?: string
   windLevel: number
   provider: string
 }

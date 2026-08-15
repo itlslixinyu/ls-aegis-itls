@@ -41,7 +41,7 @@
             />
             <a-button type="primary" @click="search">
               <template #icon><icon-search /></template>
-              搜索
+              查询
             </a-button>
             <a-button @click="reset">
               <template #icon><icon-refresh /></template>
@@ -83,17 +83,14 @@
       <template #action="{ record }">
         <div class="table-action">
           <a-space :size="0">
-            <a-button v-permission="['system:user:get']" type="text" size="small" @click="onDetail(record)">
-              详情
-            </a-button>
-            <a-button v-permission="['system:user:update']" type="text" size="small" @click="onUpdate(record)">
-              修改
-            </a-button>
+            <a-link v-permission="['system:user:get']" title="详情" @click="onDetail(record)">详情</a-link>
+            <a-link v-permission="['system:user:update']" title="修改" @click="onUpdate(record)">修改</a-link>
             <a-dropdown>
               <a-button
                 v-if="has.hasPermOr(['system:user:resetPwd', 'system:user:updateRole', 'system:user:delete'])"
                 type="text"
-                size="small"
+                size="mini"
+                title="更多"
               >
                 <template #icon>
                   <icon-more :size="16" />
@@ -330,7 +327,7 @@ const onUpdateRole = (record: UserResp) => {
   display: inline-flex;
   justify-content: center;
 
-  :deep(.arco-btn-size-small) {
+  :deep(.arco-link) {
     padding: 0 6px;
   }
 }

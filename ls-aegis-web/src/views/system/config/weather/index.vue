@@ -11,7 +11,7 @@
         :disabled="!isUpdate"
         scroll-to-first-error
       >
-        <a-form-item field="WEATHER_ENABLED" :label="weatherConfig.WEATHER_ENABLED?.name || '启用天气展示'">
+        <a-form-item field="WEATHER_ENABLED" :label="weatherConfig.WEATHER_ENABLED?.name || '是否启用'">
           <a-switch
             v-model="form.WEATHER_ENABLED"
             type="round"
@@ -22,19 +22,10 @@
             <template #unchecked>否</template>
           </a-switch>
           <template #extra>
-            {{ weatherConfig.WEATHER_ENABLED?.description || '运营中枢顶栏是否显示天气信息' }}
+            控制运营中枢顶栏是否展示天气信息。
           </template>
         </a-form-item>
-        <a-form-item field="WEATHER_CITY_MODE" :label="weatherConfig.WEATHER_CITY_MODE?.name || '城市模式'">
-          <a-select v-model="form.WEATHER_CITY_MODE" class="input-width">
-            <a-option value="auto">自动定位（浏览器定位 + 和风反查）</a-option>
-            <a-option value="fixed">固定城市（和风城市搜索）</a-option>
-          </a-select>
-          <template #extra>
-            {{ weatherConfig.WEATHER_CITY_MODE?.description || '自动定位：浏览器坐标交给和风反查城市；失败则用下方默认城市' }}
-          </template>
-        </a-form-item>
-        <a-form-item field="WEATHER_CITY" :label="weatherConfig.WEATHER_CITY?.name || '默认城市（兜底）'">
+        <a-form-item field="WEATHER_CITY" :label="weatherConfig.WEATHER_CITY?.name || '默认城市'">
           <a-input
             v-model="form.WEATHER_CITY"
             class="input-width"
@@ -43,12 +34,12 @@
             :max-length="20"
           />
           <template #extra>
-            {{ weatherConfig.WEATHER_CITY?.description || '固定城市模式使用；自动定位失败时也使用该城市（经和风解析 LocationID）' }}
+            固定城市模式下使用；定位未授权或解析失败时作为展示城市。
           </template>
         </a-form-item>
         <a-form-item
           field="WEATHER_REFRESH_INTERVAL"
-          :label="weatherConfig.WEATHER_REFRESH_INTERVAL?.name || '刷新间隔（秒）'"
+          :label="weatherConfig.WEATHER_REFRESH_INTERVAL?.name || '刷新时间间隔（秒）'"
         >
           <a-input-number
             v-model="form.WEATHER_REFRESH_INTERVAL"
@@ -58,7 +49,7 @@
             :precision="0"
           />
           <template #extra>
-            {{ weatherConfig.WEATHER_REFRESH_INTERVAL?.description || '天气数据自动刷新间隔' }}
+            天气信息自动刷新周期，单位秒，建议 60～86400。
           </template>
         </a-form-item>
         <a-form-item field="WEATHER_PROVIDER" :label="weatherConfig.WEATHER_PROVIDER?.name || '数据来源'">
@@ -67,11 +58,81 @@
             <a-option value="qweather">和风天气（JWT）</a-option>
           </a-select>
           <template #extra>
-            {{ weatherConfig.WEATHER_PROVIDER?.description || '使用 JWT 鉴权；失败时自动回退本地模拟' }}
+            本地模拟仅用于联调展示；和风天气为第三方服务，须自行申请有效凭据并遵守其服务协议与调用配额，异常时回退本地模拟。
           </template>
         </a-form-item>
 
         <template v-if="form.WEATHER_PROVIDER === 'qweather'">
+          <a-form-item field="WEATHER_CITY_MODE" :label="weatherConfig.WEATHER_CITY_MODE?.name || '城市模式'">
+            <a-select v-model="form.WEATHER_CITY_MODE" class="input-width">
+              <a-option value="auto">和风 GeoAPI 定位</a-option>
+              <a-option value="fixed">固定城市</a-option>
+            </a-select>
+            <template #extra>
+              「和风 GeoAPI 定位」在用户授权后使用浏览器位置解析城市；「固定城市」仅使用上方默认城市。位置信息仅用于天气展示。
+            </template>
+          </a-form-item>
+          <a-form-item
+            field="WEATHER_GEO_HOST"
+            :label="weatherConfig.WEATHER_GEO_HOST?.name || '和风 GeoAPI 地址'"
+          >
+            <a-input
+              v-model="form.WEATHER_GEO_HOST"
+              class="input-width-lg"
+              placeholder="请填写控制台提供的城市查询服务地址"
+              allow-clear
+              :max-length="200"
+            />
+            <template #extra>
+              填写服务商控制台提供的城市查询地址，须与当前账号权限及官方文档一致。
+            </template>
+          </a-form-item>
+          <a-form-item
+            field="WEATHER_JWT_PROJECT_ID"
+            :label="weatherConfig.WEATHER_JWT_PROJECT_ID?.name || '和风项目 ID（sub）'"
+          >
+            <a-input
+              v-model="form.WEATHER_JWT_PROJECT_ID"
+              class="input-width-lg"
+              placeholder="请填写控制台项目 ID"
+              allow-clear
+              :max-length="64"
+            />
+            <template #extra>
+              填写和风控制台中的项目 ID，须与当前凭据一致。
+            </template>
+          </a-form-item>
+          <a-form-item
+            field="WEATHER_JWT_KID"
+            :label="weatherConfig.WEATHER_JWT_KID?.name || '和风凭据 ID（kid）'"
+          >
+            <a-input
+              v-model="form.WEATHER_JWT_KID"
+              class="input-width-lg"
+              placeholder="请填写控制台凭据 ID"
+              allow-clear
+              :max-length="64"
+            />
+            <template #extra>
+              填写和风控制台中的 JWT 凭据 ID，须与已上传公钥对应。
+            </template>
+          </a-form-item>
+          <a-form-item
+            field="WEATHER_API_HOST"
+            :label="weatherConfig.WEATHER_API_HOST?.name || '和风 API Host'"
+          >
+            <a-input
+              v-model="form.WEATHER_API_HOST"
+              class="input-width-lg"
+              placeholder="请填写控制台专属 API Host"
+              allow-clear
+              :max-length="200"
+            />
+            <template #extra>
+              填写控制台「设置」中的专属 API 访问地址，请以控制台实际值为准。
+            </template>
+          </a-form-item>
+
           <a-form-item label="JWT 密钥">
             <a-space wrap>
               <a-button
@@ -92,42 +153,11 @@
               </a-button>
             </a-space>
             <template #extra>
-              生成后私钥自动填入下方；请将公钥上传到和风控制台创建 JWT 凭据。凭据 ID、项目 ID 以控制台为准单独填写。
+              密钥在本机生成；请将公钥上传至和风控制台创建凭据。项目 ID、凭据 ID 以控制台为准。私钥仅保存在本系统，请妥善保管。
             </template>
           </a-form-item>
           <a-form-item v-if="generatedPublicKey" label="公钥">
             <pre class="jwt-pem">{{ generatedPublicKey }}</pre>
-          </a-form-item>
-
-          <a-form-item
-            field="WEATHER_JWT_KID"
-            :label="weatherConfig.WEATHER_JWT_KID?.name || '和风凭据 ID（kid）'"
-          >
-            <a-input
-              v-model="form.WEATHER_JWT_KID"
-              class="input-width-lg"
-              placeholder="控制台凭据 ID"
-              allow-clear
-              :max-length="64"
-            />
-            <template #extra>
-              {{ weatherConfig.WEATHER_JWT_KID?.description || '对应 JWT Header.kid' }}
-            </template>
-          </a-form-item>
-          <a-form-item
-            field="WEATHER_JWT_PROJECT_ID"
-            :label="weatherConfig.WEATHER_JWT_PROJECT_ID?.name || '和风项目 ID（sub）'"
-          >
-            <a-input
-              v-model="form.WEATHER_JWT_PROJECT_ID"
-              class="input-width-lg"
-              placeholder="控制台项目 ID"
-              allow-clear
-              :max-length="64"
-            />
-            <template #extra>
-              {{ weatherConfig.WEATHER_JWT_PROJECT_ID?.description || '对应 JWT Payload.sub' }}
-            </template>
           </a-form-item>
           <a-form-item
             field="WEATHER_JWT_PRIVATE_KEY"
@@ -137,41 +167,11 @@
               v-model="form.WEATHER_JWT_PRIVATE_KEY"
               class="input-width-lg"
               placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"
-              :auto-size="{ minRows: 4, maxRows: 10 }"
+              :auto-size="{ minRows: 1, maxRows: 6 }"
               allow-clear
             />
             <template #extra>
-              可用「一键生成密钥」自动填入。列表脱敏显示为 ******** 时，未改动保存不会覆盖原私钥。
-            </template>
-          </a-form-item>
-          <a-form-item
-            field="WEATHER_API_HOST"
-            :label="weatherConfig.WEATHER_API_HOST?.name || '和风 API Host'"
-          >
-            <a-input
-              v-model="form.WEATHER_API_HOST"
-              class="input-width-lg"
-              placeholder="np7p44uurp.re.qweatherapi.com 或带 https://"
-              allow-clear
-              :max-length="200"
-            />
-            <template #extra>
-              {{ weatherConfig.WEATHER_API_HOST?.description || '控制台「设置」中的专属 API Host（*.qweatherapi.com），可只填域名' }}
-            </template>
-          </a-form-item>
-          <a-form-item
-            field="WEATHER_GEO_HOST"
-            :label="weatherConfig.WEATHER_GEO_HOST?.name || '和风 GeoAPI 地址'"
-          >
-            <a-input
-              v-model="form.WEATHER_GEO_HOST"
-              class="input-width-lg"
-              placeholder="通常留空"
-              allow-clear
-              :max-length="200"
-            />
-            <template #extra>
-              {{ weatherConfig.WEATHER_GEO_HOST?.description || '留空则与 API Host 相同（/geo/v2/city/lookup）；一般不必填' }}
+              私钥仅服务端保存，请勿外传或写入代码仓库。脱敏显示为 ******** 时，未修改直接保存不会覆盖原私钥。
             </template>
           </a-form-item>
         </template>
@@ -242,59 +242,45 @@ const [form] = useResetReactive({
   WEATHER_API_HOST: '',
   WEATHER_GEO_HOST: '',
 })
-const rules: FormInstance['rules'] = {
-  WEATHER_ENABLED: [{ required: true, message: '请选择' }],
-  WEATHER_CITY_MODE: [{ required: true, message: '请选择城市模式' }],
-  WEATHER_CITY: [{ required: true, message: '请输入城市' }],
-  WEATHER_REFRESH_INTERVAL: [{ required: true, message: '请输入刷新间隔' }],
-  WEATHER_PROVIDER: [{ required: true, message: '请选择数据来源' }],
-  WEATHER_JWT_KID: [
-    {
-      validator: (value, callback) => {
-        if (form.WEATHER_PROVIDER === 'qweather' && !String(value || '').trim()) {
-          callback('请填写和风凭据 ID')
-        } else {
-          callback()
-        }
-      },
-    },
-  ],
-  WEATHER_JWT_PROJECT_ID: [
-    {
-      validator: (value, callback) => {
-        if (form.WEATHER_PROVIDER === 'qweather' && !String(value || '').trim()) {
-          callback('请填写和风项目 ID')
-        } else {
-          callback()
-        }
-      },
-    },
-  ],
-  WEATHER_JWT_PRIVATE_KEY: [
-    {
-      validator: (value, callback) => {
-        if (form.WEATHER_PROVIDER !== 'qweather') {
-          callback()
-          return
-        }
-        const v = String(value || '').trim()
-        if (!v) {
-          callback('请填写和风 JWT 私钥')
-          return
-        }
-        if (v === '********') {
-          callback()
-          return
-        }
-        if (!v.includes('BEGIN PRIVATE KEY')) {
-          callback('请粘贴完整 PEM 私钥（含 BEGIN/END）')
-          return
-        }
-        callback()
-      },
-    },
-  ],
-}
+const isQweather = computed(() => form.WEATHER_PROVIDER === 'qweather')
+
+const rules = computed<FormInstance['rules']>(() => {
+  const qweatherRequired = isQweather.value
+  return {
+    WEATHER_ENABLED: [{ required: true, message: '请选择是否启用' }],
+    WEATHER_CITY: [{ required: true, message: '请输入默认城市' }],
+    WEATHER_REFRESH_INTERVAL: [{ required: true, message: '请输入刷新时间间隔' }],
+    WEATHER_PROVIDER: [{ required: true, message: '请选择数据来源' }],
+    WEATHER_CITY_MODE: qweatherRequired ? [{ required: true, message: '请选择城市模式' }] : [],
+    WEATHER_GEO_HOST: qweatherRequired ? [{ required: true, message: '请填写和风 GeoAPI 地址' }] : [],
+    WEATHER_JWT_PROJECT_ID: qweatherRequired ? [{ required: true, message: '请填写和风项目 ID（sub）' }] : [],
+    WEATHER_JWT_KID: qweatherRequired ? [{ required: true, message: '请填写和风凭据 ID（kid）' }] : [],
+    WEATHER_API_HOST: qweatherRequired ? [{ required: true, message: '请填写和风 API Host' }] : [],
+    WEATHER_JWT_PRIVATE_KEY: qweatherRequired
+      ? [
+          {
+            required: true,
+            validator: (value, callback) => {
+              const v = String(value || '').trim()
+              if (!v) {
+                callback('请填写和风 JWT 私钥')
+                return
+              }
+              if (v === '********') {
+                callback()
+                return
+              }
+              if (!v.includes('BEGIN PRIVATE KEY')) {
+                callback('请粘贴完整 PEM 私钥（含 BEGIN/END）')
+                return
+              }
+              callback()
+            },
+          },
+        ]
+      : [],
+  }
+})
 
 const weatherConfig = ref<Partial<WeatherConfig>>({})
 
@@ -433,14 +419,14 @@ const onResetValue = () => {
   })
 }
 
-const formatWeatherTip = (data?: { city?: string, label?: string, temp?: number, humidity?: number, windLevel?: number, provider?: string }) => {
+const formatWeatherTip = (data?: { city?: string, label?: string, temp?: number, aqi?: number | null, aqiCategory?: string, windLevel?: number, provider?: string }) => {
   const city = data?.city || '-'
   const label = data?.label || '-'
   const temp = data?.temp ?? '-'
-  const humidity = data?.humidity ?? '-'
+  const aqiText = data?.aqiCategory || (data?.aqi != null ? String(data.aqi) : '--')
   const wind = data?.windLevel ?? '-'
   const provider = data?.provider || '-'
-  return `${city}｜${label}｜${temp}°C｜湿度 ${humidity}%｜风力 ${wind}级｜来源 ${provider}`
+  return `${city}｜${label}｜${temp}°C｜空气质量 ${aqiText}｜风力 ${wind}级｜来源 ${provider}`
 }
 
 /** 立即拉取天气，不等待刷新间隔（不清 JWT） */

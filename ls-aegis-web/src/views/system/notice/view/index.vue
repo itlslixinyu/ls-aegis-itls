@@ -69,16 +69,27 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .detail_content {
-    .title {
-        text-align: center;
-    }
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0.5rem 1.5rem 1.5rem;
+  box-sizing: border-box;
 
-    .info {
-        text-align: center;
-    }
+  .title {
+    text-align: center;
+    line-height: 1.5;
+    letter-spacing: 0.06em;
+    margin: 0.5rem 0 1rem;
+  }
 
-    .icon {
-      margin-right: 3px;
-    }
+  .info {
+    text-align: center;
+    margin-bottom: 1.25rem;
+    letter-spacing: 0.02em;
+  }
+
+  .icon {
+    margin-right: 3px;
+  }
 }
 </style>

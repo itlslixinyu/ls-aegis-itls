@@ -550,17 +550,17 @@ VALUES
 (25, 'MAIL', '启用SSL加密', 'MAIL_SSL_ENABLED', NULL, '1', '是否启用SSL/TLS加密连接'),
 (26, 'MAIL', 'SSL端口号', 'MAIL_SSL_PORT', NULL, '465', 'SSL加密连接的备用端口（通常与主端口一致）'),
 (27, 'LOGIN', '是否启用验证码', 'LOGIN_CAPTCHA_ENABLED', NULL, '1', NULL),
-(28, 'WEATHER', '启用天气展示', 'WEATHER_ENABLED', NULL, '1', '运营中枢顶栏是否显示天气信息'),
-(29, 'WEATHER', '默认城市（兜底）', 'WEATHER_CITY', NULL, '北京', '固定城市模式使用；自动定位失败时也使用该城市（经和风解析 LocationID）'),
-(30, 'WEATHER', '刷新间隔（秒）', 'WEATHER_REFRESH_INTERVAL', NULL, '600', '天气数据自动刷新间隔，单位秒（建议 60–86400）'),
-(31, 'WEATHER', '数据来源', 'WEATHER_PROVIDER', NULL, 'mock', '天气数据来源：本地模拟 / 和风天气（JWT 鉴权，开发版有免费额度）'),
-(32, 'WEATHER', '城市模式', 'WEATHER_CITY_MODE', NULL, 'auto', 'auto=浏览器定位后经和风反查城市；fixed=使用默认城市经和风城市搜索'),
-(33, 'WEATHER', '和风 API Host', 'WEATHER_API_HOST', NULL, '', '控制台项目中的 API Host（如 https://xxx.qweatherapi.com），留空则用兼容默认'),
-(34, 'WEATHER', '和风 GeoAPI 地址', 'WEATHER_GEO_HOST', NULL, '', '留空则优先用和风 API Host 的 /geo/v2/city/lookup；兼容旧版可填 geoapi.qweather.com'),
+(28, 'WEATHER', '是否启用', 'WEATHER_ENABLED', NULL, '1', '控制运营中枢顶栏是否展示天气信息。'),
+(29, 'WEATHER', '默认城市', 'WEATHER_CITY', NULL, '北京', '固定城市模式下使用；定位未授权或解析失败时作为展示城市。'),
+(30, 'WEATHER', '刷新时间间隔（秒）', 'WEATHER_REFRESH_INTERVAL', NULL, '600', '天气信息自动刷新周期，单位秒，建议 60～86400。'),
+(31, 'WEATHER', '数据来源', 'WEATHER_PROVIDER', NULL, 'mock', '本地模拟仅用于联调展示；和风天气为第三方服务，须自行申请有效凭据并遵守其服务协议与调用配额，异常时回退本地模拟。'),
+(32, 'WEATHER', '城市模式', 'WEATHER_CITY_MODE', NULL, 'auto', '「和风 GeoAPI 定位」在用户授权后使用浏览器位置解析城市；「固定城市」仅使用默认城市。位置信息仅用于天气展示。'),
+(33, 'WEATHER', '和风 API Host', 'WEATHER_API_HOST', NULL, '', '填写控制台「设置」中的专属 API 访问地址，请以控制台实际值为准。'),
+(34, 'WEATHER', '和风 GeoAPI 地址', 'WEATHER_GEO_HOST', NULL, '', '填写服务商控制台提供的城市查询地址，须与当前账号权限及官方文档一致。'),
 (35, 'WEATHER', '和风 API Key', 'WEATHER_API_KEY', NULL, '', '已废弃：请改用 JWT（凭据ID/项目ID/私钥）。保留字段仅为兼容旧数据'),
-(36, 'WEATHER', '和风凭据 ID（kid）', 'WEATHER_JWT_KID', NULL, '', '控制台凭据 ID，对应 JWT Header.kid'),
-(37, 'WEATHER', '和风项目 ID（sub）', 'WEATHER_JWT_PROJECT_ID', NULL, '', '控制台项目 ID，对应 JWT Payload.sub'),
-(38, 'WEATHER', '和风 JWT 私钥', 'WEATHER_JWT_PRIVATE_KEY', NULL, '', 'Ed25519 私钥 PEM（仅服务端保存，勿提交仓库）');
+(36, 'WEATHER', '和风凭据 ID（kid）', 'WEATHER_JWT_KID', NULL, '', '填写和风控制台中的 JWT 凭据 ID，须与已上传公钥对应。'),
+(37, 'WEATHER', '和风项目 ID（sub）', 'WEATHER_JWT_PROJECT_ID', NULL, '', '填写和风控制台中的项目 ID，须与当前凭据一致。'),
+(38, 'WEATHER', '和风 JWT 私钥', 'WEATHER_JWT_PRIVATE_KEY', NULL, '', '私钥仅服务端保存，请勿外传或写入代码仓库。脱敏显示时未修改直接保存不会覆盖原私钥。');
 
 -- 初始化默认字典
 INSERT INTO `sys_dict`

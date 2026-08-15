@@ -33,8 +33,8 @@
             >
               <a-tooltip content="同步最新数据表结构">
                 <a-button
-                  type="primary"
-                  status="success"
+                  type="outline"
+                  status="warning"
                   size="small"
                   title="同步"
                   :disabled="dataList.length !== 0 && dataList[0].createTime == null"

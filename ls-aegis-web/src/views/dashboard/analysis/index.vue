@@ -10,7 +10,7 @@
 
     <header class="ops-screen__header anim-fade-down">
       <div
-        v-if="weatherEnabled"
+        v-if="weatherEnabled && weather"
         class="ops-screen__weather"
         :title="weatherTitle"
       >
@@ -37,8 +37,8 @@
         <span class="ops-screen__weather-pipe">|</span>
         <span
           class="ops-screen__weather-metric"
-          :class="weather.alerts.humidity !== 'none' ? `alert-${weather.alerts.humidity}` : undefined"
-        >湿度 {{ weather.humidity }}%</span>
+          :class="weather.alerts.aqi !== 'none' ? `alert-${weather.alerts.aqi}` : undefined"
+        >空气质量 {{ weather.aqiCategory }}</span>
         <span class="ops-screen__weather-pipe">|</span>
         <span
           class="ops-screen__weather-metric"
@@ -53,16 +53,39 @@
       </div>
       <div class="ops-screen__clock">
         <span class="current-time-glass">
-          <span class="current-time">{{ nowText }}</span>
+          <span class="current-time">{{ nowParts.date }}</span>
+          <span class="ops-screen__weather-pipe">|</span>
+          <span class="current-time">{{ nowParts.time }}</span>
+          <span class="ops-screen__weather-pipe">|</span>
+          <span class="current-time">{{ nowParts.week }}</span>
         </span>
-        <a-button v-if="!isFullscreen" size="mini" class="fs-btn" @click="toggle">
-          <template #icon>
-            <icon-fullscreen />
-          </template>
-          全屏
-        </a-button>
       </div>
     </header>
+
+    <div class="ops-screen__fs-dock" :class="{ 'is-tipping': showFsTip }">
+      <div v-if="showFsTip" class="ops-screen__fs-tip" role="status">
+        <span class="ops-screen__fs-tip-title">提示</span>
+        <span class="ops-screen__fs-tip-text">
+          <span>将鼠标移至</span>
+          <span>右下角可显</span>
+          <span>示全屏按钮</span>
+        </span>
+        <span class="fs-tip-decor fs-tip-tl" />
+        <span class="fs-tip-decor fs-tip-tr" />
+        <span class="fs-tip-decor fs-tip-bl" />
+        <span class="fs-tip-decor fs-tip-br" />
+      </div>
+      <button
+        type="button"
+        class="ops-screen__fs-fab"
+        :title="isFullscreen ? '退出全屏' : '全屏展示'"
+        :aria-label="isFullscreen ? '退出全屏' : '全屏展示'"
+        @click="toggle"
+      >
+        <icon-fullscreen-exit v-if="isFullscreen" :size="18" />
+        <icon-fullscreen v-else :size="18" />
+      </button>
+    </div>
 
     <div class="ops-screen__toolbar anim-fade-down" style="--delay: 0.08s">
       <div class="toolbar-left">
@@ -75,7 +98,7 @@
       <div class="toolbar-right">
         <div class="ops-screen__status ops-screen__status--inline">
           <span class="dot" :class="`is-${runStatus}`" :title="runStatusLabel" />
-          <span>系统运行中</span>
+          <span>{{ runStatusLabel }}</span>
         </div>
         <span class="updated">数据更新于：<span class="update-time">{{ updatedAt }}</span></span>
       </div>
@@ -161,7 +184,11 @@
             >
               <span class="notice-ticker__dot" :class="`level-${item.level}`" />
               <span class="notice-ticker__label" :class="`level-${item.level}`">{{ item.label }}：</span>
-              <span class="notice-ticker__text" :title="item.title">{{ item.title }}</span>
+              <span
+                class="notice-ticker__text"
+                :title="item.title"
+                :style="{ letterSpacing: '0.22em', wordSpacing: '0.35em' }"
+              >{{ item.title }}</span>
               <span v-if="item.isTop" class="notice-ticker__tag">置顶</span>
             </div>
           </div>
@@ -212,28 +239,46 @@ defineOptions({ name: 'Analysis' })
 
 const router = useRouter()
 const screenRef = ref<HTMLElement | null>(null)
-const { isFullscreen, toggle } = useFullscreen(screenRef)
+const { isFullscreen, enter: enterFullscreen, toggle } = useFullscreen(screenRef)
+const showFsTip = ref(false)
+let fsTipTimer: ReturnType<typeof setTimeout> | undefined
+let fsHotkeyBound = false
 
 const trendDays = ref<7 | 30>(7)
 const WEEK_LABELS = ['日', '一', '二', '三', '四', '五', '六'] as const
-const formatNowText = (d = dayjs()) =>
-  `${d.format('YYYY-MM-DD HH:mm:ss')} 星期${WEEK_LABELS[d.day()]}`
+const formatNowParts = (d = dayjs()) => ({
+  date: d.format('YYYY-MM-DD'),
+  time: d.format('HH:mm:ss'),
+  week: `星期${WEEK_LABELS[d.day()]}`,
+})
 
-const nowText = ref(formatNowText())
+const nowParts = ref(formatNowParts())
 const updatedAt = ref(dayjs().format('HH:mm:ss'))
 const loading = ref(false)
-const weatherRuntime = ref<WeatherRuntimeConfig>(defaultWeatherRuntimeConfig())
+/** 进入大屏先不启用/不展示，等配置加载后再按设置取数，避免本地→联网重影 */
+const weatherRuntime = ref<WeatherRuntimeConfig>({
+  ...defaultWeatherRuntimeConfig(),
+  enabled: false,
+})
 const weatherEnabled = computed(() => weatherRuntime.value.enabled)
-const weather = ref<DashboardWeather>(createMockWeather(weatherRuntime.value.city))
+const weather = ref<DashboardWeather | null>(null)
 const weatherTitle = computed(() => {
-  const base = `${weather.value.city}|${weather.value.label}|温度${weather.value.temp}°C|湿度 ${weather.value.humidity}%|风力 ${weather.value.windLevel}级`
+  if (!weather.value) return ''
+  const base = `${weather.value.city}|${weather.value.label}|温度${weather.value.temp}°C|空气质量 ${weather.value.aqiCategory}${weather.value.aqi != null ? `(${weather.value.aqi})` : ''}|风力 ${weather.value.windLevel}级`
   const alerts = listActiveWeatherAlerts(weather.value).map((i) => i.label)
   return alerts.length ? `${base}|${alerts.join('|')}` : base
 })
 let weatherTimer: ReturnType<typeof setInterval> | undefined
 
 const refreshWeather = async () => {
-  if (!weatherRuntime.value.enabled) return
+  if (!weatherRuntime.value.enabled) {
+    weather.value = null
+    weatherNetOk.value = true
+    applyRunStatus()
+    return
+  }
+  /** 联网（和风）为最高原则：只展示联网结果，失败不回退本地模拟，避免重影 */
+  const needNet = weatherRuntime.value.provider === 'qweather'
   try {
     let lat: number | undefined
     let lon: number | undefined
@@ -247,13 +292,29 @@ const refreshWeather = async () => {
     }
     const { data } = await getWeatherNow(lat != null && lon != null ? { lat, lon } : undefined)
     if (data?.city) {
+      const fromNet = String(data.provider || '') === 'qweather'
+      if (needNet && !fromNet) {
+        // 后端因失败回退了模拟数据：不展示，保持空白/上次联网结果
+        weatherNetOk.value = false
+        applyRunStatus()
+        return
+      }
       weather.value = mapWeatherNowToDashboard(data)
+      weatherNetOk.value = !needNet || fromNet
+      applyRunStatus()
       return
     }
   } catch {
-    // 静默降级
+    // 静默：联网失败不抛错
+  }
+  if (needNet) {
+    weatherNetOk.value = false
+    applyRunStatus()
+    return
   }
   weather.value = createMockWeather(weatherRuntime.value.city)
+  weatherNetOk.value = true
+  applyRunStatus()
 }
 
 const restartWeatherTimer = () => {
@@ -284,9 +345,18 @@ const loadWeatherConfig = async () => {
   restartWeatherTimer()
 }
 
-/** 系统运行指示灯：正常 / 告警 / 异常 / 离线 */
-type RunStatus = 'running' | 'warning' | 'error' | 'offline'
+/** 系统运行指示灯：正常 / 告警 / 异常 / 离线 / 天气获取失败 */
+type RunStatus = 'running' | 'warning' | 'error' | 'offline' | 'weather'
 const runStatus = ref<RunStatus>('running')
+/** 浏览器网络是否在线 */
+const systemOnline = ref(typeof navigator === 'undefined' ? true : navigator.onLine)
+/** 仪表盘接口是否可用 */
+const dashboardOk = ref(true)
+/** 天气互联网数据是否可用（配置本地模拟时视为可用） */
+const weatherNetOk = ref(true)
+/** 最近一次模拟负载（无真实主机监控时用于告警色） */
+const lastCpu = ref(30)
+const lastMem = ref(50)
 
 const runStatusLabel = computed(() => {
   const map: Record<RunStatus, string> = {
@@ -294,14 +364,44 @@ const runStatusLabel = computed(() => {
     warning: '系统告警中',
     error: '系统异常',
     offline: '系统离线',
+    weather: '天气获取失败',
   }
   return map[runStatus.value]
 })
 
-const resolveRunStatus = (cpu: number, mem: number): RunStatus => {
-  if (cpu >= 90 || mem >= 95) return 'error'
-  if (cpu >= 70 || mem >= 80) return 'warning'
-  return 'running'
+/** 优先级：离线 > 异常 > 告警 > 天气获取失败 > 正常 */
+const applyRunStatus = () => {
+  if (!systemOnline.value || !dashboardOk.value) {
+    runStatus.value = 'offline'
+    return
+  }
+  const cpu = lastCpu.value
+  const mem = lastMem.value
+  if (cpu >= 90 || mem >= 95) {
+    runStatus.value = 'error'
+    return
+  }
+  if (cpu >= 70 || mem >= 80) {
+    runStatus.value = 'warning'
+    return
+  }
+  if (weatherRuntime.value.enabled && !weatherNetOk.value) {
+    runStatus.value = 'weather'
+    return
+  }
+  runStatus.value = 'running'
+}
+
+const onBrowserOnline = () => {
+  systemOnline.value = true
+  applyRunStatus()
+  void refreshWeather()
+}
+
+const onBrowserOffline = () => {
+  systemOnline.value = false
+  weatherNetOk.value = false
+  applyRunStatus()
 }
 
 const pvTotal = ref(0)
@@ -691,11 +791,15 @@ const refreshAll = async () => {
     browserList.value = browserRes.data || []
     noticeList.value = pickDashboardNotices(noticeRes.data, 20).map(mapDashboardNotice)
 
-    const cpu = 20 + Math.floor(Math.random() * 25)
-    const mem = 40 + Math.floor(Math.random() * 30)
-    runStatus.value = resolveRunStatus(cpu, mem)
-    refreshWeather()
+    lastCpu.value = 20 + Math.floor(Math.random() * 25)
+    lastMem.value = 40 + Math.floor(Math.random() * 30)
+    dashboardOk.value = true
+    systemOnline.value = navigator.onLine
+    await refreshWeather()
     updatedAt.value = dayjs().format('HH:mm:ss')
+  } catch {
+    dashboardOk.value = false
+    applyRunStatus()
   } finally {
     loading.value = false
     nextTick(syncNoticeRepeats)
@@ -703,16 +807,64 @@ const refreshAll = async () => {
 }
 
 onMounted(async () => {
+  window.addEventListener('online', onBrowserOnline)
+  window.addEventListener('offline', onBrowserOffline)
+  systemOnline.value = navigator.onLine
   await loadWeatherConfig()
   refreshAll()
   clockTimer = setInterval(() => {
-    nowText.value = formatNowText()
+    nowParts.value = formatNowParts()
   }, 1000)
   noticeResizeObserver = new ResizeObserver(() => syncNoticeRepeats())
   if (noticeTickerEl.value) {
     noticeResizeObserver.observe(noticeTickerEl.value)
   }
+  tipFullscreenDock()
+  bindFsHotkey()
 })
+
+onActivated(() => {
+  tipFullscreenDock()
+  bindFsHotkey()
+})
+
+onDeactivated(() => {
+  unbindFsHotkey()
+})
+
+/** 进入大屏时在右下角提示全屏入口，并短暂点亮按钮 */
+function tipFullscreenDock() {
+  showFsTip.value = true
+  if (fsTipTimer) clearTimeout(fsTipTimer)
+  fsTipTimer = setTimeout(() => {
+    showFsTip.value = false
+  }, 5000)
+}
+
+/** 本页回车进入全屏（输入框内不触发） */
+function onFsEnterKey(e: KeyboardEvent) {
+  if (e.key !== 'Enter' && e.code !== 'NumpadEnter') return
+  const el = e.target as HTMLElement | null
+  if (el) {
+    const tag = el.tagName
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable) return
+  }
+  if (isFullscreen.value) return
+  e.preventDefault()
+  void enterFullscreen()
+}
+
+function bindFsHotkey() {
+  if (fsHotkeyBound) return
+  window.addEventListener('keydown', onFsEnterKey)
+  fsHotkeyBound = true
+}
+
+function unbindFsHotkey() {
+  if (!fsHotkeyBound) return
+  window.removeEventListener('keydown', onFsEnterKey)
+  fsHotkeyBound = false
+}
 
 watch(trendDays, () => {
   loadTrend()
@@ -735,8 +887,12 @@ watch(
 )
 
 onBeforeUnmount(() => {
+  window.removeEventListener('online', onBrowserOnline)
+  window.removeEventListener('offline', onBrowserOffline)
   if (clockTimer) clearInterval(clockTimer)
   if (weatherTimer) clearInterval(weatherTimer)
+  if (fsTipTimer) clearTimeout(fsTipTimer)
+  unbindFsHotkey()
   noticeResizeObserver?.disconnect()
 })
 </script>
@@ -759,6 +915,7 @@ onBeforeUnmount(() => {
   flex: 1;
   min-height: 0;
   height: 100%;
+  width: 100%;
   overflow: hidden;
 }
 
@@ -768,13 +925,14 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   color: rgba(126, 163, 204, 0.55);
-  letter-spacing: 2px;
+  letter-spacing: 0.2em;
   font-size: 14px;
 }
 
 .notice-ticker__track {
   margin: 0;
   padding: 0;
+  width: 100%;
 
   &.scroll {
     animation-name: notice-ticker-scroll;
@@ -791,11 +949,12 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  height: 36px;
+  width: 100%;
+  height: 44px;
   box-sizing: border-box;
-  gap: 8px;
+  gap: 20px;
   cursor: pointer;
-  padding: 0 20px;
+  padding: 0 12px 0 16px;
   margin: 0;
   min-width: 0;
   border-bottom: 1px dashed rgba(64, 159, 255, 0.08);
@@ -838,7 +997,7 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.18em;
 
   &.level-primary {
     color: #409fff;
@@ -865,16 +1024,19 @@ onBeforeUnmount(() => {
   white-space: nowrap;
   color: #cfe2ff;
   font-size: 13px;
+  letter-spacing: 0.22em;
+  word-spacing: 0.35em;
   transition: color 0.2s;
 }
 
 .notice-ticker__tag {
   flex-shrink: 0;
-  padding: 0 6px;
-  height: 18px;
-  line-height: 18px;
+  padding: 0 8px;
+  height: 20px;
+  line-height: 20px;
   border-radius: 2px;
   font-size: 11px;
+  letter-spacing: 0.12em;
   color: #ff4d6d;
   background: rgba(255, 77, 109, 0.12);
   border: 1px solid rgba(255, 77, 109, 0.35);

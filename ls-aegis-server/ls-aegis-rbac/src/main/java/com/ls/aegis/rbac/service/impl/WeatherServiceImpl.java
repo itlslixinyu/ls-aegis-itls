@@ -149,10 +149,11 @@ public class WeatherServiceImpl implements WeatherService {
             if (canLookup) {
                 CityLookup looked = lookupCity(locationParam, cfg);
                 if (looked != null) {
-                    return new ResolvedLocation(looked.name(), looked.locationId());
+                    return new ResolvedLocation(looked.name(), looked.locationId(),
+                        coalesce(looked.lat(), lat), coalesce(looked.lon(), lon));
                 }
             }
-            return new ResolvedLocation(fallbackCity, locationParam);
+            return new ResolvedLocation(fallbackCity, locationParam, lat, lon);
         }
 
         String queryCity = fallbackCity;
@@ -162,10 +163,15 @@ public class WeatherServiceImpl implements WeatherService {
         if (canLookup) {
             CityLookup looked = lookupCity(queryCity, cfg);
             if (looked != null) {
-                return new ResolvedLocation(looked.name(), looked.locationId());
+                return new ResolvedLocation(looked.name(), looked.locationId(), looked.lat(), looked.lon());
             }
         }
-        return new ResolvedLocation(queryCity, FALLBACK_LOCATION_ID);
+        // 兜底 LocationID（北京）及中心点坐标，供空气质量 v1 使用
+        return new ResolvedLocation(queryCity, FALLBACK_LOCATION_ID, 39.90, 116.40);
+    }
+
+    private static Double coalesce(Double preferred, Double fallback) {
+        return preferred != null ? preferred : fallback;
     }
 
     /** 和风要求「经度,纬度」，坐标保留两位小数 */
@@ -254,7 +260,11 @@ public class WeatherServiceImpl implements WeatherService {
                 return null;
             }
             String name = pickCityDisplayName(first, location);
-            return new CityLookup(name, id);
+            Double cityLat = NumberUtil.parseDouble(first.getStr("lat"), Double.NaN);
+            Double cityLon = NumberUtil.parseDouble(first.getStr("lon"), Double.NaN);
+            return new CityLookup(name, id,
+                NumberUtil.isValidNumber(cityLat) ? cityLat : null,
+                NumberUtil.isValidNumber(cityLon) ? cityLon : null);
         } catch (Exception e) {
             log.warn("和风城市查询异常 location={}：{}", location, e.getMessage());
             return null;
@@ -319,10 +329,212 @@ public class WeatherServiceImpl implements WeatherService {
         resp.setKind(kind.code());
         resp.setLabel(StrUtil.blankToDefault(now.getStr("text"), kind.label()));
         resp.setTemp(NumberUtil.parseInt(StrUtil.blankToDefault(now.getStr("temp"), "0"), 0));
-        resp.setHumidity(Math.max(0, Math.min(100, NumberUtil.parseInt(StrUtil.blankToDefault(now.getStr("humidity"), "50"), 50))));
         resp.setWindLevel(parseWindScale(now.getStr("windScale")));
         resp.setProvider(PROVIDER_QWEATHER);
+        fillAirQuality(resp, location, cfg, weatherHost);
         return resp;
+    }
+
+    /**
+     * 空气质量：优先 API v1（经纬度），失败再回退 v7/air/now（LocationID，预计 2026-06 停服）。
+     * 优先选用中国标准指数（code 以 cn- 开头），类别统一为国标中文。
+     */
+    private void fillAirQuality(WeatherNowResp resp, ResolvedLocation location, Map<String, String> cfg, String weatherHost) {
+        Double lat = location.lat();
+        Double lon = location.lon();
+        if (lat == null || lon == null) {
+            double[] parsed = parseLonLat(location.locationParam());
+            if (parsed != null) {
+                lon = parsed[0];
+                lat = parsed[1];
+            }
+        }
+        boolean filled = false;
+        if (lat != null && lon != null && NumberUtil.isValidNumber(lat) && NumberUtil.isValidNumber(lon)) {
+            filled = fillAirQualityV1(resp, cfg, weatherHost, lat, lon);
+        } else {
+            log.warn("和风空气质量 v1 跳过：缺少经纬度 city={}", location.city());
+        }
+        if (!filled) {
+            filled = fillAirQualityV7(resp, location, cfg, weatherHost);
+        }
+        if (!filled) {
+            resp.setAqi(null);
+            resp.setAqiCategory("--");
+        }
+    }
+
+    private boolean fillAirQualityV1(WeatherNowResp resp, Map<String, String> cfg, String weatherHost, double lat, double lon) {
+        String url = String.format(Locale.US, "%s/airquality/v1/current/%.2f/%.2f?lang=zh", weatherHost, lat, lon);
+        try {
+            String body = authorizedGet(url, cfg);
+            if (StrUtil.isBlank(body) || !(body.trim().startsWith("{"))) {
+                throw new BusinessException("非 JSON 响应");
+            }
+            JSONObject json = JSONUtil.parseObj(body.trim());
+            if (StrUtil.isNotBlank(json.getStr("code")) && !"200".equals(json.getStr("code"))) {
+                throw new BusinessException(describeQWeatherCode(json.getStr("code"), json));
+            }
+            JSONObject index = pickAirIndex(json.getJSONArray("indexes"));
+            if (index == null) {
+                log.warn("和风空气质量 v1 无 indexes：{}", StrUtil.maxLength(body.replaceAll("\\s+", " "), 160));
+                return false;
+            }
+            applyAirIndex(resp, index);
+            return resp.getAqi() != null || StrUtil.isNotBlank(resp.getAqiCategory());
+        } catch (Exception e) {
+            log.warn("和风空气质量 v1 失败 lat={},lon={}：{}", lat, lon, e.getMessage());
+            return false;
+        }
+    }
+
+    /** 兼容旧版实时空气质量，location 支持 LocationID 或「经度,纬度」 */
+    private boolean fillAirQualityV7(WeatherNowResp resp, ResolvedLocation location, Map<String, String> cfg, String weatherHost) {
+        String loc = StrUtil.blankToDefault(location.locationParam(), FALLBACK_LOCATION_ID);
+        String url = weatherHost + "/v7/air/now?location=" + URLUtil.encode(loc) + "&lang=zh";
+        try {
+            String body = authorizedGet(url, cfg);
+            JSONObject json = parseQWeatherJson(body, "空气质量");
+            if (!"200".equals(json.getStr("code"))) {
+                log.warn("和风空气质量 v7 失败 code={} tip={}", json.getStr("code"), describeQWeatherCode(json.getStr("code"), json));
+                return false;
+            }
+            JSONObject now = json.getJSONObject("now");
+            if (now == null) {
+                return false;
+            }
+            Integer aqi = parseAqiNumber(now.get("aqi"));
+            String category = normalizeAqiCategory(now.getStr("category"), aqi);
+            resp.setAqi(aqi);
+            resp.setAqiCategory(category);
+            return aqi != null || StrUtil.isNotBlank(category);
+        } catch (Exception e) {
+            log.warn("和风空气质量 v7 失败 location={}：{}", loc, e.getMessage());
+            return false;
+        }
+    }
+
+    private static void applyAirIndex(WeatherNowResp resp, JSONObject index) {
+        Integer aqi = parseAqiNumber(index.get("aqi"));
+        if (aqi == null) {
+            aqi = parseAqiNumber(index.get("aqiDisplay"));
+        }
+        String category = normalizeAqiCategory(index.getStr("category"), aqi);
+        resp.setAqi(aqi);
+        resp.setAqiCategory(category);
+    }
+
+    /** 解析 AQI 数值；qaqi 等小数按四舍五入为整数便于展示与预警 */
+    static Integer parseAqiNumber(Object raw) {
+        if (raw == null) {
+            return null;
+        }
+        if (raw instanceof Number number) {
+            double v = number.doubleValue();
+            if (!NumberUtil.isValidNumber(v)) {
+                return null;
+            }
+            return (int) Math.round(v);
+        }
+        String text = StrUtil.trim(String.valueOf(raw));
+        if (StrUtil.isBlank(text) || !NumberUtil.isNumber(text)) {
+            return null;
+        }
+        double v = NumberUtil.parseDouble(text, Double.NaN);
+        if (!NumberUtil.isValidNumber(v)) {
+            return null;
+        }
+        return (int) Math.round(v);
+    }
+
+    /** 将类别归一为国标中文；英文或空时按 AQI 数值推断 */
+    static String normalizeAqiCategory(String raw, Integer aqi) {
+        String cat = StrUtil.trim(raw);
+        if (StrUtil.isNotBlank(cat)) {
+            String lower = cat.toLowerCase(Locale.ROOT);
+            if (cat.contains("优") || cat.contains("良") || cat.contains("污染")) {
+                return cat;
+            }
+            if (lower.contains("excellent")) {
+                return "优";
+            }
+            if (lower.contains("good")) {
+                return aqi != null && aqi <= 50 ? "优" : "良";
+            }
+            if (lower.contains("moderate")) {
+                return "轻度污染";
+            }
+            if (lower.contains("unhealthy for sensitive")) {
+                return "中度污染";
+            }
+            if (lower.contains("unhealthy") && !lower.contains("very") && !lower.contains("hazardous")) {
+                return "重度污染";
+            }
+            if (lower.contains("very unhealthy") || lower.contains("hazardous")) {
+                return "严重污染";
+            }
+        }
+        if (aqi == null) {
+            return StrUtil.blankToDefault(cat, "--");
+        }
+        if (aqi <= 50) {
+            return "优";
+        }
+        if (aqi <= 100) {
+            return "良";
+        }
+        if (aqi <= 150) {
+            return "轻度污染";
+        }
+        if (aqi <= 200) {
+            return "中度污染";
+        }
+        if (aqi <= 300) {
+            return "重度污染";
+        }
+        return "严重污染";
+    }
+
+    /** locationParam 为「经度,纬度」时解析；否则返回 null */
+    private static double[] parseLonLat(String locationParam) {
+        if (StrUtil.isBlank(locationParam) || !locationParam.contains(",")) {
+            return null;
+        }
+        String[] parts = locationParam.split(",");
+        if (parts.length != 2) {
+            return null;
+        }
+        double lon = NumberUtil.parseDouble(StrUtil.trim(parts[0]), Double.NaN);
+        double lat = NumberUtil.parseDouble(StrUtil.trim(parts[1]), Double.NaN);
+        if (!NumberUtil.isValidNumber(lon) || !NumberUtil.isValidNumber(lat)) {
+            return null;
+        }
+        return new double[] {lon, lat};
+    }
+
+    static JSONObject pickAirIndex(JSONArray indexes) {
+        if (indexes == null || indexes.isEmpty()) {
+            return null;
+        }
+        JSONObject fallback = null;
+        JSONObject qaqi = null;
+        for (int i = 0; i < indexes.size(); i++) {
+            JSONObject item = indexes.getJSONObject(i);
+            if (item == null) {
+                continue;
+            }
+            String code = StrUtil.blankToDefault(item.getStr("code"), "").toLowerCase(Locale.ROOT);
+            if (code.startsWith("cn-") || "cn-mee".equals(code) || code.contains("china")) {
+                return item;
+            }
+            if ("qaqi".equals(code)) {
+                qaqi = item;
+            }
+            if (fallback == null) {
+                fallback = item;
+            }
+        }
+        return qaqi != null ? qaqi : fallback;
     }
 
     private String authorizedGet(String url, Map<String, String> cfg) {
@@ -392,13 +604,17 @@ public class WeatherServiceImpl implements WeatherService {
     private WeatherNowResp mockWeather(String city) {
         String[] kinds = {"sunny", "cloudy", "rainy", "storm", "thunder", "hail", "snow", "fog", "sand"};
         String[] labels = {"晴", "多云", "雨", "暴雨", "雷电", "冰雹", "暴雪", "大雾", "沙尘"};
+        String[] aqiCategories = {"优", "良", "轻度污染", "中度污染", "重度污染", "严重污染"};
+        int[] aqiSamples = {35, 72, 120, 175, 250, 350};
         int idx = ThreadLocalRandom.current().nextInt(kinds.length);
+        int aqiIdx = ThreadLocalRandom.current().nextInt(aqiCategories.length);
         WeatherNowResp resp = new WeatherNowResp();
         resp.setCity(StrUtil.blankToDefault(city, DEFAULT_CITY));
         resp.setKind(kinds[idx]);
         resp.setLabel(labels[idx]);
         resp.setTemp(-15 + ThreadLocalRandom.current().nextInt(58));
-        resp.setHumidity(3 + ThreadLocalRandom.current().nextInt(97));
+        resp.setAqi(aqiSamples[aqiIdx]);
+        resp.setAqiCategory(aqiCategories[aqiIdx]);
         resp.setWindLevel(ThreadLocalRandom.current().nextInt(13));
         resp.setProvider(PROVIDER_MOCK);
         return resp;
@@ -453,10 +669,10 @@ public class WeatherServiceImpl implements WeatherService {
         return Math.max(0, Math.min(12, NumberUtil.parseInt(StrUtil.trim(first), 0)));
     }
 
-    private record ResolvedLocation(String city, String locationParam) {
+    private record ResolvedLocation(String city, String locationParam, Double lat, Double lon) {
     }
 
-    private record CityLookup(String name, String locationId) {
+    private record CityLookup(String name, String locationId, Double lat, Double lon) {
     }
 
     record KindMeta(String code, String label) {

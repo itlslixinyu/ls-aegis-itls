@@ -48,7 +48,6 @@
             <a-link
               v-if="record.taskBatchStatus === 4 || record.taskBatchStatus === 5 || record.taskBatchStatus === 6"
               v-permission="['schedule:log:retry']"
-              status="danger"
               title="重试"
             >
               重试

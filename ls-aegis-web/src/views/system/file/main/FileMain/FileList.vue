@@ -54,7 +54,7 @@
         <a-table-column v-if="has.hasPermOr(['system:file:update', 'system:file:get', 'system:file:download', 'system:file:delete'])" title="操作" :width="120" align="center">
           <template #cell="{ record }">
             <a-popover trigger="click" position="bottom" :content-style="{ 'padding': 0, 'margin-top': 0 }">
-              <a-button type="text" @click.stop><icon-more :size="16" /></a-button>
+              <a-button type="text" size="mini" title="更多" @click.stop><icon-more :size="16" /></a-button>
               <template #content>
                 <FileRightMenu
                   :data="record"

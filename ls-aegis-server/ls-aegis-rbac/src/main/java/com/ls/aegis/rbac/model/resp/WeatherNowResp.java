@@ -28,8 +28,11 @@ public class WeatherNowResp implements Serializable {
     @Schema(description = "气温（℃）", example = "26")
     private Integer temp;
 
-    @Schema(description = "相对湿度（%）", example = "48")
-    private Integer humidity;
+    @Schema(description = "空气质量指数 AQI", example = "58")
+    private Integer aqi;
+
+    @Schema(description = "空气质量类别", example = "良")
+    private String aqiCategory;
 
     @Schema(description = "风力等级（蒲福 0–12）", example = "3")
     private Integer windLevel;

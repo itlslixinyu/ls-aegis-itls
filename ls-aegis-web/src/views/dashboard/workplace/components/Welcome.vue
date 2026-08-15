@@ -24,7 +24,12 @@
             <div
               class="notice-track"
               :class="{ paused, scroll: needScroll }"
-              :style="needScroll ? { animationDuration: `${Math.max(dataList.length * 3, 6)}s` } : undefined"
+              :style="needScroll
+                ? {
+                    animationDuration: `${Math.max(dataList.length * 3, 6)}s`,
+                    '--notice-scroll-y': `-${dataList.length * 28}px`,
+                  }
+                : undefined"
             >
               <div
                 v-for="(item, idx) in displayList"
@@ -165,12 +170,16 @@ onMounted(() => {
   height: 56px;
   overflow: hidden;
   width: 100%;
-  max-width: 450px;
+  max-width: 666px;
   margin: 0 auto;
   box-sizing: border-box;
 }
 
 .notice-track {
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+
   &.scroll {
     animation-name: notice-scroll;
     animation-timing-function: linear;
@@ -180,6 +189,11 @@ onMounted(() => {
   &.paused {
     animation-play-state: paused;
   }
+
+  // 滚动中禁用 hover 变色，避免字在指针下闪蓝
+  &:not(.paused) .notice-item:hover .notice-text {
+    color: var(--color-text-1);
+  }
 }
 
 .notice-item {
@@ -187,15 +201,16 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   height: 28px;
-  gap: 12px;
+  gap: 32px;
   cursor: pointer;
   padding: 0 8px 0 12px;
   min-width: 0;
+  box-sizing: border-box;
 
   .notice-main {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 16px;
     min-width: 0;
     flex: 1;
   }
@@ -227,6 +242,7 @@ onMounted(() => {
     flex-shrink: 0;
     font-size: 16px;
     font-weight: 600;
+    letter-spacing: 0.16em;
 
     &.level-primary {
       color: rgb(var(--arcoblue-6));
@@ -253,15 +269,19 @@ onMounted(() => {
     white-space: nowrap;
     color: var(--color-text-1);
     font-size: 16px;
+    letter-spacing: 0.2em;
+    word-spacing: 0.35em;
   }
 
   .notice-tag {
     flex-shrink: 0;
+    margin-right: 4px;
     padding: 0 6px;
     height: 18px;
     line-height: 18px;
     border-radius: 2px;
     font-size: 12px;
+    letter-spacing: 0.12em;
     color: rgb(var(--red-6));
     background: rgba(var(--red-6), 0.1);
     border: 1px solid rgba(var(--red-6), 0.35);
@@ -269,10 +289,11 @@ onMounted(() => {
 
   .notice-time {
     flex-shrink: 0;
+    margin-left: 8px;
     font-size: 13px;
     color: var(--color-text-3);
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.2px;
+    letter-spacing: 0.14em;
   }
 
   &:hover {
@@ -284,10 +305,10 @@ onMounted(() => {
 
 @keyframes notice-scroll {
   0% {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
   100% {
-    transform: translateY(-50%);
+    transform: translate3d(0, var(--notice-scroll-y, -50%), 0);
   }
 }
 

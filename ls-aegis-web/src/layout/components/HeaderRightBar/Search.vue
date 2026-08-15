@@ -62,7 +62,7 @@
       <div v-if="!searchKeyword && searchHistory.length" class="history-section">
         <div class="history-header">
           <div class="history-title">搜索历史</div>
-          <a-button type="text" size="small" @click="clearHistory">清空历史</a-button>
+          <a-link @click="clearHistory">清空历史</a-link>
         </div>
         <div class="history-list">
           <div

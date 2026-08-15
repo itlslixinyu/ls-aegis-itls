@@ -11,7 +11,7 @@
                 </template>
                 <template #default>取消</template>
               </a-button>
-              <a-button v-if="!isUpdate || (isUpdate && form.status !== 3)" type="primary" status="warning" @click="save(true)">
+              <a-button v-if="!isUpdate || (isUpdate && form.status !== 3)" type="outline" status="warning" @click="save(true)">
                 <template #icon>
                   <icon-save />
                 </template>

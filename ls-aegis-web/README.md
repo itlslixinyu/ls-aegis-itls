@@ -25,3 +25,11 @@ VITE_LOCAL_MOCK=true
 
 - ECharts 几何：`src/assets/map/china.json`（仅仪表盘地理页加载）
 - 后端省份对照：`ls-aegis-rbac/.../china-provinces.json`（仪表盘访问聚合，非地图几何）
+
+## 按钮样式字典
+
+管理后台按钮按「七类角色 + 修饰」选型，权威对照页：
+
+- 静态页：[`public/design/button-dictionary.html`](./public/design/button-dictionary.html)（开发态 `/design/button-dictionary.html`）
+- 常量：`src/constant/button-role.ts`
+- 说明：[`public/design/README.md`](./public/design/README.md)

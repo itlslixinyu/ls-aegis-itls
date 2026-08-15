@@ -2,7 +2,7 @@
   <a-modal
     v-model:visible="visible"
     :title="currentNotice?.title || '系统公告'"
-    :width="800"
+    :width="960"
     :mask-closable="false"
     :footer="false"
     @cancel="onClose"
@@ -209,17 +209,19 @@ defineExpose({
       margin: 0;
 
       .title {
-        margin-bottom: 12px; // 减小标题下边距
+        margin-bottom: 16px;
         color: var(--color-text-1);
-        line-height: 1.4;
+        line-height: 1.5;
+        letter-spacing: 0.06em;
         text-align: center;
       }
 
       .info {
-        margin-bottom: 12px; // 减小信息区域下边距
+        margin-bottom: 20px;
         color: var(--color-text-2);
         font-size: 14px;
-        line-height: 1.5715;
+        line-height: 1.7;
+        letter-spacing: 0.02em;
         text-align: center;
 
         .icon {
@@ -293,10 +295,12 @@ defineExpose({
     }
 
     .notice-text {
-      font-size: 14px;
+      font-size: 15px;
       color: var(--color-text-2);
-      line-height: 1.6;
-      max-height: 300px;
+      line-height: 1.9;
+      letter-spacing: 0.04em;
+      word-spacing: 0.12em;
+      max-height: 360px;
       overflow-y: auto;
 
       :deep(img) {
@@ -305,7 +309,7 @@ defineExpose({
       }
 
       :deep(p) {
-        margin-bottom: 12px;
+        margin-bottom: 1.1em;
 
         &:last-child {
           margin-bottom: 0;

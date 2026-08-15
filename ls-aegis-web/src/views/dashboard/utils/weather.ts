@@ -1,4 +1,4 @@
-/** 运营中枢顶栏天气（城市等由系统配置 WEATHER 驱动；暂用占位数据） */
+/** 运营中枢顶栏天气（城市等由系统配置 WEATHER 驱动） */
 
 /**
  * 天气现象（含可独立预警的灾害性天气）
@@ -27,8 +27,8 @@ export interface WeatherAlerts {
   weather: WeatherAlertLevel
   /** 气温预警（高温 / 低温） */
   temp: WeatherAlertLevel
-  /** 湿度预警（高湿 / 干燥） */
-  humidity: WeatherAlertLevel
+  /** 空气质量预警（污染等级） */
+  aqi: WeatherAlertLevel
   /** 风力预警（大风） */
   wind: WeatherAlertLevel
 }
@@ -40,8 +40,10 @@ export interface DashboardWeather {
   /** 本地天气图标路径（public/weather-icons） */
   iconSrc: string
   temp: number
-  /** 相对湿度 0–100 */
-  humidity: number
+  /** 空气质量指数 */
+  aqi: number | null
+  /** 空气质量类别，如优/良/轻度污染 */
+  aqiCategory: string
   /** 风力等级（蒲福风级 0–12） */
   windLevel: number
   /** 分项预警等级 */
@@ -168,22 +170,28 @@ export const resolveTempAlert = (temp: number): { level: WeatherAlertLevel, kind
 }
 
 /**
- * 湿度独立预警（占位规则）
- * 高湿：蓝≥85 / 黄≥90 / 橙≥95 / 红≥98
- * 干燥：蓝≤20 / 黄≤15 / 橙≤10 / 红≤5
+ * 空气质量独立预警（对齐国标 AQI 类别）
+ * 轻度污染→蓝 / 中度→黄 / 重度→橙 / 严重→红；优、良无预警
  */
-export const resolveHumidityAlert = (
-  humidity: number,
-): { level: WeatherAlertLevel, kind: 'high' | 'low' | 'none' } => {
-  if (humidity >= 98) return { level: 'red', kind: 'high' }
-  if (humidity >= 95) return { level: 'orange', kind: 'high' }
-  if (humidity >= 90) return { level: 'yellow', kind: 'high' }
-  if (humidity >= 85) return { level: 'blue', kind: 'high' }
-  if (humidity <= 5) return { level: 'red', kind: 'low' }
-  if (humidity <= 10) return { level: 'orange', kind: 'low' }
-  if (humidity <= 15) return { level: 'yellow', kind: 'low' }
-  if (humidity <= 20) return { level: 'blue', kind: 'low' }
-  return { level: 'none', kind: 'none' }
+export const resolveAqiAlert = (
+  aqi: number | null | undefined,
+  category?: string,
+): WeatherAlertLevel => {
+  const cat = (category || '').trim()
+  if (cat.includes('严重')) return 'red'
+  if (cat.includes('重度')) return 'orange'
+  if (cat.includes('中度')) return 'yellow'
+  if (cat.includes('轻度')) return 'blue'
+  if (cat === '优' || cat === '良' || cat.includes('Good') || cat.includes('Excellent')) {
+    return 'none'
+  }
+  if (aqi == null || Number.isNaN(Number(aqi))) return 'none'
+  const n = Number(aqi)
+  if (n > 300) return 'red'
+  if (n > 200) return 'orange'
+  if (n > 150) return 'yellow'
+  if (n > 100) return 'blue'
+  return 'none'
 }
 
 /**
@@ -205,12 +213,13 @@ export const resolveWeatherAlert = (kind: WeatherKind): WeatherAlertLevel => KIN
 export const resolveWeatherAlerts = (
   kind: WeatherKind,
   temp: number,
-  humidity: number,
+  aqi: number | null,
+  aqiCategory: string,
   windLevel: number,
 ): WeatherAlerts => ({
   weather: resolveWeatherAlert(kind),
   temp: resolveTempAlert(temp).level,
-  humidity: resolveHumidityAlert(humidity).level,
+  aqi: resolveAqiAlert(aqi, aqiCategory),
   wind: resolveWindAlert(windLevel),
 })
 
@@ -220,7 +229,10 @@ export const mapWeatherNowToDashboard = (data: {
   kind: string
   label?: string
   temp: number
-  humidity: number
+  aqi?: number | null
+  aqiCategory?: string
+  /** @deprecated 兼容旧字段 */
+  humidity?: number
   windLevel: number
 }): DashboardWeather => {
   const kind = (Object.prototype.hasOwnProperty.call(KIND_META, data.kind)
@@ -228,7 +240,8 @@ export const mapWeatherNowToDashboard = (data: {
     : 'cloudy') as WeatherKind
   const meta = KIND_META[kind]
   const temp = Number(data.temp) || 0
-  const humidity = Number(data.humidity) || 0
+  const aqi = data.aqi == null || Number.isNaN(Number(data.aqi)) ? null : Number(data.aqi)
+  const aqiCategory = (data.aqiCategory || '').trim() || (aqi != null ? String(aqi) : '--')
   const windLevel = Number(data.windLevel) || 0
   return {
     city: data.city || getEnvWeatherCity(),
@@ -236,16 +249,17 @@ export const mapWeatherNowToDashboard = (data: {
     label: data.label || meta.label,
     iconSrc: meta.icon,
     temp,
-    humidity,
+    aqi,
+    aqiCategory,
     windLevel,
-    alerts: resolveWeatherAlerts(kind, temp, humidity, windLevel),
+    alerts: resolveWeatherAlerts(kind, temp, aqi, aqiCategory, windLevel),
   }
 }
 
 /** 列出当前生效的独立预警（用于顶栏文案） */
 export const listActiveWeatherAlerts = (weather: DashboardWeather): ActiveWeatherAlert[] => {
   const result: ActiveWeatherAlert[] = []
-  const { alerts, kind, temp, humidity } = weather
+  const { alerts, kind, temp } = weather
 
   if (alerts.weather !== 'none') {
     const name = WEATHER_ALERT_NAME[kind] || weatherKindLabel(kind)
@@ -266,13 +280,11 @@ export const listActiveWeatherAlerts = (weather: DashboardWeather): ActiveWeathe
     })
   }
 
-  if (alerts.humidity !== 'none') {
-    const humidityKind = resolveHumidityAlert(humidity).kind
-    const name = humidityKind === 'low' ? '干燥' : '高湿'
+  if (alerts.aqi !== 'none') {
     result.push({
-      key: 'humidity',
-      level: alerts.humidity,
-      label: `${name}${ALERT_COLOR_LABEL[alerts.humidity]}预警`,
+      key: 'aqi',
+      level: alerts.aqi,
+      label: `空气质量${ALERT_COLOR_LABEL[alerts.aqi]}预警`,
     })
   }
 
@@ -287,14 +299,21 @@ export const listActiveWeatherAlerts = (weather: DashboardWeather): ActiveWeathe
   return result
 }
 
-/** 演示用占位天气（后续替换为接口结果即可） */
+/** 演示用占位天气 */
 export const createMockWeather = (city = getEnvWeatherCity()): DashboardWeather => {
   const kinds = Object.keys(KIND_META) as WeatherKind[]
   const kind = kinds[Math.floor(Math.random() * kinds.length)]
   const meta = KIND_META[kind]
-  // 扩大温湿风随机范围，便于演示分项预警
+  const aqiSamples: Array<{ aqi: number, category: string }> = [
+    { aqi: 35, category: '优' },
+    { aqi: 72, category: '良' },
+    { aqi: 120, category: '轻度污染' },
+    { aqi: 175, category: '中度污染' },
+    { aqi: 250, category: '重度污染' },
+    { aqi: 350, category: '严重污染' },
+  ]
+  const air = aqiSamples[Math.floor(Math.random() * aqiSamples.length)]
   const temp = -15 + Math.floor(Math.random() * 58)
-  const humidity = 3 + Math.floor(Math.random() * 97)
   const windLevel = Math.floor(Math.random() * 13)
   return {
     city,
@@ -302,9 +321,10 @@ export const createMockWeather = (city = getEnvWeatherCity()): DashboardWeather 
     label: meta.label,
     iconSrc: meta.icon,
     temp,
-    humidity,
+    aqi: air.aqi,
+    aqiCategory: air.category,
     windLevel,
-    alerts: resolveWeatherAlerts(kind, temp, humidity, windLevel),
+    alerts: resolveWeatherAlerts(kind, temp, air.aqi, air.category, windLevel),
   }
 }
 

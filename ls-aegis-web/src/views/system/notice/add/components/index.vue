@@ -120,17 +120,34 @@ onUnmounted(() => {
 }
 
 .aie-container-panel {
-    width: calc(100% - 2rem - 2px);
-    max-width: 826.77px;
-    margin: 0rem auto;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
     border: 1px solid var(--color-border-1);
-    background-color: var() rgba($color: var(--color-bg-1), $alpha: 1.0);
+    background-color: var(--color-bg-1);
     height: 100%;
-    padding: 1rem;
+    padding: 1.5rem 2.25rem;
     z-index: 99;
     overflow: auto;
     box-sizing: border-box;
     color: black;
+
+    :deep(.aie-content),
+    :deep(.ProseMirror) {
+      font-size: 15px;
+      line-height: 1.9;
+      letter-spacing: 0.04em;
+      word-spacing: 0.12em;
+    }
+
+    :deep(.ProseMirror p) {
+      margin: 0 0 1.1em;
+    }
+
+    :deep(.ProseMirror li) {
+      margin: 0.35em 0;
+      line-height: 1.9;
+    }
 }
 
 .aie-main {

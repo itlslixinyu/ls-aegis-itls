@@ -55,22 +55,22 @@
               <template #actions="{ record }">
                 <a-space>
                   <a-tooltip v-if="record.status === 'waiting'" content="开始">
-                    <a-button size="mini" type="text" @click="startTask(record)"><IconPlayArrow /></a-button>
+                    <a-link @click="startTask(record)"><IconPlayArrow /></a-link>
                   </a-tooltip>
                   <a-tooltip v-if="record.status === 'uploading'" content="暂停">
-                    <a-button size="mini" type="text" @click="pauseTask(record)"><IconPause /></a-button>
+                    <a-link @click="pauseTask(record)"><IconPause /></a-link>
                   </a-tooltip>
                   <a-tooltip v-if="record.status === 'paused'" content="继续">
-                    <a-button size="mini" type="text" @click="resumeTask(record)"><IconPlayArrow /></a-button>
+                    <a-link @click="resumeTask(record)"><IconPlayArrow /></a-link>
                   </a-tooltip>
                   <a-tooltip v-if="record.status === 'failed'" content="重试">
-                    <a-button size="mini" type="text" @click="retryTask(record)"><IconRefresh /></a-button>
+                    <a-link @click="retryTask(record)"><IconRefresh /></a-link>
                   </a-tooltip>
                   <a-tooltip content="取消">
-                    <a-button v-if="record.status !== 'completed' && record.status !== 'cancelled'" size="mini" type="text" @click="cancelTask(record)"><IconClose /></a-button>
+                    <a-link v-if="record.status !== 'completed' && record.status !== 'cancelled'" @click="cancelTask(record)"><IconClose /></a-link>
                   </a-tooltip>
                   <a-tooltip content="删除">
-                    <a-button size="mini" type="text" status="danger" @click="removeTask(record)"><IconDelete /></a-button>
+                    <a-link status="danger" @click="removeTask(record)"><IconDelete /></a-link>
                   </a-tooltip>
                 </a-space>
               </template>
