@@ -133,6 +133,8 @@ onMounted(() => {
     align-items: center;
     justify-content: center;
     margin-bottom: 8px;
+    padding: 0 24px;
+    box-sizing: border-box;
 
     .notice-title {
       font-size: 1.25rem;
@@ -143,7 +145,7 @@ onMounted(() => {
 
     .notice-more {
       position: absolute;
-      right: 0;
+      right: 24px;
       top: 50%;
       transform: translateY(-50%);
     }
@@ -162,6 +164,10 @@ onMounted(() => {
 .notice-viewport {
   height: 56px;
   overflow: hidden;
+  width: 100%;
+  max-width: 450px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .notice-track {
