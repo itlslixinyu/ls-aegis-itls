@@ -5,7 +5,7 @@
 | 项 | 说明 |
 |---|---|
 | 产品名 | LS・Aegis（雷铄御警）安全应用构建平台 |
-| 当前版本 | [`VERSION`](./VERSION)（权威版本号，当前 **v1.3.2**） |
+| 当前版本 | [`VERSION`](./VERSION)（权威版本号，当前 **v1.3.4**） |
 | 后端 | `ls-aegis-server`（JDK 21 / Spring Boot 3，启动模块 `ls-aegis-boot`） |
 | 前端 | `ls-aegis-web`（Vue 3 + Vite + Arco Design） |
 | 部署 | `docker/`（MySQL / Redis / 后端 / Nginx） |
@@ -19,7 +19,7 @@
 - **安全底座**：Sa-Token 鉴权、RBAC、审计日志；密钥与口令走环境变量，禁止硬编码入库
 - **国密全链路**（`gm.enable` 默认 `true`）：传输 SM2、字段 SM4、摘要/口令 SM3；算法模块 `ls-aegis-crypto`（BouncyCastle 纯 Java）
 - **信创适配**：x86_64 / ARM64；银河麒麟、统信 UOS；达梦 / 人大金仓可配置切换（默认 MySQL）
-- **业务插件**：文件存储、短信、公告、开放能力、任务调度、多租户（租户默认不接入启动）
+- **业务插件**：文件存储、公告、开放能力、任务调度、多租户（租户默认不接入启动）
 - **一键部署**：Docker Compose；前端由 `docker/nginx` 多阶段镜像构建打入 Nginx，裸 clone 无需预同步静态资源
 
 ---

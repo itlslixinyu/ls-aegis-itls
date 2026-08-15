@@ -31,7 +31,7 @@ const tooltipItemsHtmlString = (items) => {
 
 const xAxis = ref<string[]>([])
 const chartData = ref<number[]>([])
-const { chartOption } = useChart((isDark: EChartsOption) => {
+const { chartOption } = useChart((isDark: boolean) => {
   return {
     grid: {
       left: '40',

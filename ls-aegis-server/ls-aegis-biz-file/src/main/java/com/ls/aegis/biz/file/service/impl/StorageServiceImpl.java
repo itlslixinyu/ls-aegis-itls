@@ -46,6 +46,8 @@ import top.continew.starter.core.util.SpringWebUtils;
 import top.continew.starter.core.util.validation.CheckUtils;
 import top.continew.starter.core.util.validation.ValidationUtils;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -184,9 +186,7 @@ public class StorageServiceImpl extends BaseServiceImpl<StorageMapper, StorageDO
         CopyOnWriteArrayList<FileStorage> fileStorageList = fileStorageService.getFileStorageList();
         switch (storage.getType()) {
             case LOCAL -> {
-                String storagePath = StrUtil.blankToDefault(storage.getBucketName(), StringConstants.EMPTY)
-                    .replace('\\', '/');
-                CheckUtils.throwIf(storagePath.contains(".."), "本地存储路径不能包含 ..");
+                String storagePath = resolveLocalStoragePath(storage.getBucketName());
                 FileStorageProperties.LocalPlusConfig config = new FileStorageProperties.LocalPlusConfig();
                 config.setPlatform(storage.getCode());
                 config.setStoragePath(storagePath);
@@ -220,9 +220,26 @@ public class StorageServiceImpl extends BaseServiceImpl<StorageMapper, StorageDO
         fileStorage.close();
         // 本地存储引擎需要移除资源映射
         if (StorageTypeEnum.LOCAL.equals(storage.getType())) {
-            SpringWebUtils.deRegisterResourceHandler(MapUtil.of(resolveLocalHandlerPath(storage.getDomain()), storage
-                .getBucketName()));
+            SpringWebUtils.deRegisterResourceHandler(MapUtil.of(resolveLocalHandlerPath(storage.getDomain()),
+                resolveLocalStoragePath(storage.getBucketName())));
         }
+    }
+
+    /**
+     * 将本地存储相对路径转为基于 {@code user.dir} 的绝对路径。
+     * <p>Hutool {@code FileUtil} 对相对路径会按 ClassPath（Fat JAR 内嵌套目录）解析，
+     * 而 Spring {@code file:} 资源映射按工作目录解析，二者不一致会导致「上传成功但无法访问」。
+     * 统一为绝对路径后，写入与静态资源映射落在同一目录（Docker 挂载 {@code /app/data/file}）。</p>
+     */
+    private String resolveLocalStoragePath(String bucketName) {
+        String storagePath = StrUtil.blankToDefault(bucketName, StringConstants.EMPTY).replace('\\', '/');
+        CheckUtils.throwIf(storagePath.contains(".."), "本地存储路径不能包含 ..");
+        Path path = Paths.get(storagePath);
+        if (!path.isAbsolute()) {
+            path = Paths.get(System.getProperty("user.dir")).resolve(path).toAbsolutePath().normalize();
+        }
+        storagePath = path.toString().replace('\\', '/');
+        return StrUtil.appendIfMissing(storagePath, StringConstants.SLASH);
     }
 
     /**

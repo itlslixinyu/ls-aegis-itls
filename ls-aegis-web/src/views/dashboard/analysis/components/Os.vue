@@ -15,7 +15,7 @@ import { type DashboardChartCommonResp, getAnalysisOs as getData } from '@/apis/
 
 const xAxis = ref<string[]>([])
 const chartData = ref([])
-const { chartOption } = useChart((isDark: EChartsOption) => {
+const { chartOption } = useChart((isDark: boolean) => {
   return {
     legend: {
       data: xAxis.value,

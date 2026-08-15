@@ -460,13 +460,9 @@ export interface UploadPartResp {
   errorMessage?: string
 }
 
-/** 分片上传 - 完成上传参数 */
+/** 分片上传 - 完成上传参数（后端按 uploadId 从缓存合并分片，无需客户端传 ETag） */
 export interface CompleteMultipartUploadReq {
   uploadId: string
-  partETags: Array<{
-    partNumber: number
-    eTag: string
-  }>
 }
 
 /** 分片上传 - 取消上传参数 */

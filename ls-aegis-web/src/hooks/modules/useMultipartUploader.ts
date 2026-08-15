@@ -25,7 +25,6 @@ export interface FileTask {
   fileDigest?: string // 文件指纹（国密 SM3）
   uploadId?: string // 分片上传ID
   path?: string // 文件路径（由后端返回）
-  partETags: Array<{ partNumber: number, eTag: string }> // 分片ETag列表
   errorMessage?: string // 错误信息
   abortController?: AbortController // 请求中断控制器
   _uploading?: boolean // 标记是否正在上传（内部控制）
@@ -266,13 +265,7 @@ export function useMultipartUploader(props: {
 
       // 检查上传是否成功
       if (res.data && res.data.success) {
-        // 保存ETag
-        task.partETags.push({
-          partNumber: chunkNumber,
-          eTag: res.data.partETag,
-        })
-
-        // 更新已上传分片列表
+        // 更新已上传分片列表（合并由后端按 uploadId 从缓存完成，无需回传 ETag）
         if (!task.uploadedChunks.includes(chunkNumber)) {
           task.uploadedChunks.push(chunkNumber)
         }
@@ -283,7 +276,6 @@ export function useMultipartUploader(props: {
         if (task.uploadedChunks.length >= task.totalChunks) {
           await completeMultipartUpload({
             uploadId: task.uploadId!,
-            partETags: task.partETags,
           })
           task.status = 'completed'
           task.progress = 1
@@ -460,7 +452,6 @@ export function useMultipartUploader(props: {
       if (!hasResumeData) {
         // 如果没有断点续传数据，重新初始化
         task.uploadedChunks = []
-        task.partETags = []
         task.progress = 0
       } else {
         // 有断点续传数据，计算当前进度
@@ -659,7 +650,6 @@ export function useMultipartUploader(props: {
         chunkSize: 0, // 初始化时设为0，后续由后端返回
         fileDigest: '',
         path: '', // 初始化时设为空，后续由后端返回
-        partETags: [],
         errorMessage: '', // 初始化错误信息
         abortController: new AbortController(), // 初始化请求中断控制器
         _retryCount: new Map(), // 初始化重试计数器
@@ -726,7 +716,6 @@ export function useMultipartUploader(props: {
       task.progress = 0
       // 重试时保留已上传的分片信息，支持断点续传
       // task.uploadedChunks = [] // 注释掉，保留断点续传数据
-      // task.partETags = [] // 注释掉，保留断点续传数据
       task._uploading = false
       task._retryCount = new Map() // 重置重试计数器
       task.errorMessage = '' // 清除错误信息

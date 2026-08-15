@@ -27,7 +27,7 @@
 ```
 ls-aegis-boot → ls-aegis-rbac / 各 ls-aegis-biz-* / ls-aegis-starter
 ls-aegis-biz-* → ls-aegis-starter（核心能力）
-ls-aegis-rbac → ls-aegis-starter + ls-aegis-biz-file/sms/notice（跨域协作）
+ls-aegis-rbac → ls-aegis-starter + ls-aegis-biz-file/notice（跨域协作）
 ls-aegis-starter → common / mybatis / redis / security / crypto
 ```
 
@@ -36,3 +36,7 @@ ls-aegis-starter → common / mybatis / redis / security / crypto
 ```bash
 mvn -DskipTests compile
 ```
+
+## 数据库变更
+
+Liquibase master（`db.changelog-master.yaml`）**当前仅启用 MySQL**；`postgresql/` 下脚本保留供方言切换，不含增量 patch。存量 MySQL 库升级依赖 `mysql/patch_*.sql`。

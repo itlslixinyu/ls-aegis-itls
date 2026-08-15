@@ -10,7 +10,7 @@
           :on-before-upload="onBeforeUpload"
         >
           <template #upload-button>
-            <Avatar :src="avatarSrc" :name="userStore.nickname" :size="100" trigger>
+            <Avatar :src="userInfo.avatar" :gender="userInfo.gender" :name="userStore.nickname" :size="100" trigger>
               <template #trigger-icon><icon-camera /></template>
             </Avatar>
           </template>
@@ -102,12 +102,10 @@ import BasicInfoUpdateModal from './BasicInfoUpdateModal.vue'
 import { uploadAvatar } from '@/apis/system'
 import 'vue-cropper/dist/index.css'
 import { useUserStore } from '@/stores'
-import getAvatar from '@/utils/avatar'
 
 const { width } = useWindowSize()
 const userStore = useUserStore()
 const userInfo = computed(() => userStore.userInfo)
-const avatarSrc = computed(() => getAvatar(userInfo.value.avatar, userInfo.value.gender))
 
 const options: cropperOptions = reactive({
   img: '',

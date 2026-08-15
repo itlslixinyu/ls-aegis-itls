@@ -42,6 +42,8 @@ interface Props {
   size?: string | number
   alt?: string
   trigger?: boolean
+  /** 无自定义头像且需要性别默认图时传入（如个人中心） */
+  gender?: number
 }
 
 const imgError = ref(false)
@@ -53,7 +55,15 @@ watch(
 )
 
 const displaySrc = computed(() => {
-  if (imgError.value || !props.src) {
+  if (imgError.value) {
+    // 自定义头像加载失败时用默认图，不用昵称首字顶替
+    return props.src ? Unknown : ''
+  }
+  if (!props.src) {
+    // 无自定义头像：个人中心等传入 gender 时用性别图，其它场景走昵称首字
+    if (props.gender === 1 || props.gender === 2) {
+      return getAvatar(undefined, props.gender)
+    }
     return ''
   }
   return getAvatar(props.src, undefined)

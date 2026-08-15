@@ -43,7 +43,11 @@ databaseChangeLog:
       file: db/changelog/mysql/patch_fix_storage_domain.sql
   - include:
       file: db/changelog/mysql/patch_clear_broken_avatar.sql
-# PostgreSQL
+  - include:
+      file: db/changelog/mysql/patch_file_check_permission.sql
+  - include:
+      file: db/changelog/mysql/patch_drop_sms_tables.sql
+# PostgreSQL（当前 master 仅启用 MySQL；PG 脚本保留供方言切换，不含上述 patch）
 #  - include:
 #      file: db/changelog/postgresql/main_table.sql
 #  - include:

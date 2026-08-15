@@ -97,9 +97,20 @@ onBeforeUnmount(() => {
 })
 
 const unreadMessageCount = ref(0)
+
+/** 解析 WebSocket 基址：优先环境变量，否则同源 ws/wss */
+const resolveWsBase = () => {
+  const configured = (import.meta.env.VITE_API_WS_URL || '').trim().replace(/\/$/, '')
+  if (configured) {
+    return configured
+  }
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${protocol}//${window.location.host}`
+}
+
 // 初始化 WebSocket
 const initWebSocket = (token: string) => {
-  socket = new WebSocket(`${import.meta.env.VITE_API_WS_URL}/websocket?token=${token}`)
+  socket = new WebSocket(`${resolveWsBase()}/websocket?token=${token}`)
   socket.onopen = () => {
     // console.log('WebSocket connection opened')
   }

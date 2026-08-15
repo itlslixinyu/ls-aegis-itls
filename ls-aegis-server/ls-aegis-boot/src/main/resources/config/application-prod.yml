@@ -139,7 +139,7 @@ logging:
     com.ls.aegis.boot: INFO
     top.continew.starter: INFO
   file:
-    path: ../logs
+    path: /app/logs
 
 --- ### 加密配置：密码编码器配置
 ## 整体国密：运行时以 ls-aegis-crypto gmPasswordEncoder 为准（新口令 SM3，校验兼容存量 BCrypt）

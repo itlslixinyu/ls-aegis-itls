@@ -15,7 +15,7 @@ import { type DashboardChartCommonResp, getAnalysisModule as getData } from '@/a
 
 const yAxis = ref<string[]>([])
 const chartData = ref([])
-const { chartOption } = useChart((isDark: EChartsOption) => {
+const { chartOption } = useChart((isDark: boolean) => {
   return {
     grid: {
       left: 55,
