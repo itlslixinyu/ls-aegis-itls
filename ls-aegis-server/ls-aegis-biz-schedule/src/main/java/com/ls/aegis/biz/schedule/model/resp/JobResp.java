@@ -18,7 +18,11 @@ package com.ls.aegis.biz.schedule.model.resp;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import com.ls.aegis.biz.schedule.enums.*;
+import com.ls.aegis.biz.schedule.enums.JobBlockStrategyEnum;
+import com.ls.aegis.biz.schedule.enums.JobRouteStrategyEnum;
+import com.ls.aegis.biz.schedule.enums.JobStatusEnum;
+import com.ls.aegis.biz.schedule.enums.JobTaskTypeEnum;
+import com.ls.aegis.biz.schedule.enums.JobTriggerTypeEnum;
 
 import java.io.Serial;
 import java.io.Serializable;

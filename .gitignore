@@ -44,6 +44,11 @@ data/gm/
 docker/.env
 *.env
 
+# 前端构建产物（由 pnpm build 后同步，勿入库）
+docker/nginx/web/**
+!docker/nginx/web/.gitkeep
+!docker/nginx/web/README.md
+
 # 换机迁移备份（含密钥/库 dump，禁止入库）
 backups/
 

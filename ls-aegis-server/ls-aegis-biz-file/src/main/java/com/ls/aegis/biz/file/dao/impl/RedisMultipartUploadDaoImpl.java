@@ -29,7 +29,11 @@ import top.continew.starter.cache.redisson.util.RedisUtils;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -46,7 +50,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Repository
-public class RedisMultipartUploadDaoDaoImpl implements MultipartUploadDao {
+public class RedisMultipartUploadDaoImpl implements MultipartUploadDao {
 
     @Override
     public String getUploadIdByMd5(String md5) {

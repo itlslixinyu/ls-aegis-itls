@@ -5,7 +5,6 @@
 <script setup lang="ts">
 import { registerMap } from 'echarts/core'
 import VCharts from 'vue-echarts'
-import worldMap from './world.json'
 import chinaMap from './china.json'
 
 defineProps({
@@ -29,7 +28,6 @@ defineProps({
   },
 })
 
-registerMap('world', worldMap)
 registerMap('china', chinaMap)
 
 const chart = ref(null)

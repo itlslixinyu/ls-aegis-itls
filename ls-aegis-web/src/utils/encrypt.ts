@@ -17,11 +17,6 @@ export function encryptBySm3(txt: string) {
   return sm3(txt)
 }
 
-/** @deprecated 请使用 encryptBySm3 */
-export function encryptByMd5(txt: string) {
-  return encryptBySm3(txt)
-}
-
 /** SM2 公钥十六进制（含 04），由后端下发 */
 let sm2PublicKeyHex = ''
 /** 与后端 gm.enable 同步，决定行为验证码用 SM4 还是 AES */
@@ -102,11 +97,6 @@ export async function encryptTransport(txt: string) {
   return cipher
 }
 
-/** @deprecated 兼容旧调用名，实际为 SM2 */
-export function encryptByRsa(txt: string) {
-  return encryptBySm2(txt)
-}
-
 /**
  * 行为验证码坐标加密：整体国密下 SM4/ECB/PKCS7（Base64）；仅 gm.enable=false 时回退 AES。
  */
@@ -127,12 +117,13 @@ export function encryptBySm4Ecb(word: string, keyWord: string) {
   return hexToBase64(cipherHex)
 }
 
-const defaultKeyWork = 'XwKsGlMcdPMEhR1B'
-
 /**
- * AES/ECB（仅 gm.enable=false 时行为验证码回退使用）
+ * AES/ECB（仅 gm.enable=false 时行为验证码回退使用；密钥必须由调用方传入，禁止默认硬编码）
  */
-export function encryptByAes(word: string, keyWord = defaultKeyWork) {
+export function encryptByAes(word: string, keyWord: string) {
+  if (!keyWord) {
+    throw new Error('AES 密钥未配置')
+  }
   const key = CryptoJS.enc.Utf8.parse(keyWord)
   const arcs = CryptoJS.enc.Utf8.parse(word)
   const encrypted = CryptoJS.AES.encrypt(arcs, key, {

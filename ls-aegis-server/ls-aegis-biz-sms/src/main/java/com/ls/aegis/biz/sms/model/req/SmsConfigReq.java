@@ -16,7 +16,8 @@
 
 package com.ls.aegis.biz.sms.model.req;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import lombok.Data;
 

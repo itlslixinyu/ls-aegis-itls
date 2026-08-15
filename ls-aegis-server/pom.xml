@@ -37,7 +37,7 @@
     </modules>
 
     <properties>
-        <revision>1.3.0</revision>
+        <revision>1.3.1</revision>
         <!-- 与 hutool-crypto 传递版本对齐；国密模块显式依赖 -->
         <bouncycastle.version>1.78.1</bouncycastle.version>
     </properties>

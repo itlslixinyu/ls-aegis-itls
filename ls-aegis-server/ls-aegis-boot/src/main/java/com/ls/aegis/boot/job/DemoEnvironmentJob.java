@@ -16,47 +16,66 @@
 
 package com.ls.aegis.boot.job;
 
+import java.util.List;
+import java.util.function.BooleanSupplier;
+
 import cn.hutool.core.util.StrUtil;
 import com.aizuda.snailjob.client.job.core.annotation.JobExecutor;
 import com.aizuda.snailjob.common.log.SnailJobLog;
 import com.baomidou.mybatisplus.core.plugins.IgnoreStrategy;
 import com.baomidou.mybatisplus.core.plugins.InterceptorIgnoreHelper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import com.ls.aegis.redis.constant.CacheConstants;
-import com.ls.aegis.biz.open.mapper.AppMapper;
-import com.ls.aegis.biz.open.model.entity.AppDO;
-import com.ls.aegis.rbac.mapper.*;
-import com.ls.aegis.rbac.mapper.user.UserMapper;
-import com.ls.aegis.rbac.mapper.user.UserSocialMapper;
-import com.ls.aegis.rbac.model.entity.*;
-import com.ls.aegis.rbac.model.entity.user.UserDO;
-import com.ls.aegis.rbac.model.entity.user.UserSocialDO;
+
 import com.ls.aegis.biz.file.mapper.StorageMapper;
 import com.ls.aegis.biz.file.model.entity.StorageDO;
-import com.ls.aegis.biz.notice.mapper.NoticeMapper;
-import com.ls.aegis.biz.notice.mapper.NoticeLogMapper;
-import com.ls.aegis.biz.notice.mapper.MessageMapper;
 import com.ls.aegis.biz.notice.mapper.MessageLogMapper;
-import com.ls.aegis.biz.notice.model.entity.NoticeDO;
-import com.ls.aegis.biz.notice.model.entity.NoticeLogDO;
+import com.ls.aegis.biz.notice.mapper.MessageMapper;
+import com.ls.aegis.biz.notice.mapper.NoticeLogMapper;
+import com.ls.aegis.biz.notice.mapper.NoticeMapper;
 import com.ls.aegis.biz.notice.model.entity.MessageDO;
 import com.ls.aegis.biz.notice.model.entity.MessageLogDO;
+import com.ls.aegis.biz.notice.model.entity.NoticeDO;
+import com.ls.aegis.biz.notice.model.entity.NoticeLogDO;
+import com.ls.aegis.biz.open.mapper.AppMapper;
+import com.ls.aegis.biz.open.model.entity.AppDO;
+import com.ls.aegis.rbac.mapper.ClientMapper;
+import com.ls.aegis.rbac.mapper.DeptMapper;
+import com.ls.aegis.rbac.mapper.DictItemMapper;
+import com.ls.aegis.rbac.mapper.DictMapper;
+import com.ls.aegis.rbac.mapper.MenuMapper;
+import com.ls.aegis.rbac.mapper.RoleDeptMapper;
+import com.ls.aegis.rbac.mapper.RoleMapper;
+import com.ls.aegis.rbac.mapper.RoleMenuMapper;
+import com.ls.aegis.rbac.mapper.UserRoleMapper;
+import com.ls.aegis.rbac.mapper.user.UserMapper;
+import com.ls.aegis.rbac.mapper.user.UserSocialMapper;
+import com.ls.aegis.rbac.model.entity.ClientDO;
+import com.ls.aegis.rbac.model.entity.DeptDO;
+import com.ls.aegis.rbac.model.entity.DictDO;
+import com.ls.aegis.rbac.model.entity.DictItemDO;
+import com.ls.aegis.rbac.model.entity.MenuDO;
+import com.ls.aegis.rbac.model.entity.RoleDO;
+import com.ls.aegis.rbac.model.entity.RoleDeptDO;
+import com.ls.aegis.rbac.model.entity.RoleMenuDO;
+import com.ls.aegis.rbac.model.entity.UserRoleDO;
+import com.ls.aegis.rbac.model.entity.user.UserDO;
+import com.ls.aegis.rbac.model.entity.user.UserSocialDO;
+import com.ls.aegis.redis.constant.CacheConstants;
 import top.continew.starter.cache.redisson.util.RedisUtils;
 import top.continew.starter.core.constant.StringConstants;
 import top.continew.starter.extension.tenant.annotation.TenantIgnore;
 
-import java.util.List;
-import java.util.function.BooleanSupplier;
-
 /**
- * 演示环境任务（任务示例）
+ * 演示环境任务（仅 {@code demo} Profile 加载，生产默认不注册）。
  * <p>多租户关闭后不再依赖 ls-aegis-biz-tenant Mapper；租户/套餐清理略过。</p>
  *
  * @author Charles7c
  * @since 2024/8/4 15:30
  */
+@Profile("demo")
 @Component
 @RequiredArgsConstructor
 public class DemoEnvironmentJob {

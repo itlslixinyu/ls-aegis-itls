@@ -21,7 +21,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
-import com.ls.aegis.biz.schedule.enums.*;
+import com.ls.aegis.biz.schedule.enums.JobBlockStrategyEnum;
+import com.ls.aegis.biz.schedule.enums.JobRouteStrategyEnum;
+import com.ls.aegis.biz.schedule.enums.JobStatusEnum;
+import com.ls.aegis.biz.schedule.enums.JobTaskTypeEnum;
+import com.ls.aegis.biz.schedule.enums.JobTriggerTypeEnum;
 
 import java.io.Serial;
 import java.io.Serializable;

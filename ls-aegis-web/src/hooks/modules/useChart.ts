@@ -15,9 +15,7 @@ export function useChart(sourceOption: optionsFn) {
   const appStore = useAppStore()
   const isDark = computed(() => appStore.theme === 'dark')
 
-  // echarts support https://echarts.apache.org/zh/theme-builder.html
-  // 这里不使用
-  // TODO 图表主题
+  // 按当前明暗主题生成 option（未接 ECharts 独立主题文件）
   const chartOption = computed<EChartsOption>(() => {
     return sourceOption(isDark.value)
   })
