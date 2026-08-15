@@ -588,17 +588,9 @@ onMounted(() => {
     nowText.value = dayjs().format('YYYY-MM-DD HH:mm:ss')
   }, 1000)
   noticeResizeObserver = new ResizeObserver(() => syncNoticeRepeats())
-  watch(
-    noticeTickerEl,
-    (el) => {
-      noticeResizeObserver?.disconnect()
-      if (el) {
-        noticeResizeObserver?.observe(el)
-        nextTick(syncNoticeRepeats)
-      }
-    },
-    { immediate: true, flush: 'post' },
-  )
+  if (noticeTickerEl.value) {
+    noticeResizeObserver.observe(noticeTickerEl.value)
+  }
 })
 
 watch(trendDays, () => {
@@ -608,6 +600,18 @@ watch(trendDays, () => {
 watch(noticeList, () => {
   nextTick(syncNoticeRepeats)
 })
+
+watch(
+  noticeTickerEl,
+  (el) => {
+    noticeResizeObserver?.disconnect()
+    if (el && noticeResizeObserver) {
+      noticeResizeObserver.observe(el)
+      nextTick(syncNoticeRepeats)
+    }
+  },
+  { flush: 'post' },
+)
 
 onBeforeUnmount(() => {
   if (clockTimer) clearInterval(clockTimer)
@@ -647,6 +651,9 @@ onBeforeUnmount(() => {
 }
 
 .notice-ticker__track {
+  margin: 0;
+  padding: 0;
+
   &.scroll {
     animation-name: notice-ticker-scroll;
     animation-timing-function: linear;
@@ -676,11 +683,6 @@ onBeforeUnmount(() => {
       color: #00d4ff;
     }
   }
-}
-
-.notice-ticker__track {
-  margin: 0;
-  padding: 0;
 }
 
 .notice-ticker__dot {
