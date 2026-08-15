@@ -212,6 +212,22 @@ COMMENT ON COLUMN "sys_user_social"."update_time"     IS '修改时间';
 COMMENT ON COLUMN "sys_user_social"."deleted"         IS '是否已删除（0：否；id：是）';
 COMMENT ON TABLE  "sys_user_social"                   IS '用户社会化关联表';
 
+CREATE TABLE IF NOT EXISTS "sys_user_preference" (
+    "id"          int8 NOT NULL,
+    "user_id"     int8 NOT NULL,
+    "ui_json"     text NOT NULL,
+    "create_time" timestamp NOT NULL,
+    "update_time" timestamp DEFAULT NULL,
+    PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX "uk_user_preference_user_id" ON "sys_user_preference" ("user_id");
+COMMENT ON COLUMN "sys_user_preference"."id"          IS 'ID';
+COMMENT ON COLUMN "sys_user_preference"."user_id"     IS '用户ID';
+COMMENT ON COLUMN "sys_user_preference"."ui_json"     IS '界面配置JSON';
+COMMENT ON COLUMN "sys_user_preference"."create_time" IS '创建时间';
+COMMENT ON COLUMN "sys_user_preference"."update_time" IS '修改时间';
+COMMENT ON TABLE  "sys_user_preference"               IS '用户界面偏好表';
+
 CREATE TABLE IF NOT EXISTS "sys_user_role" (
     "id"      int8 NOT NULL,
     "user_id" int8 NOT NULL,
@@ -524,7 +540,7 @@ CREATE TABLE IF NOT EXISTS "sys_file" (
     "extension"          varchar(100) DEFAULT NULL,
     "content_type"       varchar(255) DEFAULT NULL,
     "type"               int2         NOT NULL DEFAULT 1,
-    "sha256"       		 varchar(256) DEFAULT NULL,
+    "file_digest"        varchar(256) DEFAULT NULL,
     "metadata"           text         DEFAULT NULL,
     "thumbnail_name"     varchar(255) DEFAULT NULL,
     "thumbnail_size"     int8         DEFAULT NULL,
@@ -538,7 +554,7 @@ CREATE TABLE IF NOT EXISTS "sys_file" (
     PRIMARY KEY ("id")
 );
 CREATE INDEX "idx_file_type"        ON "sys_file" ("type");
-CREATE INDEX "idx_file_sha256"      ON "sys_file" ("sha256");
+CREATE INDEX "idx_file_digest"      ON "sys_file" ("file_digest");
 CREATE INDEX "idx_file_storage_id"  ON "sys_file" ("storage_id");
 CREATE INDEX "idx_file_create_user" ON "sys_file" ("create_user");
 CREATE INDEX "idx_file_update_user" ON "sys_file" ("update_user");
@@ -552,7 +568,7 @@ COMMENT ON COLUMN "sys_file"."path"               IS '路径';
 COMMENT ON COLUMN "sys_file"."extension"          IS '扩展名';
 COMMENT ON COLUMN "sys_file"."content_type"       IS '内容类型';
 COMMENT ON COLUMN "sys_file"."type"               IS '类型（0: 目录；1：其他；2：图片；3：文档；4：视频；5：音频）';
-COMMENT ON COLUMN "sys_file"."sha256"             IS 'SHA256值';
+COMMENT ON COLUMN "sys_file"."file_digest"        IS '文件指纹（国密下为 SM3；普通上传可能为存储引擎 SHA256）';
 COMMENT ON COLUMN "sys_file"."metadata"           IS '元数据';
 COMMENT ON COLUMN "sys_file"."thumbnail_name"     IS '缩略图名称';
 COMMENT ON COLUMN "sys_file"."thumbnail_size"     IS '缩略图大小（字节)';

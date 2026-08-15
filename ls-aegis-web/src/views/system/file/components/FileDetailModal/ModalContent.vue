@@ -28,10 +28,10 @@
         <span v-else>{{ formatFileSize(data.size) }}</span>
       </a-descriptions-item>
       <a-descriptions-item label="路径">{{ `${data.parentPath === '/' ? '' : data.parentPath}/${data.name}` }}</a-descriptions-item>
-      <a-descriptions-item v-if="data.sha256" label="SHA256">
-        <a-typography-paragraph copyable :copy-text="data.sha256">
+      <a-descriptions-item v-if="data.fileDigest" label="文件指纹(SM3)">
+        <a-typography-paragraph copyable :copy-text="data.fileDigest">
           <template #copy-tooltip>复制</template>
-          {{ data.sha256 }}
+          {{ data.fileDigest }}
         </a-typography-paragraph>
       </a-descriptions-item>
       <a-descriptions-item label="上传时间">{{ data.createTime }}</a-descriptions-item>

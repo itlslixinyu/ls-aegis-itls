@@ -25,14 +25,13 @@ package com.ls.aegis.biz.file.constant;
 public class MultipartUploadConstants {
     //todo 后续改为从配置文件读取
     /**
-     * 文件指纹到 uploadId 的映射前缀
+     * 文件指纹（SM3）到 uploadId 的映射前缀
      * <p>
-     * 用于存储文件指纹（国密 SM3）到 uploadId 的映射，实现秒传/续传。
-     * 键格式：multipart:md5_to_upload:{digest}（前缀历史兼容）
-     * 值格式：Hash结构，包含uploadId和fileInfo
+     * 键格式：multipart:digest_to_upload:{digest}
+     * 值格式：Hash，含 uploadId
      * </p>
      */
-    public static final String MD5_TO_UPLOAD_ID_PREFIX = "multipart:md5_to_upload:";
+    public static final String DIGEST_TO_UPLOAD_ID_PREFIX = "multipart:digest_to_upload:";
 
     /**
      * 分片上传信息前缀

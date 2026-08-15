@@ -2,8 +2,8 @@ import { sm3 } from 'sm-crypto'
 
 /**
  * 文件指纹 Worker：国密 SM3。
- * 分块并行计算块摘要后，再对块摘要十六进制串拼接做 SM3（结构与原 MD5 Worker 一致，便于大文件）。
- * 完成消息：digest（并带 md5 别名以兼容旧监听）。
+ * 分块并行计算块摘要后，再对块摘要十六进制串拼接做 SM3（结构与历史 MD5 Worker 一致，便于大文件）。
+ * 完成消息字段：digest（推荐）。
  */
 if (typeof globalThis !== 'undefined') {
   globalThis.addEventListener('message', (event) => {
@@ -72,6 +72,5 @@ async function calculateFileSm3(file: File, taskId: string, blockSize: number) {
     type: 'complete',
     taskId,
     digest,
-    md5: digest,
   })
 }

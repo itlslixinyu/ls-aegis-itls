@@ -129,3 +129,6 @@ Thumbs.db
 spring-boot-devtools.properties
 hs_err_pid*
 replay_pid*
+
+# 前端演示截图（不入库；本地备忘可自建）
+ls-aegis-web/.image/screenshot/

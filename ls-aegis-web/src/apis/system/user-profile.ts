@@ -26,3 +26,13 @@ export function updateUserPhone(data: { phone: string, captcha: string, oldPassw
 export function updateUserEmail(data: { email: string, captcha: string, oldPassword: string }) {
   return http.patch(`${BASE_URL}/email`, data)
 }
+
+/** @desc 查询账号绑定的界面配置 */
+export function getUserUiSettings() {
+  return http.get<App.AppSettings | null>(`${BASE_URL}/ui-settings`)
+}
+
+/** @desc 保存界面配置到当前账号 */
+export function saveUserUiSettings(data: App.AppSettings) {
+  return http.put(`${BASE_URL}/ui-settings`, data)
+}

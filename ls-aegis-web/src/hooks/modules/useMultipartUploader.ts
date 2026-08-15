@@ -22,7 +22,7 @@ export interface FileTask {
   fileName: string // 文件名
   fileType: string // 文件类型
   fileSize: number // 文件大小
-  fileMd5?: string // 文件指纹（国密 SM3，接口字段名保持 fileMd5）
+  fileDigest?: string // 文件指纹（国密 SM3）
   uploadId?: string // 分片上传ID
   path?: string // 文件路径（由后端返回）
   partETags: Array<{ partNumber: number, eTag: string }> // 分片ETag列表
@@ -71,10 +71,10 @@ export function useMultipartUploader(props: {
   const uploadQueue = ref<Array<{ task: FileTask, chunkNumber: number }>>([])
   const activeUploads = ref<Set<string>>(new Set()) // 正在上传的分片ID集合
 
-  const md5CalculatingTaskUid = ref<string | null>(null) // 文件指纹（SM3）计算中的任务 ID
+  const digestCalculatingTaskUid = ref<string | null>(null) // 文件指纹（SM3）计算中的任务 ID
   const performanceStats = ref<{
-    md5StartTime: number
-    md5EndTime: number
+    digestStartTime: number
+    digestEndTime: number
     uploadStartTime: number
     uploadEndTime: number
     totalTime: number
@@ -102,20 +102,20 @@ export function useMultipartUploader(props: {
       console.log('[Hooks] 初始化文件指纹 Worker（SM3）...')
       digestWorker = new Worker(new URL('../../utils/file-digest-worker.ts', import.meta.url), { type: 'module' })
       digestWorker.onmessage = function (e) {
-        const { type, taskId, digest, md5, error } = e.data
-        const value = digest || md5
+        const { type, taskId, digest, error } = e.data
+        const value = digest
 
         if (type === 'complete' && value) {
           const task = fileTasks.value.find((t) => t.uid === taskId)
           if (task) {
-            task.fileMd5 = value
-            md5CalculatingTaskUid.value = null
+            task.fileDigest = value
+            digestCalculatingTaskUid.value = null
             // eslint-disable-next-line no-console
             console.log(`[Hooks] SM3 指纹计算完成: ${task.fileName}, digest: ${value}`)
           }
         } else if (type === 'error') {
           console.error('文件指纹计算失败:', error)
-          md5CalculatingTaskUid.value = null
+          digestCalculatingTaskUid.value = null
         }
       }
     }
@@ -124,18 +124,18 @@ export function useMultipartUploader(props: {
   /**
    * 计算文件指纹（国密 SM3，Web Worker）
    */
-  function calcFileMd5(file: File, taskUid: string): Promise<string> {
+  function calcFileDigest(file: File, taskUid: string): Promise<string> {
     return new Promise((resolve, reject) => {
       if (!digestWorker) {
         initDigestWorker()
       }
 
       if (digestWorker) {
-        md5CalculatingTaskUid.value = taskUid
+        digestCalculatingTaskUid.value = taskUid
 
         performanceStats.value = {
-          md5StartTime: Date.now(),
-          md5EndTime: 0,
+          digestStartTime: Date.now(),
+          digestEndTime: 0,
           uploadStartTime: 0,
           uploadEndTime: 0,
           totalTime: 0,
@@ -162,7 +162,7 @@ export function useMultipartUploader(props: {
         })
 
         const handleComplete = (e: MessageEvent) => {
-          const { type, taskId, digest, md5, error } = e.data
+          const { type, taskId, digest, error } = e.data
           if (type === 'error' && taskId === taskUid) {
             digestWorker?.removeEventListener('message', handleComplete)
             reject(error || new Error('文件指纹计算失败'))
@@ -170,10 +170,10 @@ export function useMultipartUploader(props: {
           }
           if (type === 'complete' && taskId === taskUid) {
             digestWorker?.removeEventListener('message', handleComplete)
-            const value = digest || md5
+            const value = digest
             if (performanceStats.value) {
-              performanceStats.value.md5EndTime = Date.now()
-              const cost = performanceStats.value.md5EndTime - performanceStats.value.md5StartTime
+              performanceStats.value.digestEndTime = Date.now()
+              const cost = performanceStats.value.digestEndTime - performanceStats.value.digestStartTime
               // eslint-disable-next-line no-console
               console.log(`SM3 指纹计算完成，耗时: ${cost}ms，文件大小: ${formatFileSize(file.size)}`)
             }
@@ -395,14 +395,14 @@ export function useMultipartUploader(props: {
         // eslint-disable-next-line no-console
         console.log(`[Hooks] 任务 ${task.fileName} 没有 uploadId，准备调用 initMultipartUpload`)
         // 若没有文件指纹，先计算 SM3
-        if (!task.fileMd5) {
+        if (!task.fileDigest) {
           // eslint-disable-next-line no-console
           console.log(`[Hooks] 任务 ${task.fileName} 没有文件指纹，开始计算 SM3...`)
-          task.fileMd5 = await calcFileMd5(task.file, task.uid)
+          task.fileDigest = await calcFileDigest(task.file, task.uid)
         }
 
         // eslint-disable-next-line no-console
-        console.log(`[Hooks] 调用 initMultipartUpload: ${task.fileName}, digest: ${task.fileMd5}, 路径: ${task.parentPath}`)
+        console.log(`[Hooks] 调用 initMultipartUpload: ${task.fileName}, digest: ${task.fileDigest}, 路径: ${task.parentPath}`)
 
         // 确保parentPath不是空字符串，如果是则使用"/"
         const parentPath = task.parentPath && task.parentPath !== '' ? task.parentPath : '/'
@@ -410,7 +410,7 @@ export function useMultipartUploader(props: {
         const res = await initMultipartUpload({
           fileName: task.fileName,
           fileSize: task.fileSize,
-          fileMd5: task.fileMd5,
+          fileDigest: task.fileDigest,
           parentPath,
           metaData: {
             contentType: task.fileType,
@@ -657,7 +657,7 @@ export function useMultipartUploader(props: {
         uploadedChunks: [],
         totalChunks: 0,
         chunkSize: 0, // 初始化时设为0，后续由后端返回
-        fileMd5: '',
+        fileDigest: '',
         path: '', // 初始化时设为空，后续由后端返回
         partETags: [],
         errorMessage: '', // 初始化错误信息
@@ -666,8 +666,8 @@ export function useMultipartUploader(props: {
       }
 
       // 立即开始计算 SM3 指纹，但不自动开始上传
-      calcFileMd5(file, task.uid).then((digest) => {
-        task.fileMd5 = digest
+      calcFileDigest(file, task.uid).then((digest) => {
+        task.fileDigest = digest
       }).catch((_error) => {
         task.status = 'failed'
         task.errorMessage = '文件指纹（SM3）计算失败'
@@ -795,6 +795,6 @@ export function useMultipartUploader(props: {
     clearAllTasks,
     removeTask,
     formatFileSize,
-    md5CalculatingTaskUid,
+    digestCalculatingTaskUid,
   }
 }

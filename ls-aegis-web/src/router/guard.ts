@@ -1,7 +1,7 @@
 import { Button, Message, Notification, Space } from '@arco-design/web-vue'
 import NProgress from 'nprogress'
 import type { Router } from 'vue-router'
-import { useRouteStore, useUserStore } from '@/stores'
+import { useAppStore, useRouteStore, useUserStore } from '@/stores'
 import { getToken } from '@/utils/auth'
 import { isHttp } from '@/utils/validate'
 import 'nprogress/nprogress.css'
@@ -93,6 +93,12 @@ export const setupRouterGuard = (router: Router) => {
         if (!hasRouteFlag) {
           try {
             await userStore.getInfo()
+            const appStore = useAppStore()
+            try {
+              await appStore.loadAccountSettings()
+            } catch {
+              // 偏好拉取失败不阻断登录，继续使用本地缓存/默认配置
+            }
             if (userStore.userInfo.pwdExpired && to.path !== '/pwdExpired') {
               Message.warning('密码已过期或为初始密码，请先修改后再使用系统')
               hasRouteFlag = true

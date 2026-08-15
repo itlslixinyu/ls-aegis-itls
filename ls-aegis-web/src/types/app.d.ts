@@ -11,6 +11,8 @@ declare namespace App {
     menuDark: boolean
     copyrightDisplay: boolean
     layout: 'left' | 'mix' | 'columns' | 'top'
+    /** 是否显示面包屑 */
+    showBreadcrumb: boolean
     isOpenWatermark?: boolean
     watermark?: string
     enableColorWeaknessMode?: boolean

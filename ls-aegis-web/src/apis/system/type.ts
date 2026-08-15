@@ -221,7 +221,8 @@ export interface FileItem {
   url: string
   parentPath: string
   path: string
-  sha256: string
+  /** 文件指纹（SM3） */
+  fileDigest?: string
   contentType: string
   metadata: string
   thumbnailSize: number
@@ -478,7 +479,8 @@ export interface MessagePageQuery extends MessageQuery, PageQuery {
 export interface MultiPartUploadInitReq {
   fileName: string
   fileSize: number
-  fileMd5: string
+  /** 文件指纹（SM3） */
+  fileDigest: string
   parentPath: string
   metaData: Record<string, string>
 }

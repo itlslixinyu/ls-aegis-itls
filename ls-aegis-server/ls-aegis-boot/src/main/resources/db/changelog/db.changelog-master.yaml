@@ -31,6 +31,10 @@ databaseChangeLog:
       file: db/changelog/mysql/patch_site_company_short.sql
   - include:
       file: db/changelog/mysql/patch_remove_sms_menus.sql
+  - include:
+      file: db/changelog/mysql/patch_file_digest_rename.sql
+  - include:
+      file: db/changelog/mysql/patch_user_preference.sql
 # PostgreSQL
 #  - include:
 #      file: db/changelog/postgresql/main_table.sql

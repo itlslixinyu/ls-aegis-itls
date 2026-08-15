@@ -1,0 +1,21 @@
+# 仅用于 docker/nginx 镜像构建（compose context = 仓库根）
+# 缩小上下文，避免把后端/数据/报告打进 build context
+
+.git
+.cursor
+.idea
+.vscode
+backups
+reports
+scripts
+**/node_modules
+**/target
+**/dist
+**/*.log
+docker/data
+docker/ls-aegis-server
+docker/redis
+docker/nginx/web
+ls-aegis-server
+*.md
+!docker/nginx/README.md

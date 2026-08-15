@@ -4,10 +4,16 @@
       <MenuFoldBtn></MenuFoldBtn>
     </section>
     <a-row align="center" class="h-full header-right">
-      <a-col :xs="0" :md="10" :lg="10" :xl="12" :xxl="12">
+      <a-col v-if="appStore.showBreadcrumb !== false" :xs="0" :md="10" :lg="10" :xl="12" :xxl="12">
         <Breadcrumb></Breadcrumb>
       </a-col>
-      <a-col :xs="24" :md="14" :lg="14" :xl="12" :xxl="12">
+      <a-col
+        :xs="24"
+        :md="appStore.showBreadcrumb !== false ? 14 : 24"
+        :lg="appStore.showBreadcrumb !== false ? 14 : 24"
+        :xl="appStore.showBreadcrumb !== false ? 12 : 24"
+        :xxl="appStore.showBreadcrumb !== false ? 12 : 24"
+      >
         <a-row justify="end" align="center">
           <HeaderRightBar></HeaderRightBar>
         </a-row>
@@ -19,8 +25,11 @@
 <script setup lang="ts">
 import HeaderRightBar from '../HeaderRightBar/index.vue'
 import MenuFoldBtn from '../MenuFoldBtn.vue'
+import { useAppStore } from '@/stores'
 
 defineOptions({ name: 'LayoutHeader' })
+
+const appStore = useAppStore()
 </script>
 
 <style scoped lang="scss">

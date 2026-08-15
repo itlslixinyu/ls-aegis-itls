@@ -63,10 +63,10 @@ public class MultipartUploadInitResp implements Serializable {
     private String fileName;
 
     /**
-     * 文件指纹（SM3，字段名 fileMd5 保持兼容）
+     * 文件指纹（SM3）
      */
     @Schema(description = "文件指纹（SM3）")
-    private String fileMd5;
+    private String fileDigest;
 
     /**
      * 文件大小
@@ -115,5 +115,4 @@ public class MultipartUploadInitResp implements Serializable {
      */
     @Schema(description = "已上传分片编号集合")
     private Set<Integer> uploadedPartNumbers;
-
 }

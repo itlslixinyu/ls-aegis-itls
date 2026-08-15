@@ -26,7 +26,7 @@ import java.util.Map;
  * 分片上传持久化接口
  * <p>
  * 纯粹的缓存操作，不包含业务逻辑：
- * 1. MD5到uploadId的映射管理
+ * 1. 文件指纹（SM3）到 uploadId 的映射
  * 2. 分片信息缓存
  * 3. 上传状态缓存
  * </p>
@@ -37,27 +37,27 @@ import java.util.Map;
 public interface MultipartUploadDao {
 
     /**
-     * 根据MD5获取uploadId
+     * 根据文件指纹获取 uploadId
      *
-     * @param md5 文件MD5值
-     * @return uploadId，如果不存在则返回null
+     * @param digest 文件指纹（SM3）
+     * @return uploadId，不存在则 null
      */
-    String getUploadIdByMd5(String md5);
+    String getUploadIdByDigest(String digest);
 
     /**
-     * 缓存MD5到uploadId的映射
+     * 缓存指纹 → uploadId
      *
-     * @param md5      文件MD5值
-     * @param uploadId 上传ID
+     * @param digest   文件指纹（SM3）
+     * @param uploadId 上传 ID
      */
-    void setMd5Mapping(String md5, String uploadId);
+    void setDigestMapping(String digest, String uploadId);
 
     /**
-     * 删除MD5映射
+     * 删除指纹映射
      *
-     * @param md5 文件MD5值
+     * @param digest 文件指纹（SM3）
      */
-    void deleteMd5Mapping(String md5);
+    void deleteDigestMapping(String digest);
 
     /**
      * 设置缓存分片上传信息

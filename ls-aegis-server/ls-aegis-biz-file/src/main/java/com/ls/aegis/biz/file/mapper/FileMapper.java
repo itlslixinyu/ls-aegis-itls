@@ -99,4 +99,22 @@ public interface FileMapper extends BaseMapper<FileDO> {
      */
     @Update("UPDATE sys_file SET deleted = id, update_user = #{userId}, update_time = NOW() WHERE deleted = 1")
     void cleanRecycleBin(@Param("userId") Long userId);
+
+    /**
+     * 指纹迁移：正常文件（deleted=0）游标分页
+     */
+    @Select("SELECT * FROM sys_file WHERE type != 0 AND deleted = 0 AND id > #{lastId} ORDER BY id LIMIT #{limit}")
+    List<FileDO> selectActiveForDigestMigration(@Param("lastId") long lastId, @Param("limit") int limit);
+
+    /**
+     * 指纹迁移：正常 + 回收站（deleted=0/1）游标分页，不含彻底删除（deleted=id）
+     */
+    @Select("SELECT * FROM sys_file WHERE type != 0 AND deleted IN (0, 1) AND id > #{lastId} ORDER BY id LIMIT #{limit}")
+    List<FileDO> selectActiveAndRecycleForDigestMigration(@Param("lastId") long lastId, @Param("limit") int limit);
+
+    /**
+     * 指纹迁移：按主键更新 file_digest（原生 SQL，不受逻辑删除过滤）
+     */
+    @Update("UPDATE sys_file SET file_digest = #{fileDigest} WHERE id = #{id}")
+    int updateFileDigestById(@Param("id") Long id, @Param("fileDigest") String fileDigest);
 }

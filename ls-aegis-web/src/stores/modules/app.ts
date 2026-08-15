@@ -2,11 +2,19 @@ import { defineStore } from 'pinia'
 import { computed, reactive, toRefs } from 'vue'
 import { generate, getRgbStr } from '@arco-design/color'
 import { type BasicConfig, listSiteOptionDict } from '@/apis/system'
+import { getUserUiSettings } from '@/apis/system/user-profile'
 import { getSettings } from '@/config/setting'
 
 const storeSetup = () => {
   // App配置
   const settingConfig = reactive({ ...getSettings() }) as App.AppSettings
+  // 兼容旧本地缓存：缺省字段补齐
+  if (settingConfig.showBreadcrumb === undefined) {
+    settingConfig.showBreadcrumb = true
+  }
+  if (settingConfig.isOpenWatermark === undefined) {
+    settingConfig.isOpenWatermark = false
+  }
   // 页面切换动画类名
   const transitionName = computed(() => (settingConfig.animate ? settingConfig.animateMode : ''))
 
@@ -52,6 +60,49 @@ const storeSetup = () => {
   // 设置左侧菜单折叠状态
   const setMenuCollapse = (collapsed: boolean) => {
     settingConfig.menuCollapse = collapsed
+  }
+
+  /** 导出当前可持久化的界面配置 */
+  const exportSettings = (): App.AppSettings => {
+    return {
+      theme: settingConfig.theme,
+      themeColor: settingConfig.themeColor,
+      tab: settingConfig.tab,
+      tabMode: settingConfig.tabMode,
+      animate: settingConfig.animate,
+      animateMode: settingConfig.animateMode,
+      menuCollapse: settingConfig.menuCollapse,
+      menuAccordion: settingConfig.menuAccordion,
+      menuDark: settingConfig.menuDark,
+      copyrightDisplay: settingConfig.copyrightDisplay,
+      layout: settingConfig.layout,
+      showBreadcrumb: settingConfig.showBreadcrumb,
+      isOpenWatermark: settingConfig.isOpenWatermark,
+      watermark: settingConfig.watermark,
+      enableColorWeaknessMode: settingConfig.enableColorWeaknessMode,
+      enableMourningMode: settingConfig.enableMourningMode,
+    }
+  }
+
+  /** 应用账号绑定的界面配置（覆盖本地） */
+  const applySettings = (settings: Partial<App.AppSettings>) => {
+    if (!settings) return
+    Object.assign(settingConfig, settings)
+    if (settingConfig.showBreadcrumb === undefined) {
+      settingConfig.showBreadcrumb = true
+    }
+    if (settingConfig.isOpenWatermark === undefined) {
+      settingConfig.isOpenWatermark = false
+    }
+    toggleTheme(settingConfig.theme === 'dark')
+  }
+
+  /** 登录后拉取并应用账号界面配置 */
+  const loadAccountSettings = async () => {
+    const res = await getUserUiSettings()
+    if (res.data) {
+      applySettings(res.data)
+    }
   }
 
   // 系统配置配置
@@ -161,6 +212,9 @@ const storeSetup = () => {
     setThemeColor,
     initTheme,
     setMenuCollapse,
+    exportSettings,
+    applySettings,
+    loadAccountSettings,
     initSiteConfig,
     setSiteConfig,
     getFavicon,

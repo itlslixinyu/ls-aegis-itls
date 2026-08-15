@@ -93,10 +93,10 @@ public class FileResp extends BaseDetailResp {
     private FileTypeEnum type;
 
     /**
-     * SHA256 值
+     * 文件指纹（SM3）
      */
-    @Schema(description = "SHA256 值", example = "722f185c48bed892d6fa12e2b8bf1e5f8200d4a70f522fb62112b6caf13cb74e")
-    private String sha256;
+    @Schema(description = "文件指纹（SM3）", example = "722f185c48bed892d6fa12e2b8bf1e5f8200d4a70f522fb62112b6caf13cb74e")
+    private String fileDigest;
 
     /**
      * 元数据

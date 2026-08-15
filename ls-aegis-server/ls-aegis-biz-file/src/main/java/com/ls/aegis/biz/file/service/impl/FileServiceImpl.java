@@ -28,6 +28,7 @@ import org.dromara.x.file.storage.core.FileInfo;
 import org.dromara.x.file.storage.core.FileStorageService;
 import org.dromara.x.file.storage.core.ProgressListener;
 import org.dromara.x.file.storage.core.upload.UploadPretreatment;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +36,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.ls.aegis.mybatis.base.service.BaseServiceImpl;
 import com.ls.aegis.common.context.UserContextHolder;
 import com.ls.aegis.common.enums.DisEnableStatusEnum;
+import com.ls.aegis.crypto.api.IGmCrypto;
+import com.ls.aegis.biz.file.constant.FileDigestConstants;
 import com.ls.aegis.biz.file.enums.FileTypeEnum;
 import com.ls.aegis.biz.file.mapper.FileMapper;
 import com.ls.aegis.biz.file.model.entity.FileDO;
@@ -45,6 +48,7 @@ import com.ls.aegis.biz.file.model.resp.file.FileResp;
 import com.ls.aegis.biz.file.model.resp.file.FileStatisticsResp;
 import com.ls.aegis.biz.file.service.FileService;
 import com.ls.aegis.biz.file.service.StorageService;
+import com.ls.aegis.biz.file.util.FileDigestUtils;
 import top.continew.starter.cache.redisson.util.RedisLockUtils;
 import top.continew.starter.core.constant.StringConstants;
 import top.continew.starter.core.util.CollUtils;
@@ -53,6 +57,8 @@ import top.continew.starter.core.util.validation.CheckUtils;
 import top.continew.starter.core.util.validation.ValidationUtils;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -70,6 +76,7 @@ import java.util.stream.Collectors;
 public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileResp, FileResp, FileQuery, FileReq> implements FileService {
 
     private final FileStorageService fileStorageService;
+    private final ObjectProvider<IGmCrypto> gmCryptoProvider;
     @Lazy
     @Resource
     private StorageService storageService;
@@ -159,7 +166,7 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
 
     @Override
     public FileResp check(String fileHash) {
-        FileDO file = baseMapper.lambdaQuery().eq(FileDO::getSha256, fileHash).one();
+        FileDO file = baseMapper.lambdaQuery().eq(FileDO::getFileDigest, fileHash).one();
         if (file != null) {
             return get(file.getId());
         }
@@ -225,13 +232,14 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
         List<String> allExtensions = FileTypeEnum.getAllExtensions();
         CheckUtils.throwIf(!allExtensions.contains(extName), "不支持的文件类型，仅支持 {} 格式的文件", String
             .join(StringConstants.COMMA, allExtensions));
-        // 构建上传预处理对象
+        // 构建上传预处理对象（指纹统一 SM3，不使用引擎 SHA256）
         StorageDO storage = storageService.getByCode(storageCode);
         CheckUtils.throwIf(DisEnableStatusEnum.DISABLE.equals(storage.getStatus()), "请先启用存储 [{}]", storage.getCode());
+        String fileDigest = computeSm3Hex(file);
         UploadPretreatment uploadPretreatment = fileStorageService.of(file)
             .setPlatform(storage.getCode())
-            .setHashCalculatorSha256(true)
             .putAttr(ClassUtil.getClassName(StorageDO.class, false), storage)
+            .putAttr(FileDigestConstants.ATTR_FILE_DIGEST, fileDigest)
             .setPath(this.pretreatmentPath(parentPath));
         // 图片文件生成缩略图
         if (FileTypeEnum.IMAGE.getExtensions().contains(extName)) {
@@ -258,6 +266,25 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
         this.createParentDir(parentPath, storage);
         // 上传
         return uploadPretreatment.upload();
+    }
+
+    /**
+     * 计算文件 SM3 指纹（国密关闭时仍用 SM3，保证 file_digest 算法一致）
+     */
+    private String computeSm3Hex(Object file) {
+        try {
+            byte[] data;
+            if (file instanceof MultipartFile multipartFile) {
+                data = multipartFile.getBytes();
+            } else if (file instanceof File localFile) {
+                data = Files.readAllBytes(localFile.toPath());
+            } else {
+                throw new IllegalArgumentException("不支持的文件类型: " + file.getClass().getName());
+            }
+            return FileDigestUtils.sm3Hex(data, gmCryptoProvider);
+        } catch (IOException e) {
+            throw new IllegalStateException("读取文件内容计算指纹失败", e);
+        }
     }
 
     /**

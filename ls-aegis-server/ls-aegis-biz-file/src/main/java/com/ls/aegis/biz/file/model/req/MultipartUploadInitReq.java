@@ -17,9 +17,9 @@
 package com.ls.aegis.biz.file.model.req;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Min;
 import lombok.Data;
 
 import java.io.Serial;
@@ -55,11 +55,11 @@ public class MultipartUploadInitReq implements Serializable {
     private Long fileSize;
 
     /**
-     * 文件指纹（国密开启时前端传 SM3；字段名 fileMd5 保持兼容）
+     * 文件指纹（SM3）
      */
     @Schema(description = "文件指纹（SM3）", example = "dc1fd00e3eeeb940ff46f457bf97d66ba7fcc36e0b20802383de142860e76ae6")
     @NotBlank(message = "文件指纹不能为空")
-    private String fileMd5;
+    private String fileDigest;
 
     /**
      * 文件MIME类型

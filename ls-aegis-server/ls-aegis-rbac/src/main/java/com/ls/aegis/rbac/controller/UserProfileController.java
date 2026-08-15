@@ -36,6 +36,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -51,6 +52,7 @@ import com.ls.aegis.rbac.model.req.user.UserPasswordUpdateReq;
 import com.ls.aegis.rbac.model.req.user.UserPhoneUpdateReq;
 import com.ls.aegis.rbac.model.resp.AvatarResp;
 import com.ls.aegis.rbac.model.resp.user.UserSocialBindResp;
+import com.ls.aegis.rbac.service.UserPreferenceService;
 import com.ls.aegis.rbac.service.UserService;
 import com.ls.aegis.rbac.service.UserSocialService;
 import top.continew.starter.cache.redisson.util.RedisUtils;
@@ -60,6 +62,7 @@ import top.continew.starter.core.util.validation.ValidationUtils;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 个人信息 API
@@ -78,7 +81,20 @@ public class UserProfileController {
     private static final String CAPTCHA_EXPIRED = "验证码已失效";
     private final UserService userService;
     private final UserSocialService userSocialService;
+    private final UserPreferenceService userPreferenceService;
     private final JustAuthProperties authProperties;
+
+    @Operation(summary = "查询界面配置", description = "查询当前登录用户绑定的界面样式配置")
+    @GetMapping("/ui-settings")
+    public Map<String, Object> getUiSettings() {
+        return userPreferenceService.getUiSettings(UserContextHolder.getUserId());
+    }
+
+    @Operation(summary = "保存界面配置", description = "将当前界面样式永久绑定到当前登录账号")
+    @PutMapping("/ui-settings")
+    public void saveUiSettings(@RequestBody Map<String, Object> settings) {
+        userPreferenceService.saveUiSettings(settings, UserContextHolder.getUserId());
+    }
 
     @Operation(summary = "修改头像", description = "用户修改个人头像")
     @PatchMapping("/avatar")

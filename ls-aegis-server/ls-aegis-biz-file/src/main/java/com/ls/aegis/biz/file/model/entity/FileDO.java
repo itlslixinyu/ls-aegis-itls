@@ -25,6 +25,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.dromara.x.file.storage.core.FileInfo;
 import com.ls.aegis.mybatis.base.model.entity.BaseDO;
+import com.ls.aegis.biz.file.constant.FileDigestConstants;
 import com.ls.aegis.biz.file.enums.FileTypeEnum;
 import top.continew.starter.core.constant.StringConstants;
 
@@ -86,9 +87,9 @@ public class FileDO extends BaseDO {
     private FileTypeEnum type;
 
     /**
-     * SHA256 值
+     * 文件指纹（统一 SM3）
      */
-    private String sha256;
+    private String fileDigest;
 
     /**
      * 元数据
@@ -139,7 +140,8 @@ public class FileDO extends BaseDO {
         this.extension = fileInfo.getExt();
         this.contentType = fileInfo.getContentType();
         this.type = FileTypeEnum.getByExtension(this.extension);
-        this.sha256 = fileInfo.getHashInfo().getSha256();
+        Object digestAttr = fileInfo.getAttr() != null ? fileInfo.getAttr().get(FileDigestConstants.ATTR_FILE_DIGEST) : null;
+        this.fileDigest = digestAttr != null ? digestAttr.toString() : null;
         this.metadata = JSONUtil.toJsonStr(fileInfo.getMetadata());
         this.thumbnailName = fileInfo.getThFilename();
         this.thumbnailSize = fileInfo.getThSize();

@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
  * Redis分片上传缓存实现
  * <p>
  * 核心功能：
- * 1. MD5到uploadId的映射管理
+ * 1. 文件指纹（SM3）到 uploadId 的映射
  * 2. 分片信息缓存
  * 3. 上传状态缓存
  * </p>
@@ -53,43 +53,37 @@ import java.util.stream.Collectors;
 public class RedisMultipartUploadDaoImpl implements MultipartUploadDao {
 
     @Override
-    public String getUploadIdByMd5(String md5) {
-        String md5Key = MultipartUploadConstants.MD5_TO_UPLOAD_ID_PREFIX + md5;
+    public String getUploadIdByDigest(String digest) {
+        String key = MultipartUploadConstants.DIGEST_TO_UPLOAD_ID_PREFIX + digest;
         try {
-            return RedisUtils.hGet(md5Key, "uploadId");
+            return RedisUtils.hGet(key, "uploadId");
         } catch (Exception e) {
-            log.error("根据MD5获取uploadId失败: md5={}", md5, e);
+            log.error("根据文件指纹获取uploadId失败: digest={}", digest, e);
             return null;
         }
     }
 
     @Override
-    public void setMd5Mapping(String md5, String uploadId) {
-        String md5Key = MultipartUploadConstants.MD5_TO_UPLOAD_ID_PREFIX + md5;
+    public void setDigestMapping(String digest, String uploadId) {
+        String key = MultipartUploadConstants.DIGEST_TO_UPLOAD_ID_PREFIX + digest;
         try {
-            RedisUtils.hSet(md5Key, "uploadId", uploadId);
-            RedisUtils.expire(md5Key, Duration.ofHours(MultipartUploadConstants.DEFAULT_EXPIRE_HOURS));
-            log.debug("缓存MD5映射: md5={}, uploadId={}", md5, uploadId);
+            RedisUtils.hSet(key, "uploadId", uploadId);
+            RedisUtils.expire(key, Duration.ofHours(MultipartUploadConstants.DEFAULT_EXPIRE_HOURS));
+            log.debug("缓存文件指纹映射: digest={}, uploadId={}", digest, uploadId);
         } catch (Exception e) {
-            log.error("缓存MD5映射失败: md5={}, uploadId={}", md5, uploadId, e);
-            throw new RuntimeException("缓存MD5映射失败", e);
+            log.error("缓存文件指纹映射失败: digest={}, uploadId={}", digest, uploadId, e);
+            throw new RuntimeException("缓存文件指纹映射失败", e);
         }
     }
 
     @Override
-    public void deleteMd5Mapping(String md5) {
-        String md5Key = MultipartUploadConstants.MD5_TO_UPLOAD_ID_PREFIX + md5;
+    public void deleteDigestMapping(String digest) {
         try {
-            RedisUtils.delete(md5Key);
-            log.debug("删除MD5映射: md5={}", md5);
+            RedisUtils.delete(MultipartUploadConstants.DIGEST_TO_UPLOAD_ID_PREFIX + digest);
+            log.debug("删除文件指纹映射: digest={}", digest);
         } catch (Exception e) {
-            log.error("删除MD5映射失败: md5={}", md5, e);
+            log.error("删除文件指纹映射失败: digest={}", digest, e);
         }
-    }
-
-    private String getMd5Mapping(String uploadId) {
-        List<Object> list = RedisUtils.getList(MultipartUploadConstants.MD5_TO_UPLOAD_ID_PREFIX);
-        return null;
     }
 
     @Override
@@ -139,11 +133,13 @@ public class RedisMultipartUploadDaoImpl implements MultipartUploadDao {
             String metadataKey = MultipartUploadConstants.MULTIPART_METADATA_PREFIX + uploadId;
             String expireKey = MultipartUploadConstants.MULTIPART_EXPIRE_PREFIX + uploadId;
 
-            // 先获取MD5信息，再删除数据
+            // 先取指纹再删映射与数据
             MultipartUploadInitResp initResp = getMultipartUpload(uploadId);
-            String fileMd5 = initResp.getFileMd5();
-            if (StrUtil.isNotBlank(fileMd5)) {
-                deleteMd5Mapping(fileMd5);
+            if (initResp != null) {
+                String digest = initResp.getFileDigest();
+                if (StrUtil.isNotBlank(digest)) {
+                    deleteDigestMapping(digest);
+                }
             }
 
             // 删除分片上传相关数据
@@ -161,7 +157,6 @@ public class RedisMultipartUploadDaoImpl implements MultipartUploadDao {
     public void deleteMultipartUploadAll(String uploadId) {
         this.deleteMultipartUpload(uploadId);
         this.deleteFileParts(uploadId);
-        //        this.deleteMd5Mapping();
     }
 
     @Override

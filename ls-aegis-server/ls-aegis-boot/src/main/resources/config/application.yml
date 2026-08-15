@@ -353,6 +353,14 @@ auth:
       # 个人中心改密（过期强制改密页调用此接口，必须放行）
       - /user/profile/password
 
+--- ### 文件指纹（存量 SHA256 → 重读原文算 SM3；无法直接换算）
+file:
+  digest:
+    # 启动时自动迁移（默认关闭；运维窗口改为 true 重启一次，完成后改回 false）
+    migrate-to-sm3: ${FILE_DIGEST_MIGRATE_TO_SM3:false}
+    migrate-batch-size: ${FILE_DIGEST_MIGRATE_BATCH_SIZE:100}
+    migrate-recycle-bin: ${FILE_DIGEST_MIGRATE_RECYCLE_BIN:true}
+
 --- ### 国密 GM/T（ls-aegis-crypto；整体国密默认启用；密钥自动生成落盘）
 gm:
   enable: ${GM_ENABLE:true}

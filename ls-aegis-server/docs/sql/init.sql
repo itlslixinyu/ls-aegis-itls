@@ -133,6 +133,16 @@ CREATE TABLE IF NOT EXISTS `sys_user_social` (
     INDEX `idx_deleted`(`deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户社会化关联表';
 
+CREATE TABLE IF NOT EXISTS `sys_user_preference` (
+    `id`          bigint(20)   AUTO_INCREMENT COMMENT 'ID',
+    `user_id`     bigint(20)   NOT NULL       COMMENT '用户ID',
+    `ui_json`     text         NOT NULL       COMMENT '界面配置JSON',
+    `create_time` datetime     NOT NULL       COMMENT '创建时间',
+    `update_time` datetime     DEFAULT NULL   COMMENT '修改时间',
+    PRIMARY KEY (`id`),
+    UNIQUE INDEX `uk_user_id`(`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户界面偏好表';
+
 CREATE TABLE IF NOT EXISTS `sys_user_role` (
     `id`      bigint(20) AUTO_INCREMENT COMMENT 'ID',
     `user_id` bigint(20) NOT NULL       COMMENT '用户ID',
@@ -324,7 +334,7 @@ CREATE TABLE IF NOT EXISTS `sys_file` (
     `extension`          varchar(32)   DEFAULT NULL                COMMENT '扩展名',
     `content_type`       varchar(255)  DEFAULT NULL                COMMENT '内容类型',
     `type`               tinyint(1)    UNSIGNED NOT NULL DEFAULT 1 COMMENT '类型（0: 目录；1：其他；2：图片；3：文档；4：视频；5：音频）',
-    `sha256`             varchar(256)  DEFAULT NULL                COMMENT 'SHA256值',
+    `file_digest`        varchar(256)  DEFAULT NULL                COMMENT '文件指纹（国密下为 SM3；普通上传可能为存储引擎 SHA256）',
     `metadata`           text          DEFAULT NULL                COMMENT '元数据',
     `thumbnail_name`     varchar(255)  DEFAULT NULL                COMMENT '缩略图名称',
     `thumbnail_size`     bigint(20)    DEFAULT NULL                COMMENT '缩略图大小（字节)',
@@ -337,7 +347,7 @@ CREATE TABLE IF NOT EXISTS `sys_file` (
     `deleted`            bigint(20)    NOT NULL DEFAULT 0          COMMENT '是否已删除（0：否；id：是）',
     PRIMARY KEY (`id`),
     INDEX `idx_type`(`type`),
-    INDEX `idx_sha256`(`sha256`),
+    INDEX `idx_file_digest`(`file_digest`),
     INDEX `idx_storage_id`(`storage_id`),
     INDEX `idx_create_user`(`create_user`),
     INDEX `idx_update_user`(`update_user`),

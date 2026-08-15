@@ -1,106 +1,155 @@
 <template>
   <a-drawer v-model:visible="visible" title="项目配置" width="300px" unmount-on-close :footer="false">
-    <a-space :size="15" direction="vertical" fill>
-      <a-alert v-if="settingOpen" :show-icon="false" type="info">
-        「复制配置」按钮，并将配置粘贴到 src/config/settings.ts 文件中。
-      </a-alert>
-      <a-divider v-if="settingOpen" orientation="center">系统布局</a-divider>
-      <a-row v-if="settingOpen" :gutter="[8, 8]">
-        <a-col v-for="item in LAYOUT_OPTIONS" :key="item.value" :span="8">
-          <LayoutItem :mode="item.value" :name="item.label" @click="toggleLayout(item.value)" />
-        </a-col>
-      </a-row>
+    <div class="setting-drawer">
+      <!-- 整体风格设置 -->
+      <section class="setting-section">
+        <div class="setting-section__title">整体风格设置</div>
+        <a-row :gutter="12">
+          <a-col v-for="item in STYLE_OPTIONS" :key="item.value" :span="8">
+            <StyleItem :mode="item.value" :active="currentStyle === item.value" @click="toggleStyle(item.value)" />
+          </a-col>
+        </a-row>
+      </section>
 
-      <a-divider orientation="center">系统主题</a-divider>
-      <a-row justify="center">
-        <ColorPicker
-          theme="dark" :color="appStore.themeColor" :sucker-hide="true" :colors-default="defaultColorList"
-          @change-color="changeColor"
-        ></ColorPicker>
-      </a-row>
+      <!-- 整体界面布局 -->
+      <section v-if="settingOpen" class="setting-section">
+        <div class="setting-section__title">整体界面布局</div>
+        <a-row :gutter="[12, 12]">
+          <a-col v-for="item in LAYOUT_OPTIONS" :key="item.value" :span="8">
+            <LayoutItem :mode="item.value" :name="item.label" @click="toggleLayout(item.value)" />
+          </a-col>
+        </a-row>
+      </section>
 
-      <a-divider v-if="settingOpen" orientation="center">界面显示</a-divider>
-
-      <a-descriptions v-if="settingOpen" :column="1" :align="{ value: 'right' }" :value-style="{ paddingRight: 0 }">
-        <a-descriptions-item label="页签显示">
-          <a-switch v-model="appStore.tab" />
-        </a-descriptions-item>
-        <a-descriptions-item label="页签风格">
-          <a-select
-            v-model="appStore.tabMode" placeholder="请选择" :options="tabModeList" :disabled="!appStore.tab"
-            :trigger-props="{ autoFitPopupMinWidth: true }" :style="{ width: '120px' }"
+      <!-- 主题色 -->
+      <section class="setting-section">
+        <div class="setting-section__title">主题色</div>
+        <div class="theme-colors">
+          <div
+            v-for="color in themeColorList"
+            :key="color"
+            class="theme-colors__item"
+            :style="{ backgroundColor: color }"
+            @click="appStore.setThemeColor(color)"
           >
-          </a-select>
-        </a-descriptions-item>
-        <a-descriptions-item label="动画显示">
-          <a-switch v-model="appStore.animate" />
-        </a-descriptions-item>
-        <a-descriptions-item label="动画显示">
-          <a-select
-            v-model="appStore.animateMode" placeholder="请选择" :options="animateModeList"
-            :disabled="!appStore.animate" :style="{ width: '120px' }"
-          >
-          </a-select>
-        </a-descriptions-item>
-        <a-descriptions-item label="深色菜单">
-          <a-switch v-model="appStore.menuDark" />
-        </a-descriptions-item>
-        <a-descriptions-item label="手风琴效果">
-          <a-switch v-model="appStore.menuAccordion" />
-        </a-descriptions-item>
-        <a-descriptions-item label="版权显示">
-          <a-switch v-model="appStore.copyrightDisplay" />
-        </a-descriptions-item>
-        <a-descriptions-item label="水印">
-          <a-switch v-model="appStore.isOpenWatermark" />
-        </a-descriptions-item>
-        <a-descriptions-item label="水印信息">
-          <a-input v-model="appStore.watermark" placeholder="留空则显示用户名" />
-        </a-descriptions-item>
-      </a-descriptions>
+            <icon-check v-if="appStore.themeColor?.toLowerCase() === color.toLowerCase()" :size="14" />
+          </div>
+        </div>
+      </section>
 
-      <a-divider orientation="center">其它</a-divider>
-      <a-descriptions :column="1" :align="{ value: 'right' }" :value-style="{ paddingRight: 0 }">
-        <a-descriptions-item label="色弱模式">
-          <a-switch v-model="appStore.enableColorWeaknessMode" />
-        </a-descriptions-item>
-        <a-descriptions-item v-if="settingOpen" label="哀悼模式">
-          <a-switch v-model="appStore.enableMourningMode" />
-        </a-descriptions-item>
-      </a-descriptions>
-      <a-space v-if="settingOpen" direction="vertical" fill>
-        <a-button type="primary" long @click="copySettings">
+      <!-- 功能开关 -->
+      <section class="setting-section setting-section--list">
+        <div v-if="settingOpen" class="setting-row">
+          <span class="setting-row__label">面包屑</span>
+          <a-switch v-model="appStore.showBreadcrumb" size="small" />
+        </div>
+        <div v-if="settingOpen" class="setting-row">
+          <span class="setting-row__label">多标签</span>
+          <a-switch v-model="appStore.tab" size="small" />
+        </div>
+        <div v-if="settingOpen" class="setting-row">
+          <span class="setting-row__label">页签风格</span>
+          <a-select
+            v-model="appStore.tabMode"
+            placeholder="请选择"
+            size="small"
+            :options="tabModeList"
+            :disabled="!appStore.tab"
+            :trigger-props="{ autoFitPopupMinWidth: true }"
+            :style="{ width: '110px' }"
+          />
+        </div>
+        <div v-if="settingOpen" class="setting-row">
+          <span class="setting-row__label">折叠菜单</span>
+          <a-switch v-model="appStore.menuCollapse" size="small" />
+        </div>
+        <div v-if="settingOpen" class="setting-row">
+          <span class="setting-row__label">菜单排他展开</span>
+          <a-switch v-model="appStore.menuAccordion" size="small" />
+        </div>
+        <div v-if="settingOpen" class="setting-row">
+          <span class="setting-row__label">登录用户水印</span>
+          <a-switch v-model="appStore.isOpenWatermark" size="small" />
+        </div>
+        <div v-if="settingOpen" class="setting-row">
+          <span class="setting-row__label">页脚版权信息</span>
+          <a-switch v-model="appStore.copyrightDisplay" size="small" />
+        </div>
+        <div v-if="settingOpen" class="setting-row">
+          <span class="setting-row__label">动画显示</span>
+          <a-switch v-model="appStore.animate" size="small" />
+        </div>
+        <div v-if="settingOpen" class="setting-row">
+          <span class="setting-row__label">动画类型</span>
+          <a-select
+            v-model="appStore.animateMode"
+            placeholder="请选择"
+            size="small"
+            :options="animateModeList"
+            :disabled="!appStore.animate"
+            :style="{ width: '110px' }"
+          />
+        </div>
+        <div class="setting-row">
+          <span class="setting-row__label">色弱模式</span>
+          <a-switch v-model="appStore.enableColorWeaknessMode" size="small" />
+        </div>
+        <div v-if="settingOpen" class="setting-row">
+          <span class="setting-row__label">灰色模式</span>
+          <a-switch v-model="appStore.enableMourningMode" size="small" />
+        </div>
+      </section>
+
+      <a-space direction="vertical" fill class="setting-actions">
+        <a-alert :show-icon="false" type="info">
+          点击「保存到我的账号」可将当前样式永久绑定到登录账号，换设备登录后自动生效
+        </a-alert>
+        <a-button type="primary" long :loading="saving" @click="saveToAccount">
           <template #icon>
-            <icon-copy />
+            <icon-save />
           </template>
-          复制配置
+          保存到我的账号
         </a-button>
       </a-space>
-    </a-space>
+    </div>
   </a-drawer>
 </template>
 
 <script setup lang="ts">
-import { ColorPicker } from 'vue-color-kit'
-import 'vue-color-kit/dist/vue-color-kit.css'
-import { useClipboard } from '@vueuse/core'
 import { Message } from '@arco-design/web-vue'
 import LayoutItem from './components/LayoutItem.vue'
+import StyleItem from './components/StyleItem.vue'
+import type { StyleMode } from './components/StyleItem.vue'
+import { saveUserUiSettings } from '@/apis/system/user-profile'
 import { useAppStore } from '@/stores'
 
 defineOptions({ name: 'SettingDrawer' })
+
 const appStore = useAppStore()
 const visible = ref(false)
+const saving = ref(false)
 const settingOpen = JSON.parse(import.meta.env.VITE_APP_SETTING)
-interface LayoutItemProps { label: string, value: App.AppSettings['layout'] }
+
+interface LayoutOption {
+  label: string
+  value: App.AppSettings['layout']
+}
+
+/** 整体风格：深色侧栏 / 浅色 / 暗黑 */
+const STYLE_OPTIONS: { label: string, value: StyleMode }[] = [
+  { label: '深色侧栏', value: 'dark-menu' },
+  { label: '浅色', value: 'light' },
+  { label: '暗黑', value: 'dark' },
+]
 
 /** 布局选项 */
-const LAYOUT_OPTIONS: LayoutItemProps[] = [
-  { label: '默认布局', value: 'left' },
-  { label: '混合布局', value: 'mix' },
-  { label: '顶部布局', value: 'top' },
-  { label: '双列布局', value: 'columns' },
+const LAYOUT_OPTIONS: LayoutOption[] = [
+  { label: '默认', value: 'left' },
+  { label: '混合', value: 'mix' },
+  { label: '顶部', value: 'top' },
+  { label: '双列', value: 'columns' },
 ]
+
 const tabModeList: App.TabItem[] = [
   { label: '卡片', value: 'card' },
   { label: '间隔卡片', value: 'card-gutter' },
@@ -115,88 +164,118 @@ const animateModeList: App.AnimateItem[] = [
   { label: '缩放消退', value: 'fade-scale' },
 ]
 
+/** 主题色色板（对齐常见管理端色块布局） */
+const themeColorList = [
+  '#F53F3F',
+  '#F77234',
+  '#FF7D00',
+  '#F7BA1E',
+  '#00B42A',
+  '#14C9C9',
+  '#165DFF',
+  '#3491FA',
+  '#722ED1',
+  '#D91AD9',
+  '#F5319D',
+  '#1D2129',
+]
+
+const currentStyle = computed<StyleMode>(() => {
+  if (appStore.theme === 'dark') return 'dark'
+  if (appStore.menuDark) return 'dark-menu'
+  return 'light'
+})
+
 const open = () => {
   visible.value = true
 }
 
-// 默认显示的主题色列表
-const defaultColorList = [
-  '#165DFF',
-  '#409EFF',
-  '#18A058',
-  '#2d8cf0',
-  '#007AFF',
-  '#5ac8fa',
-  '#5856D6',
-  '#536dfe',
-  '#9c27b0',
-  '#AF52DE',
-  '#0096c7',
-  '#00C1D4',
-  '#43a047',
-  '#e53935',
-  '#f4511e',
-  '#6d4c41',
-]
-
-interface ColorObj {
-  hex: string
-  hsv: { h: number, s: number, v: number }
-  rgba: { r: number, g: number, b: number, a: number }
-}
-
-// 改变主题色
-const changeColor = (colorObj: ColorObj) => {
-  if (!/^#[0-9A-Z]{6}/i.test(colorObj.hex)) return
-  appStore.setThemeColor(colorObj.hex)
-}
-
-// 复制配置
-const copySettings = () => {
-  const settings: App.AppSettings = {
-    theme: 'light',
-    themeColor: appStore.themeColor,
-    tab: appStore.tab,
-    tabMode: appStore.tabMode,
-    animate: appStore.animate,
-    animateMode: appStore.animateMode,
-    menuCollapse: appStore.menuCollapse,
-    menuAccordion: appStore.menuAccordion,
-    menuDark: appStore.menuDark,
-    copyrightDisplay: appStore.copyrightDisplay,
-    layout: appStore.layout,
-    isOpenWatermark: appStore.isOpenWatermark,
-    watermark: appStore.watermark,
-    enableColorWeaknessMode: appStore.enableColorWeaknessMode,
-    enableMourningMode: appStore.enableMourningMode,
+const toggleStyle = (mode: StyleMode) => {
+  if (mode === 'dark') {
+    appStore.toggleTheme(true)
+    return
   }
-
-  const settingJson = JSON.stringify(settings, null, 2)
-  const { isSupported, copy } = useClipboard({ source: settingJson })
-  if (isSupported) {
-    copy(settingJson)
-    Message.success({ content: '复制成功!' })
-  } else {
-    Message.error({ content: '请检查浏览器权限是否开启' })
-  }
+  appStore.toggleTheme(false)
+  appStore.menuDark = mode === 'dark-menu'
 }
-/** 切换布局 */
+
 const toggleLayout = (layout: App.AppSettings['layout']) => {
   appStore.layout = layout
+}
+
+const saveToAccount = async () => {
+  saving.value = true
+  try {
+    await saveUserUiSettings(appStore.exportSettings())
+    Message.success({ content: '已绑定到当前账号' })
+  } catch {
+    Message.error({ content: '保存失败，请稍后重试' })
+  } finally {
+    saving.value = false
+  }
 }
 
 defineExpose({ open })
 </script>
 
 <style scoped lang="scss">
-:deep(.arco-descriptions-item-label-block) {
-  color: var(--color-text-1);
+.setting-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.layout-text {
-  font-size: 12px;
-  text-align: center;
-  color: var(--color-text-2);
+.setting-section {
+  &__title {
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-1);
+  }
+
+  &--list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+  padding: 4px 0;
+
+  &__label {
+    font-size: 14px;
+    color: var(--color-text-1);
+  }
+}
+
+.theme-colors {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
+
+  &__item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    cursor: pointer;
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+
+    &:hover {
+      transform: scale(1.08);
+    }
+  }
+}
+
+.setting-actions {
   margin-top: 4px;
 }
 </style>

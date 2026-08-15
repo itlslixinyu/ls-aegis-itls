@@ -110,7 +110,7 @@ public class S3StorageHandler implements StorageHandler {
             result.setUploadId(uploadId);
             result.setPlatform(storageDO.getCode());
             result.setFileName(fileName);
-            result.setFileMd5(req.getFileMd5());
+            result.setFileDigest(req.getFileDigest());
             result.setFileSize(req.getFileSize());
             result.setExtension(FileUtil.extName(fileName));
             result.setContentType(req.getContentType());

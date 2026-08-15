@@ -37,10 +37,12 @@ import org.springframework.web.multipart.MultipartFile;
 import com.ls.aegis.security.base.controller.BaseController;
 import com.ls.aegis.biz.file.model.query.FileQuery;
 import com.ls.aegis.biz.file.model.req.FileReq;
+import com.ls.aegis.biz.file.model.resp.file.FileDigestMigrationResp;
 import com.ls.aegis.biz.file.model.resp.file.FileDirCalcSizeResp;
 import com.ls.aegis.biz.file.model.resp.file.FileResp;
 import com.ls.aegis.biz.file.model.resp.file.FileStatisticsResp;
 import com.ls.aegis.biz.file.model.resp.file.FileUploadResp;
+import com.ls.aegis.biz.file.service.FileDigestMigrationService;
 import com.ls.aegis.biz.file.service.FileService;
 import top.continew.starter.core.util.validation.ValidationUtils;
 import top.continew.starter.extension.crud.annotation.CrudRequestMapping;
@@ -62,6 +64,8 @@ import java.io.IOException;
 @RequiredArgsConstructor
 @CrudRequestMapping(value = "/system/file", api = {Api.PAGE, Api.UPDATE, Api.BATCH_DELETE})
 public class FileController extends BaseController<FileService, FileResp, FileResp, FileQuery, FileReq> {
+
+    private final FileDigestMigrationService fileDigestMigrationService;
 
     /**
      * 上传文件
@@ -119,5 +123,16 @@ public class FileController extends BaseController<FileService, FileResp, FileRe
     @GetMapping("/check")
     public FileResp checkFile(String fileHash) {
         return baseService.check(fileHash);
+    }
+
+    /**
+     * 存量指纹迁移：重读存储原文，将 file_digest 全部重算为 SM3（幂等）。
+     * <p>也可启动参数 {@code file.digest.migrate-to-sm3=true} 自动执行一次。</p>
+     */
+    @Operation(summary = "迁移文件指纹为 SM3", description = "重读存储原文重算 SM3，覆盖历史 SHA256 指纹；可重复执行")
+    @SaCheckPermission("system:file:update")
+    @PostMapping("/migrate-digest-sm3")
+    public FileDigestMigrationResp migrateDigestToSm3() {
+        return fileDigestMigrationService.migrateAllToSm3();
     }
 }

@@ -16,39 +16,33 @@
 
 package com.ls.aegis.biz.file.config.file;
 
-import cn.hutool.core.collection.CollUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import com.ls.aegis.common.enums.DisEnableStatusEnum;
-import com.ls.aegis.biz.file.model.entity.StorageDO;
-import com.ls.aegis.biz.file.service.StorageService;
-
-import java.util.List;
+import com.ls.aegis.biz.file.model.resp.file.FileDigestMigrationResp;
+import com.ls.aegis.biz.file.service.FileDigestMigrationService;
 
 /**
- * 文件存储配置加载器
- *
- * @author Charles7c
- * @since 2023/12/24 22:31
+ * 启动时可选执行：存量 file_digest 重读原文迁移为 SM3。
+ * <p>须在 {@link FileStorageConfigLoader} 之后（Order 更大）。默认关闭，运维窗口开启一次即可。</p>
  */
 @Slf4j
 @Component
-@Order(10)
+@Order(100)
 @RequiredArgsConstructor
-public class FileStorageConfigLoader implements ApplicationRunner {
+@ConditionalOnProperty(prefix = "file.digest", name = "migrate-to-sm3", havingValue = "true")
+public class FileDigestSm3MigrationRunner implements ApplicationRunner {
 
-    private final StorageService storageService;
+    private final FileDigestMigrationService fileDigestMigrationService;
 
     @Override
     public void run(ApplicationArguments args) {
-        List<StorageDO> list = storageService.lambdaQuery().eq(StorageDO::getStatus, DisEnableStatusEnum.ENABLE).list();
-        if (CollUtil.isEmpty(list)) {
-            return;
-        }
-        list.forEach(storageService::load);
+        log.warn("检测到 file.digest.migrate-to-sm3=true，开始执行存量文件指纹 SM3 迁移…");
+        FileDigestMigrationResp resp = fileDigestMigrationService.migrateAllToSm3();
+        log.warn("存量文件指纹 SM3 迁移完成: {}", resp);
     }
 }

@@ -66,8 +66,9 @@ public class MultipartUploadServiceImpl implements MultipartUploadService {
     public MultipartUploadInitResp initMultipartUpload(MultipartUploadInitReq multiPartUploadInitReq) {
         // 后续可以增加storageCode参数 指定某个存储平台 当前设计是默认存储平台
         StorageDO storageDO = storageService.getByCode(null);
-        // 根据文件Md5查询当前存储平台是否初始化过分片
-        String uploadId = multipartUploadDao.getUploadIdByMd5(multiPartUploadInitReq.getFileMd5());
+        // 根据文件指纹查询当前存储平台是否已初始化分片
+        String fileDigest = multiPartUploadInitReq.getFileDigest();
+        String uploadId = multipartUploadDao.getUploadIdByDigest(fileDigest);
         if (StrUtil.isNotBlank(uploadId)) {
             MultipartUploadInitResp multipartUpload = multipartUploadDao.getMultipartUpload(uploadId);
             //对比存储平台和分片大小是否一致 一致则返回结果
@@ -90,9 +91,9 @@ public class MultipartUploadServiceImpl implements MultipartUploadService {
         Map<String, String> metaData = multiPartUploadInitReq.getMetaData();
         MultipartUploadInitResp multipartUploadInitResp = storageHandler
             .initMultipartUpload(storageDO, multiPartUploadInitReq);
-        // 缓存文件信息：文件指纹（SM3）与 uploadId 映射
+        // 缓存文件信息：文件指纹（SM3）与 uploadId 映射（双写新旧 Redis 前缀）
         multipartUploadDao.setMultipartUpload(multipartUploadInitResp.getUploadId(), multipartUploadInitResp, metaData);
-        multipartUploadDao.setMd5Mapping(multiPartUploadInitReq.getFileMd5(), multipartUploadInitResp.getUploadId());
+        multipartUploadDao.setDigestMapping(fileDigest, multipartUploadInitResp.getUploadId());
         return multipartUploadInitResp;
     }
 
@@ -153,7 +154,8 @@ public class MultipartUploadServiceImpl implements MultipartUploadService {
         file.setPath(initResp.getPath());
         file.setParentPath(initResp.getParentPath());
         file.setSize(initResp.getFileSize());
-        file.setSha256(initResp.getFileMd5());
+        // 写入文件指纹列 file_digest（SM3）
+        file.setFileDigest(initResp.getFileDigest());
         file.setExtension(initResp.getExtension());
         file.setContentType(initResp.getContentType());
         file.setType(FileTypeEnum.getByExtension(FileUtil.extName(initResp.getFileName())));

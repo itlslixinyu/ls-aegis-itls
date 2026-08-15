@@ -82,7 +82,7 @@ public class LocalStorageHandler implements StorageHandler {
             result.setUploadId(uploadId);
             result.setPlatform(storageDO.getCode());
             result.setFileName(fileName);
-            result.setFileMd5(req.getFileMd5());
+            result.setFileDigest(req.getFileDigest());
             result.setFileSize(req.getFileSize());
             result.setExtension(FileUtil.extName(fileName));
             result.setContentType(req.getContentType());
@@ -247,12 +247,13 @@ public class LocalStorageHandler implements StorageHandler {
         }
     }
 
-    /** 分片摘要：国密启用走 SM3，否则 MD5。 */
+    /** 分片摘要：统一 SM3（国密关闭时仍用 BC/Hutool SM3，保证指纹算法一致） */
     private String digestPart(File partFile) throws Exception {
         IGmCrypto gmCrypto = gmCryptoProvider.getIfAvailable();
-        if (gmCrypto != null && gmCrypto.isEnabled()) {
-            return gmCrypto.sm3Hex(Files.readAllBytes(partFile.toPath()));
+        byte[] bytes = Files.readAllBytes(partFile.toPath());
+        if (gmCrypto != null) {
+            return gmCrypto.sm3Hex(bytes);
         }
-        return DigestUtil.md5Hex(partFile);
+        return DigestUtil.digester("sm3").digestHex(bytes);
     }
 }

@@ -37,7 +37,7 @@
               style="height: 100%; background: transparent;"
             >
               <template #progress="{ record }">
-                <template v-if="md5CalculatingTaskUid === record.uid">
+                <template v-if="digestCalculatingTaskUid === record.uid">
                   <span style="color: #888;">正在计算文件指纹(SM3)...</span>
                 </template>
                 <template v-else>
@@ -193,7 +193,7 @@ const {
   clearAllTasks,
   removeTask,
   formatFileSize: _formatFileSize,
-  md5CalculatingTaskUid,
+  digestCalculatingTaskUid,
 } = useMultipartUploader({
   maxConcurrentFiles: props.maxConcurrentFiles,
   maxConcurrentChunks: props.maxConcurrentChunks,
