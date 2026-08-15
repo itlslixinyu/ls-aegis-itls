@@ -1,4 +1,5 @@
 import type { DashboardNoticeResp } from '@/apis'
+import dayjs from 'dayjs'
 
 /** 公告等级：色块 + 分类名按等级着色（字典 notice_type） */
 export type NoticeLevel = 'primary' | 'success' | 'warning' | 'error' | 'default'
@@ -9,6 +10,10 @@ export interface NoticeTickerItem {
   label: string
   title: string
   isTop: boolean
+  /** 原始发布时间 */
+  publishTime?: string
+  /** 列表右侧展示用短日期 */
+  timeText?: string
 }
 
 /** 与字典 notice_type 颜色分级对齐（低→高：资讯→常规→人事→关注→紧急） */
@@ -28,8 +33,18 @@ export const noticeTypeMeta = (type: string | number): { level: NoticeLevel, lab
   return TYPE_META[String(type)] || { level: 'default', label: '公告' }
 }
 
+/** 欢迎页公告行右侧短日期 */
+export const formatNoticeTimeText = (time?: string): string => {
+  if (!time) {
+    return ''
+  }
+  const d = dayjs(time)
+  return d.isValid() ? d.format('YYYY-MM-DD') : ''
+}
+
 export const mapDashboardNotice = (item: DashboardNoticeResp): NoticeTickerItem => {
   const meta = noticeTypeMeta(item.type)
+  const publishTime = item.publishTime
   return {
     id: item.id,
     title: item.title,
@@ -37,6 +52,8 @@ export const mapDashboardNotice = (item: DashboardNoticeResp): NoticeTickerItem 
     label: meta.label,
     // 颜色按分类分级；置顶用独立角标，不覆盖等级色
     level: meta.level,
+    publishTime,
+    timeText: formatNoticeTimeText(publishTime),
   }
 }
 

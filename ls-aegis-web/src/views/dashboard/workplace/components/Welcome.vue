@@ -1,7 +1,7 @@
 <template>
   <a-card class="card" :bordered="false">
     <a-row align="center" :gutter="16" class="content">
-      <a-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12">
+      <a-col :xs="24" :sm="14" :md="14" :lg="14" :xl="14">
         <a-space size="medium">
           <Avatar :src="userStore.avatar" :name="userStore.nickname" :size="68" />
           <div class="welcome">
@@ -10,7 +10,7 @@
           </div>
         </a-space>
       </a-col>
-      <a-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12">
+      <a-col :xs="24" :sm="10" :md="10" :lg="10" :xl="10">
         <div class="notice-panel">
           <div class="notice-header">
             <span class="notice-title">公&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;告</span>
@@ -32,10 +32,17 @@
                 class="notice-item"
                 @click="onDetail(item.id)"
               >
-                <span class="notice-dot" :class="`level-${item.level}`" />
-                <span class="notice-label" :class="`level-${item.level}`">{{ item.label }}：</span>
-                <span class="notice-text">{{ item.title }}</span>
-                <span v-if="item.isTop" class="notice-tag">置顶</span>
+                <div class="notice-main">
+                  <span class="notice-dot" :class="`level-${item.level}`" />
+                  <span class="notice-label" :class="`level-${item.level}`">{{ item.label }}：</span>
+                  <span class="notice-text">{{ item.title }}</span>
+                  <span v-if="item.isTop" class="notice-tag">置顶</span>
+                </div>
+                <span
+                  v-if="item.timeText"
+                  class="notice-time"
+                  :title="item.publishTime"
+                >{{ item.timeText }}</span>
               </div>
             </div>
           </div>
@@ -172,12 +179,20 @@ onMounted(() => {
 .notice-item {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   height: 28px;
-  gap: 8px;
+  gap: 12px;
   cursor: pointer;
-  padding: 0 24px;
+  padding: 0 8px 0 12px;
   min-width: 0;
+
+  .notice-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+  }
 
   .notice-dot {
     flex-shrink: 0;
@@ -225,7 +240,8 @@ onMounted(() => {
   }
 
   .notice-text {
-    flex-shrink: 1;
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -243,6 +259,14 @@ onMounted(() => {
     color: rgb(var(--red-6));
     background: rgba(var(--red-6), 0.1);
     border: 1px solid rgba(var(--red-6), 0.35);
+  }
+
+  .notice-time {
+    flex-shrink: 0;
+    font-size: 13px;
+    color: var(--color-text-3);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.2px;
   }
 
   &:hover {

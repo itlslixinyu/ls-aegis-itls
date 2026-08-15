@@ -14,6 +14,8 @@ export interface DashboardNoticeResp {
   /** 分类（字典 notice_type：1通知公告…9紧急通告） */
   type: string | number
   isTop: boolean
+  /** 发布时间 */
+  publishTime?: string
 }
 
 /** 仪表盘访问趋势类型 */

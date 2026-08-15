@@ -21,6 +21,7 @@ import lombok.Data;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 仪表盘-公告响应参数
@@ -58,4 +59,10 @@ public class DashboardNoticeResp implements Serializable {
      */
     @Schema(description = "是否置顶", example = "false")
     private Boolean isTop;
+
+    /**
+     * 发布时间
+     */
+    @Schema(description = "发布时间", example = "2023-08-08 08:08:08", type = "string")
+    private LocalDateTime publishTime;
 }

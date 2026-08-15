@@ -81,7 +81,7 @@
     <select id="selectDashboardList"
             resultType="com.ls.aegis.biz.notice.model.resp.dashboard.DashboardNoticeResp">
         SELECT
-            t1.id, t1.title, t1.type, t1.is_top
+            t1.id, t1.title, t1.type, t1.is_top, t1.publish_time
         FROM sys_notice AS t1
         WHERE t1.deleted = 0 AND t1.status = 3
         <if test="userId != null">
