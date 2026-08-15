@@ -113,6 +113,7 @@
         <div v-if="!noticeList.length && !loading" class="notice-ticker__empty">暂无公告</div>
         <div
           v-else
+          ref="noticeTickerEl"
           class="notice-ticker"
           @mouseenter="noticePaused = true"
           @mouseleave="noticePaused = false"
@@ -120,7 +121,7 @@
           <div
             class="notice-ticker__track"
             :class="{ paused: noticePaused, scroll: noticeNeedScroll }"
-            :style="noticeNeedScroll ? { animationDuration: `${Math.max(noticeTickerList.length * 3, 6)}s` } : undefined"
+            :style="noticeNeedScroll ? { animationDuration: `${noticeScrollDuration}s` } : undefined"
           >
             <div
               v-for="(item, idx) in noticeDisplayList"
@@ -195,19 +196,47 @@ const osList = ref<DashboardChartCommonResp[]>([])
 const browserList = ref<DashboardChartCommonResp[]>([])
 const noticeList = ref<NoticeTickerItem[]>([])
 const noticePaused = ref(false)
+const noticeTickerEl = ref<HTMLElement | null>(null)
+/** 单份列表在半程轨道中的重复次数，保证铺满视口避免空行 */
+const noticeHalfRepeats = ref(1)
+const NOTICE_ITEM_HEIGHT = 36
 
 const noticeTickerList = computed(() => noticeList.value)
 
 const noticeNeedScroll = computed(() => noticeTickerList.value.length > 1)
 
+/** 两段相同内容做 translateY(-50%) 无缝循环；半程至少铺满面板高度 */
 const noticeDisplayList = computed(() => {
-  if (!noticeNeedScroll.value) {
-    return noticeTickerList.value
+  const list = noticeTickerList.value
+  if (!list.length) {
+    return []
   }
-  return [...noticeTickerList.value, ...noticeTickerList.value]
+  if (!noticeNeedScroll.value) {
+    return list
+  }
+  const half = Array.from({ length: noticeHalfRepeats.value }, () => list).flat()
+  return [...half, ...half]
 })
 
+const noticeScrollDuration = computed(() => {
+  const halfCount = noticeTickerList.value.length * noticeHalfRepeats.value
+  return Math.max(halfCount * 3, 6)
+})
+
+const syncNoticeRepeats = () => {
+  const el = noticeTickerEl.value
+  const len = noticeTickerList.value.length
+  if (!el || len <= 0) {
+    noticeHalfRepeats.value = 1
+    return
+  }
+  const viewH = el.clientHeight
+  const listH = len * NOTICE_ITEM_HEIGHT
+  noticeHalfRepeats.value = Math.max(1, Math.ceil(viewH / Math.max(listH, 1)))
+}
+
 let clockTimer: ReturnType<typeof setInterval> | undefined
+let noticeResizeObserver: ResizeObserver | undefined
 
 const axisText = 'rgba(180, 210, 240, 0.65)'
 const splitLine = 'rgba(64, 169, 255, 0.12)'
@@ -549,6 +578,7 @@ const refreshAll = async () => {
     setTimeout(() => {
       refreshing.value = false
     }, 300)
+    nextTick(syncNoticeRepeats)
   }
 }
 
@@ -557,14 +587,31 @@ onMounted(() => {
   clockTimer = setInterval(() => {
     nowText.value = dayjs().format('YYYY-MM-DD HH:mm:ss')
   }, 1000)
+  noticeResizeObserver = new ResizeObserver(() => syncNoticeRepeats())
+  watch(
+    noticeTickerEl,
+    (el) => {
+      noticeResizeObserver?.disconnect()
+      if (el) {
+        noticeResizeObserver?.observe(el)
+        nextTick(syncNoticeRepeats)
+      }
+    },
+    { immediate: true, flush: 'post' },
+  )
 })
 
 watch(trendDays, () => {
   loadTrend()
 })
 
+watch(noticeList, () => {
+  nextTick(syncNoticeRepeats)
+})
+
 onBeforeUnmount(() => {
   if (clockTimer) clearInterval(clockTimer)
+  noticeResizeObserver?.disconnect()
 })
 </script>
 
@@ -616,9 +663,11 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: flex-start;
   height: 36px;
+  box-sizing: border-box;
   gap: 8px;
   cursor: pointer;
   padding: 0 20px;
+  margin: 0;
   min-width: 0;
   border-bottom: 1px dashed rgba(64, 159, 255, 0.08);
 
@@ -627,6 +676,11 @@ onBeforeUnmount(() => {
       color: #00d4ff;
     }
   }
+}
+
+.notice-ticker__track {
+  margin: 0;
+  padding: 0;
 }
 
 .notice-ticker__dot {

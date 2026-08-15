@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -36,7 +36,7 @@
     </modules>
 
     <properties>
-        <revision>1.4.0</revision>
+        <revision>1.4.1</revision>
         <!-- 涓?hutool-crypto 浼犻€掔増鏈榻愶紱鍥藉瘑妯″潡鏄惧紡渚濊禆 -->
         <bouncycastle.version>1.78.1</bouncycastle.version>
     </properties>
