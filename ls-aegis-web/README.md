@@ -1,6 +1,6 @@
 # LS Aegis Web
 
-Vue3 + Arco Design 前端工程，与后端 `ls-aegis-platform` 同级，不放在后端源码内。
+Vue3 + Arco Design 前端工程，与后端 `ls-aegis-server` 同级，不放在后端源码内。
 
 ## 常用命令
 

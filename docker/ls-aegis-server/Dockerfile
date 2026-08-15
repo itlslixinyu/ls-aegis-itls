@@ -1,4 +1,4 @@
-# 适配 JDK21 运行 LS Aegis Platform（业务 jar）
+# 适配 JDK21 运行 LS Aegis Server（业务 jar）
 # 构建机若无法直连 Docker Hub，可先：
 # docker pull docker.m.daocloud.io/library/eclipse-temurin:21-jre-jammy
 # docker tag docker.m.daocloud.io/library/eclipse-temurin:21-jre-jammy eclipse-temurin:21-jre-jammy

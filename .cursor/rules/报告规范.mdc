@@ -22,7 +22,7 @@ alwaysApply: true
 
 ## 禁止
 
-- 写到仓库根目录、`ls-aegis-platform/docs/`（`docs/sql/init.sql` 除外）、`ls-aegis-web/`、`docker/`、`.cursor/`、模块内 `doc/` 等其它路径
+- 写到仓库根目录、`ls-aegis-server/docs/`（`docs/sql/init.sql` 除外）、`ls-aegis-web/`、`docker/`、`.cursor/`、模块内 `doc/` 等其它路径
 - 用 `.json`、临时 `.txt`、仅 Canvas 作为正式报告落盘（Canvas 可作 IDE 可视化副本，正式结论仍须同步 `reports/**/*.md`）
 - 探针/会话产物（如 `*-tmp.json`、`gm-verification-report.json`）当作正式报告；需要保留时写入对应 md 附录；验证日志（如根目录 `gm-verify-*.log`）勿入库，应删除或忽略
 
@@ -34,4 +34,4 @@ alwaysApply: true
 
 ## 与 SQL 文档区分
 
-`ls-aegis-platform/docs/sql/` 仅部署 SQL（`init.sql`），**不是**报告目录。
+`ls-aegis-server/docs/sql/` 仅部署 SQL（`init.sql`），**不是**报告目录。

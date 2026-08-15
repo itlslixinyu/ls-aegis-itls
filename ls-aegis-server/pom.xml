@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 过渡期继承 continew-starter 作为运行底座，后续可替换为自建父 POM -->
+    <parent>
+        <groupId>top.continew.starter</groupId>
+        <artifactId>continew-starter</artifactId>
+        <version>2.14.0</version>
+    </parent>
+
+    <groupId>com.ls</groupId>
+    <artifactId>ls-aegis-server</artifactId>
+    <version>${revision}</version>
+    <packaging>pom</packaging>
+
+    <name>${project.artifactId}</name>
+    <description>LS Aegis 服务端 Maven 父工程：统一版本、依赖与模块编排</description>
+
+    <modules>
+        <module>ls-aegis-crypto</module>
+        <module>ls-aegis-common</module>
+        <module>ls-aegis-mybatis</module>
+        <module>ls-aegis-redis</module>
+        <module>ls-aegis-security</module>
+        <module>ls-aegis-starter</module>
+        <module>ls-aegis-rbac</module>
+        <module>ls-aegis-biz-file</module>
+        <module>ls-aegis-biz-sms</module>
+        <module>ls-aegis-biz-notice</module>
+        <module>ls-aegis-biz-open</module>
+        <module>ls-aegis-biz-tenant</module>
+        <module>ls-aegis-biz-schedule</module>
+        <module>ls-aegis-boot</module>
+    </modules>
+
+    <properties>
+        <revision>1.3.0</revision>
+        <!-- 与 hutool-crypto 传递版本对齐；国密模块显式依赖 -->
+        <bouncycastle.version>1.78.1</bouncycastle.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.ls</groupId>
+                <artifactId>ls-aegis-common</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ls</groupId>
+                <artifactId>ls-aegis-crypto</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ls</groupId>
+                <artifactId>ls-aegis-mybatis</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ls</groupId>
+                <artifactId>ls-aegis-redis</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ls</groupId>
+                <artifactId>ls-aegis-security</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ls</groupId>
+                <artifactId>ls-aegis-starter</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ls</groupId>
+                <artifactId>ls-aegis-rbac</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ls</groupId>
+                <artifactId>ls-aegis-biz-file</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ls</groupId>
+                <artifactId>ls-aegis-biz-sms</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ls</groupId>
+                <artifactId>ls-aegis-biz-notice</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ls</groupId>
+                <artifactId>ls-aegis-biz-open</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ls</groupId>
+                <artifactId>ls-aegis-biz-tenant</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ls</groupId>
+                <artifactId>ls-aegis-biz-schedule</artifactId>
+                <version>${revision}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <compilerArgument>-parameters</compilerArgument>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

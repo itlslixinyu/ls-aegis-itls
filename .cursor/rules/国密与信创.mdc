@@ -8,7 +8,7 @@ alwaysApply: true
 ## 国密（强制 · 整体切换）
 
 1. 算法：SM2 签名验签、SM3 摘要、SM4 对称加密，基于 **BouncyCastle**。
-2. 统一接口 `IGmCrypto`，软件实现仅 `SoftwareGmCrypto`；模块为 **`ls-crypto`**（`com.ls.crypto`），与业务/鉴权解耦。
+2. 统一接口 `IGmCrypto`，软件实现仅 `SoftwareGmCrypto`；模块为 **`ls-aegis-crypto`**（`com.ls.aegis.crypto`），与业务/鉴权解耦。
 3. 全局开关 `gm.enable`：默认 **true**（整体国密）；`false` 关闭以兼容普通开源环境。
 4. 密钥禁止硬编码、禁止提交仓库；优先环境变量/配置中心；未配置时 **自动生成** 并写入 `gm.key-store-path`；**私钥绝不下发前端**。
 5. 全链路：
@@ -17,7 +17,7 @@ alwaysApply: true
    - 摘要 / 新口令哈希 **SM3**（`{sm3}`；校验仍兼容存量 `{bcrypt}`）
    - 行为验证码坐标 **SM4/ECB**
    - 分片文件指纹 / 分片 ETag **SM3**
-   - SnailJob 登录摘要 **SM3**（库口令见 `biz-schedule/README-GM.md`）
+   - SnailJob 登录摘要 **SM3**（库口令见 `ls-aegis-biz-schedule/README-GM.md`）
 6. 存量兼容（默认关闭，整体国密勿开）：
    - `gm.legacy-rsa-fallback`：传输解密回退 RSA
    - `gm.legacy-aes-fallback`：字段解密回退 AES

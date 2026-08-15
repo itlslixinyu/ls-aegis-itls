@@ -1,7 +1,7 @@
 {
   "name": "ls-aegis-web",
   "type": "module",
-  "version": "1.2.2",
+  "version": "1.3.0",
   "private": "true",
   "scripts": {
     "bootstrap": "pnpm install --registry=https://registry.npmmirror.com",

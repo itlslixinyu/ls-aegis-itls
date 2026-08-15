@@ -13,8 +13,8 @@ alwaysApply: true
 
 | 用途 | 路径 |
 |------|------|
-| Liquibase 运行时 | `ls-aegis-platform/ls-demo/src/main/resources/db/changelog/**` |
-| 部署 SQL（唯一） | `ls-aegis-platform/docs/sql/init.sql` |
+| Liquibase 运行时 | `ls-aegis-server/ls-aegis-boot/src/main/resources/db/changelog/**` |
+| 部署 SQL（唯一） | `ls-aegis-server/docs/sql/init.sql` |
 | 变更登记 | `db.changelog-master.yaml`（已上线库新增 patch 必须 include） |
 
 | 场景 | 做法 |

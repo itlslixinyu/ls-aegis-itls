@@ -11,7 +11,7 @@ export default function appInfo(): Plugin {
       // eslint-disable-next-line no-console
       console.log(
         boxen(
-          `${bold(green(`${bgGreen('LS Aegis Web v1.0.0')}`))}\n${cyan('前端：Vue3 + Arco Design')}\n${cyan('后端：ls-aegis-platform')}\n${cyan('前后端分离中后台平台')}`,
+          `${bold(green(`${bgGreen('LS Aegis Web v1.0.0')}`))}\n${cyan('前端：Vue3 + Arco Design')}\n${cyan('后端：ls-aegis-server')}\n${cyan('前后端分离中后台平台')}`,
           {
             padding: 1,
             margin: 1,
