@@ -94,7 +94,15 @@
                 </when>
             </choose>
         </if>
-        ORDER BY t1.is_top DESC, t1.publish_time DESC
-        LIMIT 5
+        ORDER BY t1.is_top DESC
+        <choose>
+            <when test="_databaseId == 'pgsql'">
+                , RANDOM()
+            </when>
+            <otherwise>
+                , RAND()
+            </otherwise>
+        </choose>
+        LIMIT 20
     </select>
 </mapper>

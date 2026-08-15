@@ -9,6 +9,17 @@
     @before-ok="save"
     @close="reset"
   >
+    <!-- 供浏览器/密码管理器关联账号，避免 DOM 无提示 -->
+    <input
+      type="text"
+      name="username"
+      autocomplete="username"
+      :value="username"
+      tabindex="-1"
+      aria-hidden="true"
+      class="pwd-reset-username"
+      readonly
+    >
     <GiForm ref="formRef" v-model="form" :columns="columns" />
   </a-modal>
 </template>
@@ -27,19 +38,30 @@ const emit = defineEmits<{
 
 const { width } = useWindowSize()
 const dataId = ref('')
+const username = ref('')
 const visible = ref(false)
 const formRef = ref<InstanceType<typeof GiForm>>()
 
 const [form, resetForm] = useResetReactive({})
 
 const columns: ColumnItem[] = reactive([
-  { label: '密码', field: 'newPassword', type: 'input-password', span: 24, required: true },
+  {
+    label: '密码',
+    field: 'newPassword',
+    type: 'input-password',
+    span: 24,
+    required: true,
+    props: {
+      autocomplete: 'new-password',
+    },
+  },
 ])
 
 // 重置
 const reset = () => {
   formRef.value?.formRef?.resetFields()
   resetForm()
+  username.value = ''
 }
 
 // 保存
@@ -57,13 +79,26 @@ const save = async () => {
 }
 
 // 打开
-const onOpen = (id: string) => {
+const onOpen = (id: string, name?: string) => {
   reset()
   dataId.value = id
+  username.value = name || ''
   visible.value = true
 }
 
 defineExpose({ onOpen })
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.pwd-reset-username {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+</style>

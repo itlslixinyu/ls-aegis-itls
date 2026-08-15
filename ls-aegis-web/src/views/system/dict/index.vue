@@ -79,7 +79,8 @@ defineOptions({ name: 'SystemDict' })
 
 const queryForm = reactive<DictItemQuery>({
   dictId: '',
-  sort: ['createTime,desc'],
+  // 按排序字段升序，使序号与字典值一致（如公告分类 1→9）
+  sort: ['sort,asc'],
 })
 
 const {

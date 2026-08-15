@@ -8,9 +8,11 @@ export interface ImageCaptchaResp {
 
 /** 仪表盘公告类型 */
 export interface DashboardNoticeResp {
-  id: number
+  /** 雪花 ID，可能超过 JS 安全整数，后端 FLEXIBLE 模式下为大数时返回 string */
+  id: string | number
   title: string
-  type: number
+  /** 分类（字典 notice_type：1通知公告…9紧急通告） */
+  type: string | number
   isTop: boolean
 }
 

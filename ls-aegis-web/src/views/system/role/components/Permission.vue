@@ -8,7 +8,7 @@
     :scroll="{ x: '100%', y: '100%', minWidth: 1000 }"
     :pagination="false"
     :disabled-tools="['fullscreen', 'size', 'setting']"
-    :row-selection="disabled ? false : { type: 'checkbox', showCheckedAll: showCheckedAll && !disabled, selectRowKeys: selectedKeys }"
+    :row-selection="disabled ? undefined : { type: 'checkbox', showCheckedAll: showCheckedAll && !disabled, selectRowKeys: selectedKeys }"
     @select="select"
     @select-all="selectAll"
     @refresh="refresh"
@@ -80,7 +80,7 @@ interface ExtendedRolePermissionResp extends RolePermissionResp {
 const tableRef = ref<InstanceType<typeof GiTable>>()
 // 是否父子联动
 const isCascade = ref(true)
-const isExpanded = ref(true)
+const isExpanded = ref(false)
 // 是否禁用
 const disabled = ref(false)
 
@@ -185,7 +185,8 @@ const {
   },
   onSuccess: () => {
     nextTick(() => {
-      tableRef.value?.tableRef?.expandAll(true)
+      tableRef.value?.tableRef?.expandAll(false)
+      isExpanded.value = false
     })
     // 构建菜单映射缓存
     buildMenuMap(tableData.value as ExtendedRolePermissionResp[])
@@ -198,7 +199,7 @@ const {
 
 const columns: TableInstance['columns'] = [
   { title: '菜单', dataIndex: 'title', slotName: 'title', width: 170, ellipsis: true, tooltip: true, fixed: !isMobile() ? 'left' : undefined },
-  { title: '权限', dataIndex: 'permissions', slotName: 'permissions' },
+  { title: '权限', dataIndex: 'permissions', slotName: 'permissions', align: 'left' },
 ]
 
 // 级联选中子项

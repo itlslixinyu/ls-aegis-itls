@@ -11,6 +11,8 @@ export const defaultSettings: App.AppSettings = {
   copyrightDisplay: true,
   layout: 'left',
   showBreadcrumb: true,
+  tableBordered: true,
+  tableSize: 'large',
   isOpenWatermark: false,
   enableColorWeaknessMode: false,
   enableMourningMode: false,

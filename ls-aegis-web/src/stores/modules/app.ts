@@ -12,6 +12,12 @@ const storeSetup = () => {
   if (settingConfig.showBreadcrumb === undefined) {
     settingConfig.showBreadcrumb = true
   }
+  if (settingConfig.tableBordered === undefined) {
+    settingConfig.tableBordered = true
+  }
+  if (settingConfig.tableSize === undefined) {
+    settingConfig.tableSize = 'large'
+  }
   if (settingConfig.isOpenWatermark === undefined) {
     settingConfig.isOpenWatermark = false
   }
@@ -77,6 +83,8 @@ const storeSetup = () => {
       copyrightDisplay: settingConfig.copyrightDisplay,
       layout: settingConfig.layout,
       showBreadcrumb: settingConfig.showBreadcrumb,
+      tableBordered: settingConfig.tableBordered,
+      tableSize: settingConfig.tableSize,
       isOpenWatermark: settingConfig.isOpenWatermark,
       watermark: settingConfig.watermark,
       enableColorWeaknessMode: settingConfig.enableColorWeaknessMode,
@@ -90,6 +98,12 @@ const storeSetup = () => {
     Object.assign(settingConfig, settings)
     if (settingConfig.showBreadcrumb === undefined) {
       settingConfig.showBreadcrumb = true
+    }
+    if (settingConfig.tableBordered === undefined) {
+      settingConfig.tableBordered = true
+    }
+    if (settingConfig.tableSize === undefined) {
+      settingConfig.tableSize = 'large'
     }
     if (settingConfig.isOpenWatermark === undefined) {
       settingConfig.isOpenWatermark = false

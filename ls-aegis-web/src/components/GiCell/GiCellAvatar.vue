@@ -1,9 +1,9 @@
 <template>
-  <a-space fill>
+  <a-space class="gi-cell-avatar" :size="8" align="center">
     <Avatar :src="props.avatar" :name="props.name" :size="24" />
     <a-link v-if="props.isLink" @click="emit('click')">
       <a-typography-paragraph
-        class="link-text"
+        class="gi-cell-avatar__name link-text"
         :ellipsis="{
           rows: 1,
           showTooltip: true,
@@ -13,17 +13,17 @@
         {{ props.name }}
       </a-typography-paragraph>
     </a-link>
-    <span v-else>
-      <a-typography-paragraph
-        :ellipsis="{
-          rows: 1,
-          showTooltip: true,
-          css: true,
-        }"
-      >
-        {{ props.name }}
-      </a-typography-paragraph>
-    </span>
+    <a-typography-paragraph
+      v-else
+      class="gi-cell-avatar__name"
+      :ellipsis="{
+        rows: 1,
+        showTooltip: true,
+        css: true,
+      }"
+    >
+      {{ props.name }}
+    </a-typography-paragraph>
   </a-space>
 </template>
 
@@ -47,4 +47,13 @@ interface Props {
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.gi-cell-avatar {
+  max-width: 100%;
+}
+
+.gi-cell-avatar__name {
+  margin-bottom: 0 !important;
+  line-height: 24px;
+}
+</style>

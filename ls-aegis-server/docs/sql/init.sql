@@ -558,8 +558,15 @@ VALUES
 INSERT INTO `sys_dict_item`
 (`id`, `label`, `value`, `color`, `sort`, `description`, `status`, `dict_id`, `create_user`, `create_time`)
 VALUES
-(1, '产品新闻', '1', 'primary', 1, NULL, 1, 1, 1, NOW()),
-(2, '企业动态', '2', 'success', 2, NULL, 1, 1, 1, NOW()),
+(1, '通知公告', '1', 'primary', 1, '日常行政通知、会议通知、放假调休、制度宣贯', 1, 1, 1, NOW()),
+(2, '政策文件', '2', 'primary', 2, '新规发布、政策解读、上级下发文件', 1, 1, 1, NOW()),
+(6, '新闻动态', '3', 'default', 3, '公司动态、项目进展、行业资讯', 1, 1, 1, NOW()),
+(7, '人事公告', '4', 'success', 4, '任免、招聘、入职离职、考勤、绩效考核公示', 1, 1, 1, NOW()),
+(8, '财务公示', '5', 'warning', 5, '预算、采购招标、中标结果、费用公示', 1, 1, 1, NOW()),
+(9, '安全通告', '6', 'error', 6, '网络安全预警、系统维护、漏洞提示、版本升级', 1, 1, 1, NOW()),
+(10, '运维公告', '7', 'warning', 7, '服务器停机、系统更新、功能变更、接口下线', 1, 1, 1, NOW()),
+(11, '公示通告', '8', 'default', 8, '结果公示、评选、申诉、公开征求意见', 1, 1, 1, NOW()),
+(12, '紧急通告', '9', 'error', 9, '突发事件、应急通知、重要紧急事项', 1, 1, 1, NOW()),
 (3, '桌面端', 'PC', 'primary', 1, NULL, 1, 2, 1, NOW()),
 (4, '安卓', 'ANDROID', 'success', 2, NULL, 1, 2, 1, NOW()),
 (5, '小程序', 'XCX', 'warning', 3, NULL, 1, 2, 1, NOW());
@@ -583,6 +590,31 @@ INSERT INTO `sys_client`
 (`id`, `client_id`, `client_type`, `auth_type`, `active_timeout`, `timeout`, `status`, `create_user`, `create_time`)
 VALUES
 (1, 'ef51c9a3e9046c4f2ea45142c8a8344a', 'PC', '["ACCOUNT", "EMAIL"]', 1800, 86400, 1, 1, NOW());
+
+-- 初始化仪表盘公告种子（20 条已发布）
+INSERT INTO `sys_notice`
+(`id`, `title`, `content`, `type`, `notice_scope`, `notice_users`, `notice_methods`, `is_timing`, `publish_time`, `is_top`, `status`, `create_user`, `create_time`, `deleted`)
+VALUES
+(910000000000000001, '系统维护窗口通知', '<p>本周六 22:00-24:00 进行系统例行维护，期间登录可能短暂中断，请提前保存工作内容。</p>', '7', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 1 DAY), b'1', 3, 1, DATE_SUB(NOW(), INTERVAL 1 DAY), 0),
+(910000000000000002, '密码策略已更新', '<p>新密码需满足长度与复杂度要求，下次登录时请按提示完成修改。</p>', '6', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 2 DAY), b'1', 3, 1, DATE_SUB(NOW(), INTERVAL 2 DAY), 0),
+(910000000000000003, '国密传输链路启用说明', '<p>平台默认启用 SM2/SM3/SM4 国密能力，浏览器需支持现代加密套件。</p>', '6', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 3 DAY), b'0', 3, 1, DATE_SUB(NOW(), INTERVAL 3 DAY), 0),
+(910000000000000004, '工作总览公告滚动上线', '<p>工作总览与运营数据中枢已支持公告无缝滚动展示，欢迎体验并提出反馈。</p>', '3', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 4 DAY), b'0', 3, 1, DATE_SUB(NOW(), INTERVAL 4 DAY), 0),
+(910000000000000005, '本周五下午例行巡检', '<p>运维将于周五 14:00-16:00 巡检核心服务，如遇异常请联系值班人员。</p>', '7', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 5 DAY), b'0', 3, 1, DATE_SUB(NOW(), INTERVAL 5 DAY), 0),
+(910000000000000006, '关于国庆假期值班安排', '<p>假期值班表已发布，请各部门负责人及时查阅并转发至组内成员。</p>', '1', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 6 DAY), b'0', 3, 1, DATE_SUB(NOW(), INTERVAL 6 DAY), 0),
+(910000000000000007, '文件存储容量扩容完成', '<p>对象存储与本地存储容量已扩容，大文件上传超时问题已优化。</p>', '7', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 7 DAY), b'0', 3, 1, DATE_SUB(NOW(), INTERVAL 7 DAY), 0),
+(910000000000000008, '角色权限模型调整公告', '<p>部分菜单权限码已整理，如发现菜单缺失请联系管理员重新授权。</p>', '1', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 8 DAY), b'0', 3, 1, DATE_SUB(NOW(), INTERVAL 8 DAY), 0),
+(910000000000000009, '登录双因素验证试行', '<p>高权限账号将逐步启用二次验证，请提前绑定可用邮箱。</p>', '6', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 9 DAY), b'0', 3, 1, DATE_SUB(NOW(), INTERVAL 9 DAY), 0),
+(910000000000000010, '运营数据中枢视觉升级', '<p>大屏动效与面板样式已对齐运维大屏规范，刷新页面即可体验。</p>', '3', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 10 DAY), b'0', 3, 1, DATE_SUB(NOW(), INTERVAL 10 DAY), 0),
+(910000000000000011, '接口限流策略说明', '<p>公开接口增加频率限制，异常调用将被短暂熔断，请勿短时间高频请求。</p>', '7', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 11 DAY), b'0', 3, 1, DATE_SUB(NOW(), INTERVAL 11 DAY), 0),
+(910000000000000012, '新员工入职资料清单', '<p>请人事与部门管理员按清单完成账号开通、角色分配与培训确认。</p>', '4', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 12 DAY), b'0', 3, 1, DATE_SUB(NOW(), INTERVAL 12 DAY), 0),
+(910000000000000013, '数据库备份演练通知', '<p>本月备份恢复演练定于周日凌晨执行，演练期间只读查询不受影响。</p>', '7', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 13 DAY), b'0', 3, 1, DATE_SUB(NOW(), INTERVAL 13 DAY), 0),
+(910000000000000014, '浏览器兼容性建议', '<p>推荐使用 Chrome / Edge / 国产信创浏览器最新版本访问管理后台。</p>', '1', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 14 DAY), b'0', 3, 1, DATE_SUB(NOW(), INTERVAL 14 DAY), 0),
+(910000000000000015, '消息中心未读提醒优化', '<p>未读公告与站内信角标刷新频率已优化，减少无效轮询。</p>', '3', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 15 DAY), b'0', 3, 1, DATE_SUB(NOW(), INTERVAL 15 DAY), 0),
+(910000000000000016, '季度安全意识培训', '<p>请全体员工于本月底前完成在线安全培训并提交测验结果。</p>', '6', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 16 DAY), b'0', 3, 1, DATE_SUB(NOW(), INTERVAL 16 DAY), 0),
+(910000000000000017, '定时任务监控告警上线', '<p>调度中心失败任务将同步推送到消息中心，请相关负责人关注。</p>', '7', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 17 DAY), b'0', 3, 1, DATE_SUB(NOW(), INTERVAL 17 DAY), 0),
+(910000000000000018, '客户满意度调研邀请', '<p>本季度调研已开启，欢迎提交使用体验与改进建议。</p>', '8', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 18 DAY), b'0', 3, 1, DATE_SUB(NOW(), INTERVAL 18 DAY), 0),
+(910000000000000019, '日志留存周期调整', '<p>操作日志默认留存周期调整为 180 天，超期数据将按策略归档。</p>', '2', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 19 DAY), b'0', 3, 1, DATE_SUB(NOW(), INTERVAL 19 DAY), 0),
+(910000000000000020, '信创环境适配进展同步', '<p>已完成主流国产 OS 与浏览器兼容验证，问题反馈请提交工单。</p>', '3', 1, NULL, '[1]', b'0', DATE_SUB(NOW(), INTERVAL 20 DAY), b'0', 3, 1, DATE_SUB(NOW(), INTERVAL 20 DAY), 0);
 
 -- ========== plugin\plugin_open.sql ==========
 
@@ -611,7 +643,7 @@ CREATE TABLE IF NOT EXISTS `sys_app`  (
 INSERT INTO `sys_menu`
 (`id`, `title`, `parent_id`, `type`, `path`, `name`, `component`, `redirect`, `icon`, `is_external`, `is_cache`, `is_hidden`, `permission`, `sort`, `status`, `create_user`, `create_time`)
 VALUES
-(7000, '能力开放', 0, 1, '/open', 'Open', 'Layout', '/open/app', 'expand', b'0', b'0', b'0', NULL, 7, 1, 1, NOW()),
+(7000, '能力开放', 0, 1, '/open', 'Open', 'Layout', '/open/app', 'expand', b'0', b'0', b'0', NULL, 4, 1, 1, NOW()),
 (7010, '应用管理', 7000, 2, '/open/app', 'OpenApp', 'open/app/index', NULL, 'common', b'0', b'0', b'0', NULL, 1, 1, 1, NOW()),
 (7011, '列表', 7010, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'open:app:list', 1, 1, 1, NOW()),
 (7012, '详情', 7010, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'open:app:get', 2, 1, 1, NOW()),
@@ -748,7 +780,7 @@ ALTER TABLE `sys_app`
 INSERT INTO `sys_menu`
 (`id`, `title`, `parent_id`, `type`, `path`, `name`, `component`, `redirect`, `icon`, `is_external`, `is_cache`, `is_hidden`, `permission`, `sort`, `status`, `create_user`, `create_time`)
 VALUES
-(3000, '租户管理', 0, 1, '/tenant', 'Tenant', 'Layout', '/tenant/management', 'user-group', b'0', b'0', b'0', NULL, 6, 1, 1, NOW()),
+(3000, '租户管理', 0, 1, '/tenant', 'Tenant', 'Layout', '/tenant/management', 'user-group', b'0', b'0', b'0', NULL, 3, 1, 1, NOW()),
 
 (3010, '租户管理', 3000, 2, '/tenant/management', 'TenantManagement', 'tenant/management/index', NULL, 'user-group', b'0', b'0', b'0', NULL, 1, 1, 1, NOW()),
 (3011, '列表', 3010, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'tenant:management:list', 1, 1, 1, NOW()),
@@ -771,7 +803,7 @@ VALUES
 INSERT INTO `sys_menu`
 (`id`, `title`, `parent_id`, `type`, `path`, `name`, `component`, `redirect`, `icon`, `is_external`, `is_cache`, `is_hidden`, `permission`, `sort`, `status`, `create_user`, `create_time`)
 VALUES
-(8000, '任务调度', 0, 1, '/schedule', 'Schedule', 'Layout', '/schedule/job', 'schedule', b'0', b'0', b'0', NULL, 8, 1, 1, NOW()),
+(8000, '任务调度', 0, 1, '/schedule', 'Schedule', 'Layout', '/schedule/job', 'schedule', b'0', b'0', b'0', NULL, 5, 1, 1, NOW()),
 (8010, '任务管理', 8000, 2, '/schedule/job', 'ScheduleJob', 'schedule/job/index', NULL, 'select-all', b'0', b'0', b'0', NULL, 1, 1, 1, NOW()),
 (8011, '列表', 8010, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'schedule:job:list', 1, 1, 1, NOW()),
 (8012, '详情', 8010, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'schedule:job:get', 2, 1, 1, NOW()),
@@ -827,7 +859,7 @@ CREATE TABLE IF NOT EXISTS `gen_field_config` (
 INSERT INTO `sys_menu`
 (`id`, `title`, `parent_id`, `type`, `path`, `name`, `component`, `redirect`, `icon`, `is_external`, `is_cache`, `is_hidden`, `permission`, `sort`, `status`, `create_user`, `create_time`)
 VALUES
-(9000, '开发工具', 0, 1, '/code', 'Code', 'Layout', '/code/generator', 'code-release-managment', b'0', b'0', b'0', NULL, 9, 1, 1, NOW()),
+(9000, '开发工具', 0, 1, '/code', 'Code', 'Layout', '/code/generator', 'code-release-managment', b'0', b'0', b'0', NULL, 6, 1, 1, NOW()),
 (9010, '代码生成', 9000, 2, '/code/generator', 'CodeGenerator', 'code/generator/index', NULL, 'code', b'0', b'0', b'0', NULL, 1, 1, 1, NOW()),
 (9011, '列表', 9010, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'code:generator:list', 1, 1, 1, NOW()),
 (9012, '配置', 9010, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'code:generator:config', 2, 1, 1, NOW()),

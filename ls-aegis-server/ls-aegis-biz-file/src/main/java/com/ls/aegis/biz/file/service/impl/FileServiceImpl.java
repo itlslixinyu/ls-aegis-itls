@@ -381,6 +381,12 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
             return;
         }
         FileInfo fileInfo = file.toFileInfo(storage);
+        // 物理文件已丢失时，仅清理库记录，避免 move/delete 抛错导致事务回滚
+        if (!fileStorageService.exists(fileInfo)) {
+            log.warn("删除跳过物理文件：存储中不存在 fileId={}, path={}, name={}", file.getId(), file.getPath(), file
+                .getName());
+            return;
+        }
         if (Boolean.TRUE.equals(storage.getRecycleBinEnabled())) {
             // 移动到回收站目录
             fileInfo.setId(file.getId().toString());

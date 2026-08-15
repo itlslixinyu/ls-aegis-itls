@@ -115,7 +115,7 @@
       <a-empty v-if="!fileList.length" />
     </a-spin>
     <FilePreview ref="filePreviewRef" />
-    <div class="pagination">
+    <div class="gi-pagination">
       <a-pagination v-bind="pagination" />
     </div>
 
@@ -439,12 +439,8 @@ onMounted(() => {
     flex-direction: column;
   }
 
-  .pagination {
+  .gi-pagination {
     padding: 0 var(--padding) var(--padding);
-
-    :deep(.arco-pagination) {
-      justify-content: end;
-    }
   }
 }
 </style>

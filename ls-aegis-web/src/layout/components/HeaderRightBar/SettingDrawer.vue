@@ -1,5 +1,12 @@
 <template>
-  <a-drawer v-model:visible="visible" title="项目配置" width="300px" unmount-on-close :footer="false">
+  <a-drawer
+    v-model:visible="visible"
+    title="项目配置"
+    width="300px"
+    unmount-on-close
+    :footer="false"
+    class="setting-drawer-wrap"
+  >
     <div class="setting-drawer">
       <!-- 整体风格设置 -->
       <section class="setting-section">
@@ -42,6 +49,21 @@
         <div v-if="settingOpen" class="setting-row">
           <span class="setting-row__label">面包屑</span>
           <a-switch v-model="appStore.showBreadcrumb" size="small" />
+        </div>
+        <div class="setting-row">
+          <span class="setting-row__label">表格边框</span>
+          <a-switch v-model="appStore.tableBordered" size="small" />
+        </div>
+        <div class="setting-row">
+          <span class="setting-row__label">表格尺寸</span>
+          <a-select
+            v-model="appStore.tableSize"
+            placeholder="请选择"
+            size="small"
+            :options="tableSizeOptions"
+            :trigger-props="{ autoFitPopupMinWidth: true }"
+            :style="{ width: '110px' }"
+          />
         </div>
         <div v-if="settingOpen" class="setting-row">
           <span class="setting-row__label">多标签</span>
@@ -154,6 +176,13 @@ const tabModeList: App.TabItem[] = [
   { label: '卡片', value: 'card' },
   { label: '间隔卡片', value: 'card-gutter' },
   { label: '圆角', value: 'rounded' },
+]
+
+const tableSizeOptions = [
+  { label: '迷你', value: 'mini' },
+  { label: '小型', value: 'small' },
+  { label: '中等', value: 'medium' },
+  { label: '大型', value: 'large' },
 ]
 
 const animateModeList: App.AnimateItem[] = [

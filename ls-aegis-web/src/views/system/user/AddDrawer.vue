@@ -76,6 +76,7 @@ const columns: ColumnItem[] = reactive([
     required: true,
     props: {
       maxLength: 64,
+      autocomplete: 'username',
     },
     disabled: () => isUpdate.value,
   },
@@ -88,6 +89,7 @@ const columns: ColumnItem[] = reactive([
     props: {
       maxLength: 32,
       showWordLimit: true,
+      autocomplete: 'new-password',
     },
     hide: () => isUpdate.value,
   },

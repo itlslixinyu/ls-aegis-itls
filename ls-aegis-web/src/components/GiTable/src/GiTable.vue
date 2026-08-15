@@ -25,10 +25,16 @@
           <a-tooltip content="尺寸">
             <a-button>
               <template #icon><icon-table-size style="width: 14px; height: 14px" /></template>
+              {{ sizeLabel }}
             </a-button>
           </a-tooltip>
           <template #content>
-            <a-doption v-for="item in TABLE_SIZE_OPTIONS" :key="item.value" :value="item.value" :active="item.value === size">
+            <a-doption
+              v-for="item in TABLE_SIZE_OPTIONS"
+              :key="item.value"
+              :value="item.value"
+              :active="item.value === tableSize"
+            >
               {{ item.label }}
             </a-doption>
           </template>
@@ -54,14 +60,14 @@
     <a-row class="gi-table__toolbar-bottom">
       <slot name="toolbar-bottom"></slot>
     </a-row>
-    <div class="gi-table__body" :class="`gi-table__body-pagination-${tableProps['page-position']}`">
+    <div class="gi-table__body" :class="`gi-table__body-pagination-${pagePosition}`">
       <div class="gi-table__container">
         <a-table
           ref="tableRef"
           v-bind="tableProps"
           :stripe="stripe"
-          :size="size"
-          :bordered="{ cell: isBordered }"
+          :size="tableSize"
+          :bordered="{ cell: tableBordered }"
           :columns="visibleColumns"
           :scrollbar="true"
           :data="data"
@@ -83,8 +89,26 @@ import type { DropdownInstance, TableColumnData, TableData, TableInstance } from
 import { omit } from 'lodash-es'
 import type { TableProps } from './type'
 import ColumnSetting from './components/ColumnSetting.vue'
+import { useAppStore } from '@/stores'
 
 defineOptions({ name: 'GiTable' })
+
+const appStore = useAppStore()
+/** 单元格边框：跟随项目配置「表格边框」 */
+const tableBordered = computed(() => appStore.tableBordered !== false)
+/** 表格尺寸：跟随项目配置，默认大型 */
+const TABLE_SIZE_OPTIONS = [
+  { label: '迷你', value: 'mini' },
+  { label: '小型', value: 'small' },
+  { label: '中等', value: 'medium' },
+  { label: '大型', value: 'large' },
+] as const
+type TableSizeValue = (typeof TABLE_SIZE_OPTIONS)[number]['value']
+const tableSize = computed<TableSizeValue>(() => {
+  const v = appStore.tableSize
+  return TABLE_SIZE_OPTIONS.some((o) => o.value === v) ? (v as TableSizeValue) : 'large'
+})
+const sizeLabel = computed(() => TABLE_SIZE_OPTIONS.find((o) => o.value === tableSize.value)?.label ?? '大型')
 
 // Props 默认值
 const props = withDefaults(defineProps<Props>(), {
@@ -92,6 +116,8 @@ const props = withDefaults(defineProps<Props>(), {
   disabledColumnKeys: () => [],
   disabledTools: () => [],
   data: () => [],
+  /** 分页默认底部居中，与全局 a-pagination 样式一致 */
+  pagePosition: 'bottom',
 })
 
 /** Emits 类型定义 */
@@ -146,22 +172,12 @@ const attrs = useAttrs()
 const tableRef = useTemplateRef('tableRef')
 const columnSettingRef = ref<InstanceType<typeof ColumnSetting> | null>(null)
 const stripe = ref(false)
-const size = ref<TableInstance['size']>('large')
-const isBordered = ref(false)
 const isFullscreen = ref(false)
 
-/** 表格尺寸选项 */
-const TABLE_SIZE_OPTIONS = [
-  { label: '迷你', value: 'mini' },
-  { label: '小型', value: 'small' },
-  { label: '中等', value: 'medium' },
-  { label: '大型', value: 'large' },
-] as const
-
-/** 处理表格尺寸变更 */
+/** 处理表格尺寸变更（写入项目配置，全局生效） */
 const handleSizeChange: DropdownInstance['onSelect'] = (value) => {
-  if (value) {
-    size.value = value as TableInstance['size']
+  if (value && TABLE_SIZE_OPTIONS.some((o) => o.value === value)) {
+    appStore.tableSize = value as TableSizeValue
   }
 }
 
@@ -208,15 +224,23 @@ const tableProps = computed(() => ({
   ...attrs,
 }))
 
+/** 分页位置：默认底部，与全站居中样式配套 */
+const pagePosition = computed(() => {
+  const tp = tableProps.value as Record<string, unknown>
+  return (tp.pagePosition ?? tp['page-position'] ?? 'bottom') as string
+})
+
+/** 未指定 align 时默认居中（业务可覆盖 left/right） */
+const applyDefaultAlign = (columns: TableColumnData[]) =>
+  columns.map((col) => (col.align === undefined ? { ...col, align: 'center' as const } : col))
+
 /** 计算显示的列 */
 const visibleColumns = computed(() => {
-  // 如果tableColumns有值，使用tableColumns
-  if (tableColumns.value && tableColumns.value.length > 0) {
-    return tableColumns.value
-  }
-
-  // 否则使用原始的columns
-  return props.columns?.filter((col) => col.show !== false) || []
+  const cols
+    = tableColumns.value?.length > 0
+      ? tableColumns.value
+      : props.columns?.filter((col) => col.show !== false) || []
+  return applyDefaultAlign(cols)
 })
 
 // 处理表格变化的函数
@@ -290,62 +314,68 @@ defineExpose({
       height: 100%;
     }
 
-    // 分页默认位置
-    :deep(.arco-pagination) {
+    // 分页：默认底部居中（样式统一由全局 a-pagination.less 管理）
+    :deep(.arco-table-pagination) {
       margin-top: 10px;
-      justify-content: end;
+      justify-content: center;
+    }
+
+    :deep(.arco-pagination) {
+      justify-content: center;
     }
 
     &-pagination-top {
       flex-direction: column-reverse;
 
-      :deep(.arco-pagination) {
+      :deep(.arco-table-pagination) {
+        margin-top: 0;
         margin-bottom: 10px;
-        justify-content: center;
       }
     }
 
-    // 上
+    // 上左 / 上右（显式覆盖居中）
     &-pagination-t {
       &l {
         flex-direction: column-reverse;
 
-        :deep(.arco-pagination) {
+        :deep(.arco-table-pagination) {
+          margin-top: 0;
           margin-bottom: 10px;
-          justify-content: start;
+          justify-content: flex-start;
         }
       }
 
       &r {
         flex-direction: column-reverse;
 
-        :deep(.arco-pagination) {
+        :deep(.arco-table-pagination) {
+          margin-top: 0;
           margin-bottom: 10px;
-          justify-content: end;
+          justify-content: flex-end;
         }
       }
     }
 
-    //下
     &-pagination-bottom {
-      :deep(.arco-pagination) {
+      :deep(.arco-table-pagination) {
         margin-top: 10px;
         justify-content: center;
       }
     }
 
+    // 下左 / 下右（显式覆盖居中）
     &-pagination-b {
       &l {
-        :deep(.arco-pagination) {
+        :deep(.arco-table-pagination) {
           margin-top: 10px;
-          justify-content: start;
+          justify-content: flex-start;
         }
       }
 
       &r {
-        :deep(.arco-pagination) {
+        :deep(.arco-table-pagination) {
           margin-top: 10px;
-          justify-content: end;
+          justify-content: flex-end;
         }
       }
     }

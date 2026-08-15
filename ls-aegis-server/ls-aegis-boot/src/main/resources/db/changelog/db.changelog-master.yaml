@@ -47,6 +47,12 @@ databaseChangeLog:
       file: db/changelog/mysql/patch_file_check_permission.sql
   - include:
       file: db/changelog/mysql/patch_drop_sms_tables.sql
+  - include:
+      file: db/changelog/mysql/patch_menu_toplevel_sort.sql
+  - include:
+      file: db/changelog/mysql/patch_seed_dashboard_notice.sql
+  - include:
+      file: db/changelog/mysql/patch_notice_type_categories.sql
 # PostgreSQL（当前 master 仅启用 MySQL；PG 脚本保留供方言切换，不含上述 patch）
 #  - include:
 #      file: db/changelog/postgresql/main_table.sql

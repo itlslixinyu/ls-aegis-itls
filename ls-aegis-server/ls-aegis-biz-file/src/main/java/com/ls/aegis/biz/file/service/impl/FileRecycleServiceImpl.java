@@ -88,6 +88,9 @@ public class FileRecycleServiceImpl implements FileRecycleService {
         StorageDO storage = storageService.getById(file.getStorageId());
         FileInfo fileInfo = file.toFileInfo(storage);
         fileInfo.setPath(storage.getRecycleBinPath() + fileInfo.getPath());
+        if (!fileStorageService.exists(fileInfo)) {
+            return;
+        }
         fileStorageService.delete(fileInfo);
     }
 

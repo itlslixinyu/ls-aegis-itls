@@ -13,6 +13,10 @@ declare namespace App {
     layout: 'left' | 'mix' | 'columns' | 'top'
     /** 是否显示面包屑 */
     showBreadcrumb: boolean
+    /** 列表表格是否显示单元格边框线 */
+    tableBordered: boolean
+    /** 列表表格尺寸：mini / small / medium / large，默认 large（大型） */
+    tableSize: 'mini' | 'small' | 'medium' | 'large'
     isOpenWatermark?: boolean
     watermark?: string
     enableColorWeaknessMode?: boolean

@@ -59,6 +59,11 @@
         <a-tag v-if="record.type === 2" color="green">菜单</a-tag>
         <a-tag v-if="record.type === 3">按钮</a-tag>
       </template>
+      <template #sort="{ record }">
+        <a-tag v-if="record.type === 1" color="arcoblue">{{ record.sort }}</a-tag>
+        <a-tag v-else-if="record.type === 2" color="green">{{ record.sort }}</a-tag>
+        <a-tag v-else>{{ record.sort }}</a-tag>
+      </template>
       <template #status="{ record }">
         <GiCellStatus :status="record.status" />
       </template>
@@ -151,14 +156,14 @@ const columns: TableInstance['columns'] = [
   { title: '菜单标题', dataIndex: 'title', slotName: 'title', width: 170, fixed: !isMobile() ? 'left' : undefined },
   { title: '类型', dataIndex: 'type', slotName: 'type', align: 'center' },
   { title: '状态', dataIndex: 'status', slotName: 'status', align: 'center' },
-  { title: '排序', dataIndex: 'sort', align: 'center', show: false },
+  { title: '排序', dataIndex: 'sort', slotName: 'sort', align: 'center', width: 90 },
   { title: '路由地址', dataIndex: 'path', ellipsis: true, tooltip: true },
   { title: '组件名称', dataIndex: 'name', ellipsis: true, tooltip: true },
   { title: '组件路径', dataIndex: 'component', minWidth: 180, ellipsis: true, tooltip: true },
   { title: '权限标识', dataIndex: 'permission', minWidth: 180, ellipsis: true, tooltip: true },
-  { title: '外链', dataIndex: 'isExternal', slotName: 'isExternal', align: 'center' },
+  { title: '外链', dataIndex: 'isExternal', slotName: 'isExternal', align: 'center', show: false },
   { title: '隐藏', dataIndex: 'isHidden', slotName: 'isHidden', align: 'center' },
-  { title: '缓存', dataIndex: 'isCache', slotName: 'isCache', align: 'center' },
+  { title: '缓存', dataIndex: 'isCache', slotName: 'isCache', align: 'center', show: false },
   { title: '创建人', dataIndex: 'createUserString', ellipsis: true, tooltip: true, show: false },
   { title: '创建时间', dataIndex: 'createTime', width: 180 },
   { title: '修改人', dataIndex: 'updateUserString', ellipsis: true, tooltip: true, show: false },

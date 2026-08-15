@@ -48,7 +48,7 @@
           <h2 class="hero-title">国密合规 · 安全运营</h2>
           <p class="hero-sub">SM2 / SM3 / SM4 全链路加密保护</p>
           <ul class="hero-points">
-            <li><icon-lock /> 零信任架构</li>
+            <li><icon-lock /> 零信任安全架构</li>
             <li><icon-user-group /> RBAC 三权分立</li>
             <li><icon-mind-mapping /> 可视化态势感知</li>
           </ul>
@@ -124,7 +124,7 @@ const { isDesktop } = useDevice()
 
 const logo = computed(() => appStore.getLogo())
 const title = computed(() => appStore.getTitle())
-const company = computed(() => appStore.getCompany())
+const company = computed(() => appStore.getCompanyShort())
 const copyright = computed(() => appStore.getCopyright())
 const beianIcp = computed(() => appStore.getForRecord())
 const beianGongan = computed(() => appStore.getBeianGongan())
@@ -195,6 +195,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 12px;
   min-width: 0;
+  height: 48px;
 }
 
 .brand-logo {
@@ -219,13 +220,15 @@ onUnmounted(() => {
   align-items: center;
   gap: 10px;
   min-width: 0;
-  font-size: 28px;
-  font-weight: 600;
+  height: 48px;
   letter-spacing: 0.02em;
 }
 
 .company {
   white-space: nowrap;
+  font-size: 28px;
+  line-height: 48px;
+  font-weight: 400;
 }
 
 .divider {
@@ -239,6 +242,9 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 24px;
+  line-height: 48px;
+  font-weight: 400;
 }
 
 .clock-pill {
@@ -460,7 +466,13 @@ onUnmounted(() => {
   }
 
   .brand-text {
-    font-size: 16px;
+    .company {
+      font-size: 16px;
+    }
+
+    .product {
+      font-size: 14px;
+    }
   }
 
   .clock-pill {

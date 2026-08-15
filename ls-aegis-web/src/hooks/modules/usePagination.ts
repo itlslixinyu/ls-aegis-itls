@@ -3,12 +3,21 @@ import { useBreakpoint } from '@/hooks'
 
 type Callback = () => void
 
+/** 全站分页默认配置（业务页统一走 usePagination / useTable，勿各自拼装） */
+export const DEFAULT_PAGINATION_OPTIONS = {
+  defaultPageSize: 10,
+  defaultSizeOptions: [10, 20, 30, 40, 50],
+} as const
+
 export interface Options {
   defaultPageSize: number
   defaultSizeOptions: number[]
 }
 
-export function usePagination(callback: Callback, options: Options = { defaultPageSize: 10, defaultSizeOptions: [10, 20, 30, 40, 50] }) {
+export function usePagination(
+  callback: Callback,
+  options: Options = { ...DEFAULT_PAGINATION_OPTIONS },
+) {
   const { breakpoint } = useBreakpoint()
 
   const pagination = reactive({
