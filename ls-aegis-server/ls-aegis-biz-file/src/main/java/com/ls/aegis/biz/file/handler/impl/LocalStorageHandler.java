@@ -120,7 +120,7 @@ public class LocalStorageHandler implements StorageHandler {
             File partFile = new File(partFilePath);
             file.transferTo(partFile);
 
-            // 计算 ETag：国密启用时用 SM3，否则 MD5
+            // 计算 ETag：统一 SM3
             String etag = digestPart(partFile);
 
             // 构建返回结果

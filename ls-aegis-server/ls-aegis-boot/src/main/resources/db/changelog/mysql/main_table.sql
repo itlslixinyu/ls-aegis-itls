@@ -331,7 +331,7 @@ CREATE TABLE IF NOT EXISTS `sys_file` (
     `extension`          varchar(32)   DEFAULT NULL                COMMENT '扩展名',
     `content_type`       varchar(255)  DEFAULT NULL                COMMENT '内容类型',
     `type`               tinyint(1)    UNSIGNED NOT NULL DEFAULT 1 COMMENT '类型（0: 目录；1：其他；2：图片；3：文档；4：视频；5：音频）',
-    `file_digest`        varchar(256)  DEFAULT NULL                COMMENT '文件指纹（国密下为 SM3；普通上传可能为存储引擎 SHA256）',
+    `file_digest`        varchar(256)  DEFAULT NULL                COMMENT '文件指纹（统一 SM3）',
     `metadata`           text          DEFAULT NULL                COMMENT '元数据',
     `thumbnail_name`     varchar(255)  DEFAULT NULL                COMMENT '缩略图名称',
     `thumbnail_size`     bigint(20)    DEFAULT NULL                COMMENT '缩略图大小（字节)',

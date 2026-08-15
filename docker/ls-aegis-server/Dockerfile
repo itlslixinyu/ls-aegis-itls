@@ -6,11 +6,12 @@ FROM eclipse-temurin:21-jre-jammy
 
 ARG JAR_FILE=./bin/*.jar
 COPY ${JAR_FILE} /app/bin/app.jar
-WORKDIR /app/bin
+# WORKDIR 必须为 /app，使种子路径 data/file/ 落在挂载卷 /app/data/file/
+WORKDIR /app
 
 ENTRYPOINT ["java", \
             "-jar", \
             "-XX:+UseZGC", \
             "-Djava.security.egd=file:/dev/./urandom", \
             "-Dspring.profiles.active=prod", \
-            "app.jar"]
+            "/app/bin/app.jar"]

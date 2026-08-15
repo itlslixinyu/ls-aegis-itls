@@ -31,9 +31,9 @@ export function getFileStatistics() {
   return http.get<T.FileStatisticsResp>(`${BASE_URL}/statistics`)
 }
 
-/** @desc 根据文件指纹检测文件是否已经在服务器存在 */
+/** @desc 根据文件指纹（SM3）检测文件是否已经在服务器存在 */
 export function checkFile(fileDigest: string) {
-  return http.get<T.FileItem>(`${BASE_URL}/check`, { fileHash: fileDigest })
+  return http.get<T.FileItem>(`${BASE_URL}/check`, { fileDigest })
 }
 
 /** @desc 创建文件夹 */

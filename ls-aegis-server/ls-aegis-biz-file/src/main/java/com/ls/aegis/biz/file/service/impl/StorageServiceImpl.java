@@ -192,8 +192,8 @@ public class StorageServiceImpl extends BaseServiceImpl<StorageMapper, StorageDO
                 config.setStoragePath(storagePath);
                 fileStorageList.addAll(FileStorageServiceBuilder.buildLocalPlusFileStorage(Collections
                     .singletonList(config)));
-                // 注册资源映射（domain 路径 → 本地目录，须鉴权策略配合 excludes）
-                SpringWebUtils.registerResourceHandler(MapUtil.of(URLUtil.url(storage.getDomain()).getPath(), storagePath));
+                // 注册资源映射：对外 domain 可能带 /api（Nginx 反代），容器内仍映射 /file/
+                SpringWebUtils.registerResourceHandler(MapUtil.of(resolveLocalHandlerPath(storage.getDomain()), storagePath));
             }
             case OSS -> {
                 FileStorageProperties.AmazonS3Config config = new FileStorageProperties.AmazonS3Config();
@@ -220,9 +220,22 @@ public class StorageServiceImpl extends BaseServiceImpl<StorageMapper, StorageDO
         fileStorage.close();
         // 本地存储引擎需要移除资源映射
         if (StorageTypeEnum.LOCAL.equals(storage.getType())) {
-            SpringWebUtils.deRegisterResourceHandler(MapUtil.of(URLUtil.url(storage.getDomain()).getPath(), storage
+            SpringWebUtils.deRegisterResourceHandler(MapUtil.of(resolveLocalHandlerPath(storage.getDomain()), storage
                 .getBucketName()));
         }
+    }
+
+    /**
+     * 解析本地存储在容器内的静态资源映射路径。
+     * <p>对外访问域名可能是 {@code http://host:8080/api/file/}（经 Nginx /api 反代），
+     * 后端实际提供的路径始终是 {@code /file/}。</p>
+     */
+    private String resolveLocalHandlerPath(String domain) {
+        String path = URLUtil.url(domain).getPath();
+        if (StrUtil.startWith(path, "/api/")) {
+            path = StrUtil.removePrefix(path, "/api");
+        }
+        return StrUtil.appendIfMissing(StrUtil.prependIfMissing(path, StringConstants.SLASH), StringConstants.SLASH);
     }
 
     /**

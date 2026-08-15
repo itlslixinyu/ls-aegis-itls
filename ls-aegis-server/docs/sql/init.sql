@@ -334,7 +334,7 @@ CREATE TABLE IF NOT EXISTS `sys_file` (
     `extension`          varchar(32)   DEFAULT NULL                COMMENT '扩展名',
     `content_type`       varchar(255)  DEFAULT NULL                COMMENT '内容类型',
     `type`               tinyint(1)    UNSIGNED NOT NULL DEFAULT 1 COMMENT '类型（0: 目录；1：其他；2：图片；3：文档；4：视频；5：音频）',
-    `file_digest`        varchar(256)  DEFAULT NULL                COMMENT '文件指纹（国密下为 SM3；普通上传可能为存储引擎 SHA256）',
+    `file_digest`        varchar(256)  DEFAULT NULL                COMMENT '文件指纹（统一 SM3）',
     `metadata`           text          DEFAULT NULL                COMMENT '元数据',
     `thumbnail_name`     varchar(255)  DEFAULT NULL                COMMENT '缩略图名称',
     `thumbnail_size`     bigint(20)    DEFAULT NULL                COMMENT '缩略图大小（字节)',
@@ -592,8 +592,7 @@ INSERT INTO `sys_dict`
 (`id`, `name`, `code`, `description`, `is_system`, `create_user`, `create_time`)
 VALUES
 (1, '公告分类', 'notice_type', NULL, b'1', 1, NOW()),
-(2, '客户端类型', 'client_type', NULL, b'1', 1, NOW()),
-(3, '短信厂商', 'sms_supplier', NULL, b'1', 1, NOW());
+(2, '客户端类型', 'client_type', NULL, b'1', 1, NOW());
 
 INSERT INTO `sys_dict_item`
 (`id`, `label`, `value`, `color`, `sort`, `description`, `status`, `dict_id`, `create_user`, `create_time`)
@@ -602,10 +601,7 @@ VALUES
 (2, '企业动态', '2', 'success', 2, NULL, 1, 1, 1, NOW()),
 (3, '桌面端', 'PC', 'primary', 1, NULL, 1, 2, 1, NOW()),
 (4, '安卓', 'ANDROID', 'success', 2, NULL, 1, 2, 1, NOW()),
-(5, '小程序', 'XCX', 'warning', 3, NULL, 1, 2, 1, NOW()),
-(6, '阿里云', 'alibaba', 'warning', 1, NULL, 1, 3, 1, NOW()),
-(7, '腾讯云', 'tencent', 'primary', 2, NULL, 1, 3, 1, NOW()),
-(8, '容联云', 'cloopen', 'success', 3, NULL, 1, 3, 1, NOW());
+(5, '小程序', 'XCX', 'warning', 3, NULL, 1, 2, 1, NOW());
 
 -- 初始化默认用户和角色关联数据
 INSERT INTO `sys_user_role`
@@ -618,8 +614,8 @@ VALUES
 INSERT INTO `sys_storage`
 (`id`, `name`, `code`, `type`, `access_key`, `secret_key`, `endpoint`, `bucket_name`, `domain`, `recycle_bin_enabled`, `recycle_bin_path`, `description`, `is_default`, `sort`, `status`, `create_user`, `create_time`)
 VALUES
-(1, '开发环境', 'local_dev', 1, NULL, NULL, NULL, 'data/file/', 'http://localhost:8000/file/', b'1', '.RECYCLE.BIN/', '本地存储', b'1', 1, 1, 1, NOW()),
-(2, '生产环境', 'local_prod', 1, NULL, NULL, NULL, 'data/file/', 'http://localhost:8000/file/', b'1', '.RECYCLE.BIN/', '本地存储', b'0', 2, 2, 1, NOW());
+(1, '开发环境', 'local_dev', 1, NULL, NULL, NULL, 'data/file/', 'http://localhost:8080/api/file/', b'1', '.RECYCLE.BIN/', '本地存储', b'1', 1, 1, 1, NOW()),
+(2, '生产环境', 'local_prod', 1, NULL, NULL, NULL, 'data/file/', 'http://localhost:8080/api/file/', b'1', '.RECYCLE.BIN/', '本地存储', b'0', 2, 2, 1, NOW());
 
 -- 初始化客户端数据
 INSERT INTO `sys_client`

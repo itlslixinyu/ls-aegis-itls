@@ -568,7 +568,7 @@ COMMENT ON COLUMN "sys_file"."path"               IS '路径';
 COMMENT ON COLUMN "sys_file"."extension"          IS '扩展名';
 COMMENT ON COLUMN "sys_file"."content_type"       IS '内容类型';
 COMMENT ON COLUMN "sys_file"."type"               IS '类型（0: 目录；1：其他；2：图片；3：文档；4：视频；5：音频）';
-COMMENT ON COLUMN "sys_file"."file_digest"        IS '文件指纹（国密下为 SM3；普通上传可能为存储引擎 SHA256）';
+COMMENT ON COLUMN "sys_file"."file_digest"        IS '文件指纹（统一 SM3）';
 COMMENT ON COLUMN "sys_file"."metadata"           IS '元数据';
 COMMENT ON COLUMN "sys_file"."thumbnail_name"     IS '缩略图名称';
 COMMENT ON COLUMN "sys_file"."thumbnail_size"     IS '缩略图大小（字节)';

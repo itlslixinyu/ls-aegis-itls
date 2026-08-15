@@ -40,7 +40,6 @@ LS-Aegis/
 │   ├── ls-aegis-starter/        # 核心自动装配
 │   ├── ls-aegis-rbac/           # 登录、用户/角色/菜单/部门/字典/审计
 │   ├── ls-aegis-biz-file/       # 文件与存储
-│   ├── ls-aegis-biz-sms/        # 短信
 │   ├── ls-aegis-biz-notice/     # 公告与站内消息
 │   ├── ls-aegis-biz-open/       # 开放能力
 │   ├── ls-aegis-biz-schedule/   # 任务调度（SnailJob）

@@ -91,7 +91,7 @@ public class MultipartUploadServiceImpl implements MultipartUploadService {
         Map<String, String> metaData = multiPartUploadInitReq.getMetaData();
         MultipartUploadInitResp multipartUploadInitResp = storageHandler
             .initMultipartUpload(storageDO, multiPartUploadInitReq);
-        // 缓存文件信息：文件指纹（SM3）与 uploadId 映射（双写新旧 Redis 前缀）
+        // 缓存文件信息：文件指纹（SM3）→ uploadId（仅 multipart:digest_to_upload:）
         multipartUploadDao.setMultipartUpload(multipartUploadInitResp.getUploadId(), multipartUploadInitResp, metaData);
         multipartUploadDao.setDigestMapping(fileDigest, multipartUploadInitResp.getUploadId());
         return multipartUploadInitResp;

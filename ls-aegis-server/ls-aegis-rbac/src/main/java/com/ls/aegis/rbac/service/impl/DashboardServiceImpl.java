@@ -97,8 +97,8 @@ public class DashboardServiceImpl implements DashboardService {
     public List<DashboardChartCommonResp> getAnalysisGeo() throws IOException {
         List<DashboardChartCommonResp> originList = logMapper.selectListDashboardAnalysisGeo();
         List<DashboardChartCommonResp> list = new ArrayList<>(34);
-        // 获取省份数据
-        String chinaJson = IoUtil.readUtf8(new ClassPathResource("china.json").getInputStream());
+        // 省份简称/全称对照（仅仪表盘聚合用；ECharts 几何在前端 assets/map/china.json）
+        String chinaJson = IoUtil.readUtf8(new ClassPathResource("china-provinces.json").getInputStream());
         JSONArray jsonArr = JSONUtil.parseObj(chinaJson).getJSONArray("children");
         List<String> provinceList = CollUtils.mapToList(jsonArr, item -> {
             JSONObject itemJsonObj = JSONUtil.parseObj(item);

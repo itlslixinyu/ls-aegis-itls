@@ -3,7 +3,6 @@
     <div class="body">
       <section>
         <a-upload
-          :file-list="avatarList"
           accept="image/*"
           :show-file-list="false"
           list-type="picture-card"
@@ -11,7 +10,7 @@
           :on-before-upload="onBeforeUpload"
         >
           <template #upload-button>
-            <Avatar :src="avatarList[0].url" :name="userStore.nickname" :size="100" trigger>
+            <Avatar :src="avatarSrc" :name="userStore.nickname" :size="100" trigger>
               <template #trigger-icon><icon-camera /></template>
             </Avatar>
           </template>
@@ -97,7 +96,7 @@
 
 <script setup lang="ts">
 import { useWindowSize } from '@vueuse/core'
-import { type FileItem, Message } from '@arco-design/web-vue'
+import { Message } from '@arco-design/web-vue'
 import { VueCropper } from 'vue-cropper'
 import BasicInfoUpdateModal from './BasicInfoUpdateModal.vue'
 import { uploadAvatar } from '@/apis/system'
@@ -108,14 +107,8 @@ import getAvatar from '@/utils/avatar'
 const { width } = useWindowSize()
 const userStore = useUserStore()
 const userInfo = computed(() => userStore.userInfo)
+const avatarSrc = computed(() => getAvatar(userInfo.value.avatar, userInfo.value.gender))
 
-const avatar = {
-  uid: '-2',
-  name: 'avatar.png',
-  url: userInfo.value.avatar,
-}
-const avatarList = ref<FileItem[]>([avatar])
-const fileRef = ref(reactive({ name: 'avatar.png' }))
 const options: cropperOptions = reactive({
   img: '',
   autoCrop: true,
@@ -132,7 +125,6 @@ const options: cropperOptions = reactive({
 const visible = ref(false)
 // 打开裁剪框
 const onBeforeUpload = (file: File): boolean => {
-  fileRef.value = file
   const reader = new FileReader()
   reader.readAsDataURL(file)
   reader.onload = () => {
@@ -144,7 +136,6 @@ const onBeforeUpload = (file: File): boolean => {
 
 // 重置
 const reset = () => {
-  fileRef.value = { name: '' }
   options.img = ''
   visible.value = false
 }
@@ -165,17 +156,20 @@ const handleRealTime = (data: any) => {
 }
 
 const cropperRef = ref()
-// 上传头像
+// 上传头像（裁剪固定输出 png，文件名与后端后缀校验一致）
 const handleUpload = async () => {
-  cropperRef.value.getCropBlob((data: any) => {
-    const formData = new FormData()
-    formData.append('avatarFile', data, fileRef.value?.name)
-    uploadAvatar(formData).then((res) => {
+  cropperRef.value.getCropBlob(async (data: Blob) => {
+    try {
+      const formData = new FormData()
+      formData.append('avatarFile', data, 'avatar.png')
+      const res = await uploadAvatar(formData)
       userInfo.value.avatar = res.data.avatar
-      avatarList.value[0].url = getAvatar(res.data.avatar, undefined)
+      await userStore.getInfo()
       reset()
       Message.success('更新成功')
-    })
+    } catch {
+      // 错误由请求拦截器提示
+    }
   })
 }
 

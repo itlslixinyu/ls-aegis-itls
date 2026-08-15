@@ -1,6 +1,6 @@
 <template>
-  <a-avatar v-if="src" :size="size">
-    <img :src="src" :alt="alt" />
+  <a-avatar v-if="displaySrc" :size="size">
+    <img :src="displaySrc" :alt="alt" @error="onImgError" />
     <template v-if="trigger" #trigger-icon><slot name="trigger-icon"></slot></template>
   </a-avatar>
   <a-avatar
@@ -23,6 +23,7 @@
 <script setup lang="ts">
 import Unknown from '@/assets/images/avatar/unknown.png'
 import * as Regexp from '@/utils/regexp'
+import getAvatar from '@/utils/avatar'
 
 defineOptions({ name: 'Avatar' })
 
@@ -41,6 +42,25 @@ interface Props {
   size?: string | number
   alt?: string
   trigger?: boolean
+}
+
+const imgError = ref(false)
+watch(
+  () => props.src,
+  () => {
+    imgError.value = false
+  },
+)
+
+const displaySrc = computed(() => {
+  if (imgError.value || !props.src) {
+    return ''
+  }
+  return getAvatar(props.src, undefined)
+})
+
+const onImgError = () => {
+  imgError.value = true
 }
 
 /**

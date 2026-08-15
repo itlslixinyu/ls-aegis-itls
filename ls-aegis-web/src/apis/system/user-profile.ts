@@ -17,8 +17,8 @@ export function updateUserPassword(data: { oldPassword: string, newPassword: str
   return http.patch(`${BASE_URL}/password`, data)
 }
 
-/** @desc 修改手机号 */
-export function updateUserPhone(data: { phone: string, captcha: string, oldPassword: string }) {
+/** @desc 登记/修改手机号（仅登记，无需短信验证码） */
+export function updateUserPhone(data: { phone: string, oldPassword: string }) {
   return http.patch(`${BASE_URL}/phone`, data)
 }
 

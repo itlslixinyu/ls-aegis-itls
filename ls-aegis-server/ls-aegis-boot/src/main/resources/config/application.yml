@@ -212,8 +212,6 @@ continew-starter.tenant:
     - sys_dict_item # 字典项表
     - sys_option # 参数表
     - sys_storage # 存储表
-    - sys_sms_config # 短信配置表
-    - sys_sms_log # 短信日志表
     - sys_client # 客户端表
     - sys_app # 应用表
   # 忽略菜单 ID（租户不能使用的菜单）
@@ -222,7 +220,6 @@ continew-starter.tenant:
     - 1130 # 字典管理
     - 1140 # 字典项管理
     - 1150 # 系统配置
-    - 2050 # 短信日志
     - 3000 # 租户管理
     - 7000 # 能力开放
     - 8000 # 任务调度

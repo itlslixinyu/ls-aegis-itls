@@ -3,7 +3,7 @@ export interface ModeItem {
   icon: string
   subtitle: string
   value?: string
-  type: 'phone' | 'email' | 'wechat_open' | 'gitee' | 'github'
+  type: 'phone' | 'email' | 'password' | 'wechat_open' | 'gitee' | 'github'
   jumpMode?: 'link' | 'modal'
   status: boolean
   statusString: string

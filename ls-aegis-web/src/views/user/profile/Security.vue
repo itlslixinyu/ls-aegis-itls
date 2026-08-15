@@ -24,7 +24,7 @@
             :type="item.status ? 'secondary' : 'primary'"
             @click="onUpdate(item.type, item.status)"
           >
-            {{ ['password'].includes(item.type) || item.status ? '修改' : '绑定' }}
+            {{ buttonText(item) }}
           </a-button>
         </div>
       </div>
@@ -42,17 +42,16 @@ import { useUserStore } from '@/stores'
 const userStore = useUserStore()
 const userInfo = computed(() => userStore.userInfo)
 
-const modeList = ref<ModeItem[]>([])
-modeList.value = [
+const modeList = computed<ModeItem[]>(() => [
   {
-    title: '安全手机',
+    title: '手机号',
     icon: 'phone-color',
     value: userInfo.value.phone,
-    subtitle: `${userInfo.value.phone ? '' : '手机号'}可用于身份验证、密码找回、通知接收`,
+    subtitle: '仅登记联系方式，不用于登录与身份验证',
     type: 'phone',
     jumpMode: 'modal',
     status: !!userInfo.value.phone,
-    statusString: userInfo.value.phone ? '已绑定' : '未绑定',
+    statusString: userInfo.value.phone ? '已登记' : '未登记',
   },
   {
     title: '安全邮箱',
@@ -73,7 +72,17 @@ modeList.value = [
     status: !!userInfo.value.pwdResetTime,
     statusString: userInfo.value.pwdResetTime ? '已设置' : '未设置',
   },
-]
+])
+
+const buttonText = (item: ModeItem) => {
+  if (item.type === 'phone') {
+    return item.status ? '修改' : '登记'
+  }
+  if (item.type === 'password' || item.status) {
+    return '修改'
+  }
+  return '绑定'
+}
 
 const verifyModelRef = ref<InstanceType<typeof VerifyModel>>()
 // 修改

@@ -27,15 +27,20 @@
 
 <script setup lang="ts">
 import type { EChartsOption } from 'echarts'
+import { registerMap } from 'echarts/core'
 import { getAnalysisGeo as getData } from '@/apis/common/dashboard'
 import { useChart } from '@/hooks'
+import chinaMap from '@/assets/map/china.json'
+
+// 地图几何仅本页加载，避免所有 Chart 实例都打入 2MB GeoJSON
+registerMap('china', chinaMap as any)
 
 const chartRef = useTemplateRef('chartRef')
 const chartData = ref([])
 const totalValue = ref(0)
 const topData = ref([])
 
-const { chartOption } = useChart((isDark: EChartsOption) => {
+const { chartOption } = useChart((isDark: boolean): EChartsOption => {
   return {
     visualMap: {
       left: 'left',

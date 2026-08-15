@@ -118,15 +118,10 @@ public class UserProfileController {
         userService.updatePassword(oldPassword, newPassword, UserContextHolder.getUserId());
     }
 
-    @Operation(summary = "修改手机号", description = "修改手机号")
+    @Operation(summary = "登记/修改手机号", description = "仅登记联系手机号，不发送、不校验短信验证码")
     @PatchMapping("/phone")
     public void updatePhone(@RequestBody @Valid UserPhoneUpdateReq updateReq) {
         String oldPassword = SecureUtils.decryptPasswordByRsaPrivateKey(updateReq.getOldPassword(), DECRYPT_FAILED);
-        String captchaKey = CacheConstants.CAPTCHA_KEY_PREFIX + updateReq.getPhone();
-        String captcha = RedisUtils.get(captchaKey);
-        ValidationUtils.throwIfBlank(captcha, CAPTCHA_EXPIRED);
-        ValidationUtils.throwIfNotEqualIgnoreCase(updateReq.getCaptcha(), captcha, "验证码不正确");
-        RedisUtils.delete(captchaKey);
         userService.updatePhone(updateReq.getPhone(), oldPassword, UserContextHolder.getUserId());
     }
 

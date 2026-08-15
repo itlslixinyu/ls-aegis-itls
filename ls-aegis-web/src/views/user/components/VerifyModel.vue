@@ -25,7 +25,7 @@
 import { useWindowSize } from '@vueuse/core'
 import { Message } from '@arco-design/web-vue'
 import NProgress from 'nprogress'
-import { type BehaviorCaptchaReq, getEmailCaptcha, getSmsCaptcha, updateUserEmail, updateUserPassword, updateUserPhone } from '@/apis'
+import { type BehaviorCaptchaReq, getEmailCaptcha, updateUserEmail, updateUserPassword, updateUserPhone } from '@/apis'
 import { encryptTransport } from '@/utils/encrypt'
 import { useUserStore } from '@/stores'
 import { type ColumnItem, GiForm } from '@/components/GiForm'
@@ -90,7 +90,8 @@ const columns: ColumnItem[] = reactive([
     span: 24,
     rules: [{ required: true, message: '请输入验证码' }],
     hide: () => {
-      return !['phone', 'email'].includes(verifyType.value)
+      // 手机号仅登记，不发短信验证码；邮箱仍需验证码
+      return verifyType.value !== 'email'
     },
   },
   {
@@ -154,10 +155,10 @@ const VerifyRef = ref<InstanceType<any>>()
 const captchaType = ref('blockPuzzle')
 const captchaMode = ref('pop')
 const captchaLoading = ref(false)
-// 弹出行为验证码
+// 弹出行为验证码（仅邮箱）
 const onCaptcha = async () => {
   if (captchaLoading.value) return
-  const isInvalid = await formRef.value?.formRef?.validateField(verifyType.value === 'phone' ? 'phone' : 'email')
+  const isInvalid = await formRef.value?.formRef?.validateField('email')
   if (isInvalid) return
   // 重置行为参数
   VerifyRef.value.instance.refresh()
@@ -183,22 +184,16 @@ const reset = () => {
   resetCaptcha()
 }
 
-// 获取验证码
+// 获取邮箱验证码
 const getCaptcha = async (captchaReq: BehaviorCaptchaReq) => {
-  // 发送验证码
   try {
     captchaLoading.value = true
     captchaBtnName.value = '发送中...'
-    if (verifyType.value === 'phone') {
-      await getSmsCaptcha(form.phone, captchaReq)
-    } else if (verifyType.value === 'email') {
-      await getEmailCaptcha(form.email, captchaReq, 'bind')
-    }
+    await getEmailCaptcha(form.email, captchaReq, 'bind')
     captchaLoading.value = false
     captchaDisable.value = true
     captchaBtnName.value = `获取验证码(${(captchaTime.value -= 1)}s)`
     Message.success('发送成功')
-    // Message.success('仅提供效果演示，实际使用请查看代码取消相关注释')
     captchaTimer.value = window.setInterval(() => {
       captchaTime.value -= 1
       captchaBtnName.value = `获取验证码(${captchaTime.value}s)`
@@ -221,7 +216,6 @@ const save = async () => {
     if (verifyType.value === 'phone') {
       await updateUserPhone({
         phone: form.phone,
-        captcha: form.captcha,
         oldPassword: await encryptTransport(form.oldPassword) as string,
       })
       Message.success('修改成功')

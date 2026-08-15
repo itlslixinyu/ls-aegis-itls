@@ -14,7 +14,6 @@
 | ls-aegis-starter | `com.ls.aegis.starter` | 核心自动装配（不含 rbac/biz，避免循环依赖） |
 | ls-aegis-rbac | `com.ls.aegis.rbac` | 登录认证、用户/角色/菜单/部门/字典/审计 |
 | ls-aegis-biz-file | `com.ls.aegis.biz.file` | 文件与存储 |
-| ls-aegis-biz-sms | `com.ls.aegis.biz.sms` | 短信 |
 | ls-aegis-biz-notice | `com.ls.aegis.biz.notice` | 公告与站内消息 |
 | ls-aegis-biz-open | `com.ls.aegis.biz.open` | 开放能力示例 |
 | ls-aegis-biz-tenant | `com.ls.aegis.biz.tenant` | 多租户（默认不接入启动） |

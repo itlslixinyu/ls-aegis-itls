@@ -128,10 +128,10 @@ public interface FileService extends BaseService<FileResp, FileResp, FileQuery, 
     /**
      * 检查文件是否存在
      *
-     * @param fileHash 文件 Hash
+     * @param fileDigest 文件指纹（SM3）
      * @return 响应参数
      */
-    FileResp check(String fileHash);
+    FileResp check(String fileDigest);
 
     /**
      * 计算文件夹大小

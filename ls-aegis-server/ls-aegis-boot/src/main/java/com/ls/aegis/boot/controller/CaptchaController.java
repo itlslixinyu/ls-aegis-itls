@@ -19,7 +19,6 @@ package com.ls.aegis.boot.controller;
 import cn.dev33.satoken.annotation.SaIgnore;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.lang.Dict;
-import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
@@ -37,9 +36,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
-import org.dromara.sms4j.api.SmsBlend;
-import org.dromara.sms4j.api.entity.SmsResponse;
-import org.dromara.sms4j.core.factory.SmsFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -53,11 +49,9 @@ import com.ls.aegis.common.config.CaptchaProperties;
 import com.ls.aegis.redis.constant.CacheConstants;
 import com.ls.aegis.common.constant.GlobalConstants;
 import com.ls.aegis.rbac.enums.OptionCategoryEnum;
-import com.ls.aegis.biz.sms.model.entity.SmsConfigDO;
 import com.ls.aegis.rbac.model.entity.user.UserDO;
 import com.ls.aegis.rbac.service.OptionService;
 import com.ls.aegis.rbac.service.UserService;
-import com.ls.aegis.biz.sms.service.SmsConfigService;
 import com.ls.aegis.rbac.config.mail.MailSendHelper;
 import top.continew.starter.cache.redisson.util.RedisUtils;
 import top.continew.starter.captcha.graphic.core.GraphicCaptchaService;
@@ -70,12 +64,10 @@ import top.continew.starter.log.annotation.Log;
 import top.continew.starter.ratelimiter.annotation.RateLimiter;
 import top.continew.starter.ratelimiter.annotation.RateLimiters;
 import top.continew.starter.ratelimiter.enums.LimitType;
-import top.continew.starter.validation.constraints.Mobile;
 import top.continew.starter.web.model.R;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -98,7 +90,6 @@ public class CaptchaController {
     private final CaptchaProperties captchaProperties;
     private final GraphicCaptchaService graphicCaptchaService;
     private final OptionService optionService;
-    private final SmsConfigService smsConfigService;
     private final UserService userService;
 
     @Log(ignore = true)
@@ -192,55 +183,6 @@ public class CaptchaController {
         MailSendHelper.sendHtml(email, "【%s】邮箱验证码".formatted(siteTitle), content);
         // 保存验证码
         String captchaKey = CacheConstants.CAPTCHA_KEY_PREFIX + email;
-        RedisUtils.set(captchaKey, captcha, Duration.ofMinutes(expirationInMinutes));
-        return R.ok("发送成功，验证码有效期 %s 分钟".formatted(expirationInMinutes));
-    }
-
-    /**
-     * 获取短信验证码
-     *
-     * <p>
-     * 限流规则：<br>
-     * 1.同一号码同一模板，1分钟2条，1小时8条，24小时20条 <br>
-     * 2.同一号码所有模板 24 小时 100 条 <br>
-     * 3.同一 IP 每分钟限制发送 30 条
-     * </p>
-     *
-     * @param phone      手机号
-     * @param captchaReq 行为验证码请求参数
-     * @return {@link R }
-     */
-    @Operation(summary = "获取短信验证码", description = "发送验证码到指定手机号")
-    @GetMapping("/sms")
-    @RateLimiters({
-        @RateLimiter(name = CacheConstants.CAPTCHA_KEY_PREFIX + "MIN", key = "#phone + ':' + T(cn.hutool.extra.spring.SpringUtil).getProperty('captcha.sms.templateId')", rate = 2, interval = 1, unit = TimeUnit.MINUTES, message = "获取验证码操作太频繁，请稍后再试"),
-        @RateLimiter(name = CacheConstants.CAPTCHA_KEY_PREFIX + "HOUR", key = "#phone + ':' + T(cn.hutool.extra.spring.SpringUtil).getProperty('captcha.sms.templateId')", rate = 8, interval = 1, unit = TimeUnit.HOURS, message = "获取验证码操作太频繁，请稍后再试"),
-        @RateLimiter(name = CacheConstants.CAPTCHA_KEY_PREFIX + "DAY'", key = "#phone + ':' + T(cn.hutool.extra.spring.SpringUtil).getProperty('captcha.sms.templateId')", rate = 20, interval = 24, unit = TimeUnit.HOURS, message = "获取验证码操作太频繁，请稍后再试"),
-        @RateLimiter(name = CacheConstants.CAPTCHA_KEY_PREFIX, key = "#phone", rate = 100, interval = 24, unit = TimeUnit.HOURS, message = "获取验证码操作太频繁，请稍后再试"),
-        @RateLimiter(name = CacheConstants.CAPTCHA_KEY_PREFIX, key = "#phone", rate = 30, interval = 1, unit = TimeUnit.MINUTES, type = LimitType.IP, message = "获取验证码操作太频繁，请稍后再试")})
-    public R getSmsCaptcha(@NotBlank(message = "手机号不能为空") @Mobile String phone, CaptchaVO captchaReq) {
-        // 行为验证码校验
-        CaptchaService behaviorCaptchaService = SpringUtil.getBean(CaptchaService.class);
-        ResponseModel verificationRes = behaviorCaptchaService.verification(captchaReq);
-        ValidationUtils.throwIfNotEqual(verificationRes.getRepCode(), RepCodeEnum.SUCCESS.getCode(), verificationRes
-            .getRepMsg());
-        CaptchaProperties.CaptchaSms captchaSms = captchaProperties.getSms();
-        // 生成验证码
-        String captcha = RandomUtil.randomNumbers(captchaSms.getLength());
-        Long expirationInMinutes = captchaSms.getExpirationInMinutes();
-        // 获取短信配置
-        SmsConfigDO smsConfig = smsConfigService.getDefaultConfig();
-        SmsBlend smsBlend = smsConfig != null
-            ? SmsFactory.getBySupplier(smsConfig.getSupplier())
-            : SmsFactory.getSmsBlend();
-        Map<String, String> messageMap = MapUtil.newHashMap(2, true);
-        messageMap.put(captchaSms.getCodeKey(), captcha);
-        messageMap.put(captchaSms.getTimeKey(), String.valueOf(expirationInMinutes));
-        // 发送验证码
-        SmsResponse smsResponse = smsBlend.sendMessage(phone, (LinkedHashMap<String, String>)messageMap);
-        CheckUtils.throwIf(!smsResponse.isSuccess(), "验证码发送失败");
-        // 保存验证码
-        String captchaKey = CacheConstants.CAPTCHA_KEY_PREFIX + phone;
         RedisUtils.set(captchaKey, captcha, Duration.ofMinutes(expirationInMinutes));
         return R.ok("发送成功，验证码有效期 %s 分钟".formatted(expirationInMinutes));
     }

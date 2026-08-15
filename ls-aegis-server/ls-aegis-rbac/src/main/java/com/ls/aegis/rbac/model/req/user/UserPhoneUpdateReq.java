@@ -19,20 +19,19 @@ package com.ls.aegis.rbac.model.req.user;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
-import org.hibernate.validator.constraints.Length;
 import top.continew.starter.validation.constraints.Mobile;
 
 import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * 用户手机号修改请求参数
+ * 用户手机号登记/修改请求参数（仅登记，不校验短信验证码）
  *
  * @author Charles7c
  * @since 2023/10/27 20:11
  */
 @Data
-@Schema(description = "用户手机号修改请求参数")
+@Schema(description = "用户手机号登记/修改请求参数")
 public class UserPhoneUpdateReq implements Serializable {
 
     @Serial
@@ -45,14 +44,6 @@ public class UserPhoneUpdateReq implements Serializable {
     @NotBlank(message = "新手机号不能为空")
     @Mobile(message = "新手机号格式不正确")
     private String phone;
-
-    /**
-     * 验证码
-     */
-    @Schema(description = "验证码", example = "888888")
-    @NotBlank(message = "验证码不能为空")
-    @Length(max = 6, message = "验证码无效")
-    private String captcha;
 
     /**
      * 当前密码

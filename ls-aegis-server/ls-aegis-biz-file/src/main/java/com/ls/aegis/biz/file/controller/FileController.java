@@ -118,11 +118,11 @@ public class FileController extends BaseController<FileService, FileResp, FileRe
     }
 
     @Log(ignore = true)
-    @Operation(summary = "检测文件是否存在", description = "检测文件是否存在")
+    @Operation(summary = "检测文件是否存在", description = "按文件指纹（SM3）检测是否已存在")
     @SaCheckPermission("system:file:check")
     @GetMapping("/check")
-    public FileResp checkFile(String fileHash) {
-        return baseService.check(fileHash);
+    public FileResp checkFile(String fileDigest) {
+        return baseService.check(fileDigest);
     }
 
     /**

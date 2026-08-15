@@ -34,7 +34,6 @@ import com.ls.aegis.rbac.auth.enums.AuthTypeEnum;
 import com.ls.aegis.rbac.auth.model.req.AccountLoginReq;
 import com.ls.aegis.rbac.auth.model.req.EmailLoginReq;
 import com.ls.aegis.rbac.auth.model.req.LoginReq;
-import com.ls.aegis.rbac.auth.model.req.PhoneLoginReq;
 import com.ls.aegis.rbac.enums.LogStatusEnum;
 import com.ls.aegis.rbac.mapper.LogMapper;
 import com.ls.aegis.rbac.model.entity.LogDO;
@@ -173,10 +172,6 @@ public class LogDaoLocalImpl implements LogDao {
             } else if (requestBody.contains(AuthTypeEnum.EMAIL.getValue())) {
                 EmailLoginReq authReq = JSONUtil.toBean(requestBody, EmailLoginReq.class);
                 logDO.setCreateUser(ExceptionUtils.exToNull(() -> userService.getByEmail(authReq.getEmail()).getId()));
-                return;
-            } else if (requestBody.contains(AuthTypeEnum.PHONE.getValue())) {
-                PhoneLoginReq authReq = JSONUtil.toBean(requestBody, PhoneLoginReq.class);
-                logDO.setCreateUser(ExceptionUtils.exToNull(() -> userService.getByPhone(authReq.getPhone()).getId()));
                 return;
             }
         }

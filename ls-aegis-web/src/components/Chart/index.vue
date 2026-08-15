@@ -3,9 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { registerMap } from 'echarts/core'
 import VCharts from 'vue-echarts'
-import chinaMap from './china.json'
 
 defineProps({
   option: {
@@ -27,8 +25,6 @@ defineProps({
     default: '100%',
   },
 })
-
-registerMap('china', chinaMap)
 
 const chart = ref(null)
 defineExpose({

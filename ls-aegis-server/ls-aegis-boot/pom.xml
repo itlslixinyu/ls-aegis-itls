@@ -33,10 +33,6 @@
         </dependency>
         <dependency>
             <groupId>com.ls</groupId>
-            <artifactId>ls-aegis-biz-sms</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.ls</groupId>
             <artifactId>ls-aegis-biz-notice</artifactId>
         </dependency>
         <dependency>

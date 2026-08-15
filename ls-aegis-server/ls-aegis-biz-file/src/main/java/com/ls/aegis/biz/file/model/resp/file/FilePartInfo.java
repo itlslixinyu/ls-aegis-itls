@@ -50,15 +50,9 @@ public class FilePartInfo implements Serializable {
     private Long partSize;
 
     /**
-     * 分片MD5
+     * 分片 ETag（本地存储为 SM3；对象存储为平台返回标识）
      */
-    @Schema(description = "分片MD5")
-    private String partMd5;
-
-    /**
-     * 分片ETag（S3返回的标识）
-     */
-    @Schema(description = "分片ETag")
+    @Schema(description = "分片 ETag（本地为 SM3）")
     private String partETag;
 
     /**

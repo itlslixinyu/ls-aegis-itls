@@ -165,8 +165,8 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
     }
 
     @Override
-    public FileResp check(String fileHash) {
-        FileDO file = baseMapper.lambdaQuery().eq(FileDO::getFileDigest, fileHash).one();
+    public FileResp check(String fileDigest) {
+        FileDO file = baseMapper.lambdaQuery().eq(FileDO::getFileDigest, fileDigest).one();
         if (file != null) {
             return get(file.getId());
         }
@@ -232,7 +232,7 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
         List<String> allExtensions = FileTypeEnum.getAllExtensions();
         CheckUtils.throwIf(!allExtensions.contains(extName), "不支持的文件类型，仅支持 {} 格式的文件", String
             .join(StringConstants.COMMA, allExtensions));
-        // 构建上传预处理对象（指纹统一 SM3，不使用引擎 SHA256）
+        // 构建上传预处理对象（指纹统一 SM3）
         StorageDO storage = storageService.getByCode(storageCode);
         CheckUtils.throwIf(DisEnableStatusEnum.DISABLE.equals(storage.getStatus()), "请先启用存储 [{}]", storage.getCode());
         String fileDigest = computeSm3Hex(file);
