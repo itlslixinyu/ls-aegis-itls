@@ -53,6 +53,16 @@ databaseChangeLog:
       file: db/changelog/mysql/patch_seed_dashboard_notice.sql
   - include:
       file: db/changelog/mysql/patch_notice_type_categories.sql
+  - include:
+      file: db/changelog/mysql/patch_weather_option.sql
+  - include:
+      file: db/changelog/mysql/patch_weather_open_meteo.sql
+  - include:
+      file: db/changelog/mysql/patch_weather_qweather.sql
+  - include:
+      file: db/changelog/mysql/patch_weather_qweather_jwt.sql
+  - include:
+      file: db/changelog/mysql/patch_weather_city_qweather.sql
 # PostgreSQL（当前 master 仅启用 MySQL；PG 脚本保留供方言切换，不含上述 patch）
 #  - include:
 #      file: db/changelog/postgresql/main_table.sql

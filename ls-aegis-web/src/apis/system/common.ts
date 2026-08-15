@@ -1,5 +1,6 @@
 import http from '@/utils/http'
 import type { LabelValueState } from '@/types/global'
+import type { WeatherNowResp } from './type'
 
 const BASE_URL = '/system/common'
 
@@ -11,6 +12,20 @@ export function listCommonDict(code: string) {
 /** @desc 查询系统配置参数 */
 export function listSiteOptionDict() {
   return http.get<LabelValueState[]>(`${BASE_URL}/dict/option/site`)
+}
+
+/** @desc 查询天气配置参数（运营中枢顶栏；失败静默降级，避免打扰） */
+export function listWeatherOptionDict() {
+  return http.get<LabelValueState[]>(`${BASE_URL}/dict/option/weather`, undefined, {
+    skipErrorMessage: true,
+  })
+}
+
+/** @desc 查询实时天气（后端代理；失败静默降级） */
+export function getWeatherNow(params?: { lat?: number, lon?: number }) {
+  return http.get<WeatherNowResp>(`${BASE_URL}/weather/now`, params, {
+    skipErrorMessage: true,
+  })
 }
 
 /** @desc 上传文件 */

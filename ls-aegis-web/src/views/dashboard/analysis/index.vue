@@ -9,25 +9,55 @@
     <div class="ops-screen__scan" aria-hidden="true" />
 
     <header class="ops-screen__header anim-fade-down">
-      <div class="ops-screen__status">
-        <span class="dot" />
-        <span>系统运行中</span>
-        <span class="sep" />
-        <span>CPU {{ cpuUsage }}%</span>
-        <span class="sep" />
-        <span>MEM {{ memUsage }}%</span>
+      <div
+        v-if="weatherEnabled"
+        class="ops-screen__weather"
+        :title="weatherTitle"
+      >
+        <span class="ops-screen__weather-city">{{ weather.city }}</span>
+        <span class="ops-screen__weather-pipe">|</span>
+        <span
+          class="ops-screen__weather-condition"
+          :class="weather.alerts.weather !== 'none' ? `alert-${weather.alerts.weather}` : undefined"
+        >
+          <img
+            class="ops-screen__weather-icon-img"
+            :src="weather.iconSrc"
+            :alt="weather.label"
+            width="26"
+            height="26"
+          >
+          <span class="ops-screen__weather-label">{{ weather.label }}</span>
+        </span>
+        <span class="ops-screen__weather-pipe">|</span>
+        <span
+          class="ops-screen__weather-temp"
+          :class="weather.alerts.temp !== 'none' ? `alert-${weather.alerts.temp}` : undefined"
+        >温度{{ weather.temp }}°C</span>
+        <span class="ops-screen__weather-pipe">|</span>
+        <span
+          class="ops-screen__weather-metric"
+          :class="weather.alerts.humidity !== 'none' ? `alert-${weather.alerts.humidity}` : undefined"
+        >湿度 {{ weather.humidity }}%</span>
+        <span class="ops-screen__weather-pipe">|</span>
+        <span
+          class="ops-screen__weather-metric"
+          :class="weather.alerts.wind !== 'none' ? `alert-${weather.alerts.wind}` : undefined"
+        >风力 {{ weather.windLevel }}级</span>
       </div>
+      <div v-else class="ops-screen__weather ops-screen__weather--empty" aria-hidden="true" />
       <div class="ops-screen__title-wrap">
         <span class="ops-screen__title-dot">·</span>
         <h1 class="ops-screen__title">{{ screenTitle }}</h1>
         <span class="ops-screen__title-dot">·</span>
       </div>
       <div class="ops-screen__clock">
-        <span class="current-time">{{ nowText }}</span>
-        <a-button size="mini" class="fs-btn" @click="toggle">
+        <span class="current-time-glass">
+          <span class="current-time">{{ nowText }}</span>
+        </span>
+        <a-button v-if="!isFullscreen" size="mini" class="fs-btn" @click="toggle">
           <template #icon>
-            <icon-fullscreen-exit v-if="isFullscreen" />
-            <icon-fullscreen v-else />
+            <icon-fullscreen />
           </template>
           全屏
         </a-button>
@@ -43,10 +73,10 @@
         </a-radio-group>
       </div>
       <div class="toolbar-right">
-        <a-button size="small" type="primary" :loading="refreshing" @click="refreshAll">
-          <template #icon><icon-refresh /></template>
-          刷新
-        </a-button>
+        <div class="ops-screen__status ops-screen__status--inline">
+          <span class="dot" :class="`is-${runStatus}`" :title="runStatusLabel" />
+          <span>系统运行中</span>
+        </div>
         <span class="updated">数据更新于：<span class="update-time">{{ updatedAt }}</span></span>
       </div>
     </div>
@@ -59,10 +89,10 @@
         :style="{ '--delay': `${0.05 + idx * 0.08}s` }"
       >
         <div class="kpi-card__icon" :style="{ background: item.iconBg, color: item.iconColor }">
-          <icon-eye v-if="item.key === 'pv'" :size="22" />
-          <icon-location v-else-if="item.key === 'ip'" :size="22" />
-          <icon-apps v-else-if="item.key === 'module'" :size="22" />
-          <icon-desktop v-else :size="22" />
+          <icon-eye v-if="item.key === 'pv'" :size="18" />
+          <icon-location v-else-if="item.key === 'ip'" :size="18" />
+          <icon-apps v-else-if="item.key === 'module'" :size="18" />
+          <icon-desktop v-else :size="18" />
         </div>
         <div class="kpi-card__main">
           <div class="kpi-card__title">{{ item.title }}</div>
@@ -75,7 +105,7 @@
                   :value="m.value"
                   :value-from="0"
                   :precision="m.precision ?? 0"
-                  :value-style="{ color: item.valueColor, fontSize: '22px', fontWeight: 700 }"
+                  :value-style="{ color: item.valueColor, fontSize: '20px', fontWeight: 700 }"
                   animation
                   show-group-separator
                 >
@@ -167,6 +197,16 @@ import {
   pickDashboardNotices,
   type NoticeTickerItem,
 } from '../utils/noticeTicker'
+import {
+  createMockWeather,
+  defaultWeatherRuntimeConfig,
+  listActiveWeatherAlerts,
+  mapWeatherNowToDashboard,
+  tryBrowserGeolocation,
+  type DashboardWeather,
+  type WeatherRuntimeConfig,
+} from '../utils/weather'
+import { getWeatherNow, listWeatherOptionDict } from '@/apis/system'
 
 defineOptions({ name: 'Analysis' })
 
@@ -175,12 +215,94 @@ const screenRef = ref<HTMLElement | null>(null)
 const { isFullscreen, toggle } = useFullscreen(screenRef)
 
 const trendDays = ref<7 | 30>(7)
-const nowText = ref(dayjs().format('YYYY-MM-DD HH:mm:ss'))
+const WEEK_LABELS = ['日', '一', '二', '三', '四', '五', '六'] as const
+const formatNowText = (d = dayjs()) =>
+  `${d.format('YYYY-MM-DD HH:mm:ss')} 星期${WEEK_LABELS[d.day()]}`
+
+const nowText = ref(formatNowText())
 const updatedAt = ref(dayjs().format('HH:mm:ss'))
-const refreshing = ref(false)
 const loading = ref(false)
-const cpuUsage = ref(28)
-const memUsage = ref(57)
+const weatherRuntime = ref<WeatherRuntimeConfig>(defaultWeatherRuntimeConfig())
+const weatherEnabled = computed(() => weatherRuntime.value.enabled)
+const weather = ref<DashboardWeather>(createMockWeather(weatherRuntime.value.city))
+const weatherTitle = computed(() => {
+  const base = `${weather.value.city}|${weather.value.label}|温度${weather.value.temp}°C|湿度 ${weather.value.humidity}%|风力 ${weather.value.windLevel}级`
+  const alerts = listActiveWeatherAlerts(weather.value).map((i) => i.label)
+  return alerts.length ? `${base}|${alerts.join('|')}` : base
+})
+let weatherTimer: ReturnType<typeof setInterval> | undefined
+
+const refreshWeather = async () => {
+  if (!weatherRuntime.value.enabled) return
+  try {
+    let lat: number | undefined
+    let lon: number | undefined
+    if (weatherRuntime.value.cityMode === 'auto') {
+      const geo = await tryBrowserGeolocation()
+      if (geo) {
+        // 和风坐标反查建议最多两位小数
+        lat = Math.round(geo.lat * 100) / 100
+        lon = Math.round(geo.lon * 100) / 100
+      }
+    }
+    const { data } = await getWeatherNow(lat != null && lon != null ? { lat, lon } : undefined)
+    if (data?.city) {
+      weather.value = mapWeatherNowToDashboard(data)
+      return
+    }
+  } catch {
+    // 静默降级
+  }
+  weather.value = createMockWeather(weatherRuntime.value.city)
+}
+
+const restartWeatherTimer = () => {
+  if (weatherTimer) clearInterval(weatherTimer)
+  weatherTimer = undefined
+  if (!weatherRuntime.value.enabled) return
+  const ms = Math.max(60, weatherRuntime.value.refreshInterval) * 1000
+  weatherTimer = setInterval(() => {
+    void refreshWeather()
+  }, ms)
+}
+
+const loadWeatherConfig = async () => {
+  try {
+    const { data } = await listWeatherOptionDict()
+    const map = Object.fromEntries((data || []).map((i) => [i.label, i.value]))
+    weatherRuntime.value = {
+      enabled: String(map.WEATHER_ENABLED ?? '1') !== '0',
+      city: String(map.WEATHER_CITY || weatherRuntime.value.city || '北京').trim() || '北京',
+      cityMode: String(map.WEATHER_CITY_MODE || 'auto') === 'fixed' ? 'fixed' : 'auto',
+      refreshInterval: Math.max(60, Number(map.WEATHER_REFRESH_INTERVAL) || 600),
+      provider: String(map.WEATHER_PROVIDER || 'mock'),
+    }
+  } catch {
+    weatherRuntime.value = defaultWeatherRuntimeConfig()
+  }
+  await refreshWeather()
+  restartWeatherTimer()
+}
+
+/** 系统运行指示灯：正常 / 告警 / 异常 / 离线 */
+type RunStatus = 'running' | 'warning' | 'error' | 'offline'
+const runStatus = ref<RunStatus>('running')
+
+const runStatusLabel = computed(() => {
+  const map: Record<RunStatus, string> = {
+    running: '系统运行中',
+    warning: '系统告警中',
+    error: '系统异常',
+    offline: '系统离线',
+  }
+  return map[runStatus.value]
+})
+
+const resolveRunStatus = (cpu: number, mem: number): RunStatus => {
+  if (cpu >= 90 || mem >= 95) return 'error'
+  if (cpu >= 70 || mem >= 80) return 'warning'
+  return 'running'
+}
 
 const pvTotal = ref(0)
 const pvToday = ref(0)
@@ -543,7 +665,6 @@ const loadTrend = async () => {
 }
 
 const refreshAll = async () => {
-  refreshing.value = true
   loading.value = true
   try {
     const [pvRes, ipRes, trendRes, moduleRes, timeslotRes, osRes, browserRes, noticeRes] = await Promise.all([
@@ -570,22 +691,22 @@ const refreshAll = async () => {
     browserList.value = browserRes.data || []
     noticeList.value = pickDashboardNotices(noticeRes.data, 20).map(mapDashboardNotice)
 
-    cpuUsage.value = 20 + Math.floor(Math.random() * 25)
-    memUsage.value = 40 + Math.floor(Math.random() * 30)
+    const cpu = 20 + Math.floor(Math.random() * 25)
+    const mem = 40 + Math.floor(Math.random() * 30)
+    runStatus.value = resolveRunStatus(cpu, mem)
+    refreshWeather()
     updatedAt.value = dayjs().format('HH:mm:ss')
   } finally {
     loading.value = false
-    setTimeout(() => {
-      refreshing.value = false
-    }, 300)
     nextTick(syncNoticeRepeats)
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await loadWeatherConfig()
   refreshAll()
   clockTimer = setInterval(() => {
-    nowText.value = dayjs().format('YYYY-MM-DD HH:mm:ss')
+    nowText.value = formatNowText()
   }, 1000)
   noticeResizeObserver = new ResizeObserver(() => syncNoticeRepeats())
   if (noticeTickerEl.value) {
@@ -615,6 +736,7 @@ watch(
 
 onBeforeUnmount(() => {
   if (clockTimer) clearInterval(clockTimer)
+  if (weatherTimer) clearInterval(weatherTimer)
   noticeResizeObserver?.disconnect()
 })
 </script>

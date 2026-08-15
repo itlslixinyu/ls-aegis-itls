@@ -469,6 +469,9 @@ VALUES
 (1190, '邮件配置', 1150, 2, '/system/config?tab=mail', 'SystemMailConfig', 'system/config/mail/index', NULL, 'email', b'0', b'0', b'1', NULL, 4, 1, 1, NOW()),
 (1191, '查询', 1190, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:mailConfig:get', 1, 1, 1, NOW()),
 (1192, '修改', 1190, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:mailConfig:update', 2, 1, 1, NOW()),
+(1200, '天气配置', 1150, 2, '/system/config?tab=weather', 'SystemWeatherConfig', 'system/config/weather/index', NULL, 'cloud', b'0', b'0', b'1', NULL, 5, 1, 1, NOW()),
+(1201, '查询', 1200, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:weatherConfig:get', 1, 1, 1, NOW()),
+(1202, '修改', 1200, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:weatherConfig:update', 2, 1, 1, NOW()),
 (1230, '存储配置', 1150, 2, '/system/config?tab=storage', 'SystemStorage', 'system/config/storage/index', NULL, 'storage', b'0', b'0', b'1', NULL, 6, 1, 1, NOW()),
 (1231, '列表', 1230, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:storage:list', 1, 1, 1, NOW()),
 (1232, '详情', 1230, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:storage:get', 2, 1, 1, NOW()),
@@ -546,7 +549,18 @@ VALUES
 (24, 'MAIL', '邮箱密码', 'MAIL_PASSWORD', NULL, NULL, '服务授权密码/客户端专用密码'),
 (25, 'MAIL', '启用SSL加密', 'MAIL_SSL_ENABLED', NULL, '1', '是否启用SSL/TLS加密连接'),
 (26, 'MAIL', 'SSL端口号', 'MAIL_SSL_PORT', NULL, '465', 'SSL加密连接的备用端口（通常与主端口一致）'),
-(27, 'LOGIN', '是否启用验证码', 'LOGIN_CAPTCHA_ENABLED', NULL, '1', NULL);
+(27, 'LOGIN', '是否启用验证码', 'LOGIN_CAPTCHA_ENABLED', NULL, '1', NULL),
+(28, 'WEATHER', '启用天气展示', 'WEATHER_ENABLED', NULL, '1', '运营中枢顶栏是否显示天气信息'),
+(29, 'WEATHER', '默认城市（兜底）', 'WEATHER_CITY', NULL, '北京', '固定城市模式使用；自动定位失败时也使用该城市（经和风解析 LocationID）'),
+(30, 'WEATHER', '刷新间隔（秒）', 'WEATHER_REFRESH_INTERVAL', NULL, '600', '天气数据自动刷新间隔，单位秒（建议 60–86400）'),
+(31, 'WEATHER', '数据来源', 'WEATHER_PROVIDER', NULL, 'mock', '天气数据来源：本地模拟 / 和风天气（JWT 鉴权，开发版有免费额度）'),
+(32, 'WEATHER', '城市模式', 'WEATHER_CITY_MODE', NULL, 'auto', 'auto=浏览器定位后经和风反查城市；fixed=使用默认城市经和风城市搜索'),
+(33, 'WEATHER', '和风 API Host', 'WEATHER_API_HOST', NULL, '', '控制台项目中的 API Host（如 https://xxx.qweatherapi.com），留空则用兼容默认'),
+(34, 'WEATHER', '和风 GeoAPI 地址', 'WEATHER_GEO_HOST', NULL, '', '留空则优先用和风 API Host 的 /geo/v2/city/lookup；兼容旧版可填 geoapi.qweather.com'),
+(35, 'WEATHER', '和风 API Key', 'WEATHER_API_KEY', NULL, '', '已废弃：请改用 JWT（凭据ID/项目ID/私钥）。保留字段仅为兼容旧数据'),
+(36, 'WEATHER', '和风凭据 ID（kid）', 'WEATHER_JWT_KID', NULL, '', '控制台凭据 ID，对应 JWT Header.kid'),
+(37, 'WEATHER', '和风项目 ID（sub）', 'WEATHER_JWT_PROJECT_ID', NULL, '', '控制台项目 ID，对应 JWT Payload.sub'),
+(38, 'WEATHER', '和风 JWT 私钥', 'WEATHER_JWT_PRIVATE_KEY', NULL, '', 'Ed25519 私钥 PEM（仅服务端保存，勿提交仓库）');
 
 -- 初始化默认字典
 INSERT INTO `sys_dict`

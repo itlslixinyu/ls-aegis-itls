@@ -63,7 +63,7 @@ public class OptionServiceImpl implements OptionService {
     private static final String SENSITIVE_OPTION_MASK = "********";
 
     /** 列表接口需脱敏的参数编码 */
-    private static final List<String> SENSITIVE_OPTION_CODES = List.of("MAIL_PASSWORD");
+    private static final List<String> SENSITIVE_OPTION_CODES = List.of("MAIL_PASSWORD", "WEATHER_API_KEY", "WEATHER_JWT_PRIVATE_KEY");
 
     private final OptionMapper baseMapper;
 

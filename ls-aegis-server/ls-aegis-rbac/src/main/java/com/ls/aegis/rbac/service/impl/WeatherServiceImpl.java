@@ -1,0 +1,464 @@
+package com.ls.aegis.rbac.service.impl;
+
+import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.URLUtil;
+import cn.hutool.http.Header;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import com.ls.aegis.rbac.enums.OptionCategoryEnum;
+import com.ls.aegis.rbac.model.resp.WeatherNowResp;
+import com.ls.aegis.rbac.service.OptionService;
+import com.ls.aegis.rbac.service.WeatherService;
+import com.ls.aegis.rbac.util.QWeatherJwtHelper;
+import top.continew.starter.core.exception.BusinessException;
+import top.continew.starter.core.util.validation.ValidationUtils;
+
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.zip.GZIPInputStream;
+
+/**
+ * 运营中枢天气：本地模拟 / 和风天气（JWT Ed25519）
+ * <p>城市一律经和风 GeoAPI 解析（坐标反查或城市名查询），不再使用本地 IP 库。</p>
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class WeatherServiceImpl implements WeatherService {
+
+    private static final String PROVIDER_MOCK = "mock";
+    private static final String PROVIDER_QWEATHER = "qweather";
+    private static final String CITY_MODE_AUTO = "auto";
+    private static final String DEFAULT_CITY = "北京";
+    /** 连接超时（毫秒）；和风 TLS 偶发偏慢 */
+    private static final int HTTP_CONNECT_TIMEOUT_MS = 8_000;
+    /** 读取超时（毫秒）；单次请求含 Gzip 解压 */
+    private static final int HTTP_READ_TIMEOUT_MS = 15_000;
+    private static final String FALLBACK_LOCATION_ID = "101010100";
+
+    private final OptionService optionService;
+
+    private volatile String cachedJwt;
+    private volatile long cachedJwtExpireAtEpoch;
+
+    @Override
+    public WeatherNowResp now(String clientIp, Double lat, Double lon) {
+        Map<String, String> cfg = optionService.getByCategory(OptionCategoryEnum.WEATHER);
+        String provider = normalizeProvider(cfg.get("WEATHER_PROVIDER"));
+        String cityMode = StrUtil.blankToDefault(cfg.get("WEATHER_CITY_MODE"), CITY_MODE_AUTO).trim();
+        String fallbackCity = resolveFallbackCity(cfg);
+
+        ResolvedLocation location = resolveLocation(lat, lon, cityMode, fallbackCity, cfg);
+        if (PROVIDER_QWEATHER.equalsIgnoreCase(provider)) {
+            if (!hasJwtConfig(cfg)) {
+                log.warn("和风天气 JWT 未配置完整（凭据ID/项目ID/私钥），回退本地模拟");
+            } else {
+                try {
+                    WeatherNowResp remote = fetchQWeather(location, cfg);
+                    if (remote != null) {
+                        return remote;
+                    }
+                } catch (Exception e) {
+                    log.warn("和风天气获取失败，回退本地模拟：{}", e.getMessage());
+                }
+            }
+        }
+        return mockWeather(location.city());
+    }
+
+    @Override
+    public WeatherNowResp testConnection(String clientIp) {
+        clearTokenCache();
+        Map<String, String> cfg = optionService.getByCategory(OptionCategoryEnum.WEATHER);
+        String provider = normalizeProvider(cfg.get("WEATHER_PROVIDER"));
+        String cityMode = StrUtil.blankToDefault(cfg.get("WEATHER_CITY_MODE"), CITY_MODE_AUTO).trim();
+        String fallbackCity = resolveFallbackCity(cfg);
+
+        if (PROVIDER_MOCK.equalsIgnoreCase(provider)) {
+            ResolvedLocation location = resolveLocation(null, null, cityMode, fallbackCity, cfg);
+            WeatherNowResp mock = mockWeather(location.city());
+            mock.setLabel(mock.getLabel() + "（本地模拟）");
+            return mock;
+        }
+
+        ValidationUtils.throwIf(!PROVIDER_QWEATHER.equalsIgnoreCase(provider), "请先将数据来源保存为和风天气后再测试");
+        ValidationUtils.throwIf(!hasJwtConfig(cfg), "请先配置并保存 JWT 凭据 ID、项目 ID 与私钥");
+        ValidationUtils.throwIf(StrUtil.isBlank(normalizeApiHost(cfg.get("WEATHER_API_HOST"))),
+            "请填写并保存和风 API Host（控制台「设置」中的专属域名，如 xxx.re.qweatherapi.com）");
+
+        ResolvedLocation location = resolveLocation(null, null, cityMode, fallbackCity, cfg);
+        try {
+            WeatherNowResp remote = fetchQWeather(location, cfg);
+            ValidationUtils.throwIfNull(remote, "和风接口未返回有效天气数据，请检查 API Host 与凭据");
+            return remote;
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            String msg = StrUtil.blankToDefault(e.getMessage(), "未知错误");
+            if (StrUtil.containsIgnoreCase(msg, "timed out") || StrUtil.containsIgnoreCase(msg, "timeout")) {
+                throw new BusinessException("和风连接超时，请确认 API Host 可访问（须 https:// 专属域名），并稍后重试");
+            }
+            throw new BusinessException("和风连接失败：" + msg);
+        }
+    }
+
+    @Override
+    public void clearTokenCache() {
+        cachedJwt = null;
+        cachedJwtExpireAtEpoch = 0;
+    }
+
+    private static String normalizeProvider(String raw) {
+        String provider = StrUtil.blankToDefault(raw, PROVIDER_MOCK).trim();
+        if ("open-meteo".equalsIgnoreCase(provider)) {
+            return PROVIDER_QWEATHER;
+        }
+        return provider;
+    }
+
+    private static String resolveFallbackCity(Map<String, String> cfg) {
+        String city = StrUtil.blankToDefault(cfg.get("WEATHER_CITY"), DEFAULT_CITY).trim();
+        return StrUtil.isBlank(city) ? DEFAULT_CITY : city;
+    }
+
+    /**
+     * 解析展示城市与和风 location（LocationID 或 lon,lat）。
+     * <ul>
+     *   <li>有浏览器坐标：和风坐标反查</li>
+     *   <li>固定城市 / 自动无坐标：按配置城市名走和风城市搜索</li>
+     * </ul>
+     */
+    private ResolvedLocation resolveLocation(Double lat,
+                                             Double lon,
+                                             String cityMode,
+                                             String fallbackCity,
+                                             Map<String, String> cfg) {
+        boolean canLookup = hasJwtConfig(cfg);
+        if (lat != null && lon != null && NumberUtil.isValidNumber(lat) && NumberUtil.isValidNumber(lon)) {
+            String locationParam = formatLonLat(lon, lat);
+            if (canLookup) {
+                CityLookup looked = lookupCity(locationParam, cfg);
+                if (looked != null) {
+                    return new ResolvedLocation(looked.name(), looked.locationId());
+                }
+            }
+            return new ResolvedLocation(fallbackCity, locationParam);
+        }
+
+        String queryCity = fallbackCity;
+        if (!CITY_MODE_AUTO.equalsIgnoreCase(cityMode) && StrUtil.isNotBlank(fallbackCity)) {
+            queryCity = fallbackCity;
+        }
+        if (canLookup) {
+            CityLookup looked = lookupCity(queryCity, cfg);
+            if (looked != null) {
+                return new ResolvedLocation(looked.name(), looked.locationId());
+            }
+        }
+        return new ResolvedLocation(queryCity, FALLBACK_LOCATION_ID);
+    }
+
+    /** 和风要求「经度,纬度」，坐标保留两位小数 */
+    private static String formatLonLat(double lon, double lat) {
+        return String.format(Locale.US, "%.2f,%.2f", lon, lat);
+    }
+
+    private static boolean hasJwtConfig(Map<String, String> cfg) {
+        String privateKey = StrUtil.trim(cfg.get("WEATHER_JWT_PRIVATE_KEY"));
+        return StrUtil.isNotBlank(cfg.get("WEATHER_JWT_KID"))
+            && StrUtil.isNotBlank(cfg.get("WEATHER_JWT_PROJECT_ID"))
+            && StrUtil.isNotBlank(privateKey)
+            && !"********".equals(privateKey);
+    }
+
+    private String resolveBearerToken(Map<String, String> cfg) {
+        long now = System.currentTimeMillis() / 1000;
+        if (StrUtil.isNotBlank(cachedJwt) && cachedJwtExpireAtEpoch - 60 > now) {
+            return cachedJwt;
+        }
+        synchronized (this) {
+            now = System.currentTimeMillis() / 1000;
+            if (StrUtil.isNotBlank(cachedJwt) && cachedJwtExpireAtEpoch - 60 > now) {
+                return cachedJwt;
+            }
+            cachedJwt = QWeatherJwtHelper.createToken(
+                StrUtil.trim(cfg.get("WEATHER_JWT_KID")),
+                StrUtil.trim(cfg.get("WEATHER_JWT_PROJECT_ID")),
+                cfg.get("WEATHER_JWT_PRIVATE_KEY"));
+            cachedJwtExpireAtEpoch = now - 30 + QWeatherJwtHelper.tokenTtlSeconds();
+            return cachedJwt;
+        }
+    }
+
+    private static String normalizeCityName(String raw) {
+        String city = StrUtil.trim(raw);
+        city = StrUtil.removeSuffix(city, "市");
+        city = StrUtil.removeSuffix(city, "地区");
+        city = StrUtil.removeSuffix(city, "自治州");
+        return StrUtil.isBlank(city) ? null : city;
+    }
+
+    /** 顶栏展示优先市级（adm2），避免只显示「东城」等区名 */
+    static String pickCityDisplayName(JSONObject location, String fallback) {
+        if (location == null) {
+            return fallback;
+        }
+        String adm2 = normalizeCityName(location.getStr("adm2"));
+        if (StrUtil.isNotBlank(adm2)) {
+            return adm2;
+        }
+        String name = normalizeCityName(location.getStr("name"));
+        if (StrUtil.isNotBlank(name)) {
+            return name;
+        }
+        String adm1 = normalizeCityName(location.getStr("adm1"));
+        if (StrUtil.isNotBlank(adm1)) {
+            return adm1;
+        }
+        return fallback;
+    }
+
+    private CityLookup lookupCity(String location, Map<String, String> cfg) {
+        if (StrUtil.isBlank(location)) {
+            return null;
+        }
+        String url = buildCityLookupUrl(location, cfg);
+        if (StrUtil.isBlank(url)) {
+            return null;
+        }
+        try {
+            String body = authorizedGet(url, cfg);
+            JSONObject json = parseQWeatherJson(body, "城市查询");
+            if (!"200".equals(json.getStr("code"))) {
+                log.warn("和风城市查询失败 code={} location={} tip={}", json.getStr("code"), location, describeQWeatherCode(json
+                    .getStr("code"), json));
+                return null;
+            }
+            JSONArray locations = json.getJSONArray("location");
+            if (locations == null || locations.isEmpty()) {
+                return null;
+            }
+            JSONObject first = locations.getJSONObject(0);
+            String id = first.getStr("id");
+            if (StrUtil.isBlank(id)) {
+                return null;
+            }
+            String name = pickCityDisplayName(first, location);
+            return new CityLookup(name, id);
+        } catch (Exception e) {
+            log.warn("和风城市查询异常 location={}：{}", location, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 新版控制台 API Host 统一走 /geo/v2/city/lookup；
+     * 兼容旧版独立 Geo 域名 geoapi.qweather.com 的 /v2/city/lookup。
+     */
+    private static String buildCityLookupUrl(String location, Map<String, String> cfg) {
+        String geoHost = normalizeApiHost(cfg.get("WEATHER_GEO_HOST"));
+        String apiHost = normalizeApiHost(cfg.get("WEATHER_API_HOST"));
+        String host;
+        String path;
+        if (StrUtil.isNotBlank(geoHost)) {
+            host = geoHost;
+            path = host.contains("geoapi.qweather.com") ? "/v2/city/lookup" : "/geo/v2/city/lookup";
+        } else if (StrUtil.isNotBlank(apiHost)) {
+            host = apiHost;
+            path = "/geo/v2/city/lookup";
+        } else {
+            return null;
+        }
+        return host + path + "?location=" + URLUtil.encode(location) + "&range=cn&number=1&lang=zh";
+    }
+
+    /** 统一补全 https，去掉尾斜杠；禁止回落到已淘汰的公共域名。 */
+    static String normalizeApiHost(String raw) {
+        String host = StrUtil.trim(raw);
+        if (StrUtil.isBlank(host)) {
+            return "";
+        }
+        host = host.replaceAll("/$", "");
+        if (StrUtil.startWithIgnoreCase(host, "http://")) {
+            host = "https://" + host.substring("http://".length());
+        } else if (!StrUtil.startWithIgnoreCase(host, "https://")) {
+            host = "https://" + host;
+        }
+        return host;
+    }
+
+    private WeatherNowResp fetchQWeather(ResolvedLocation location, Map<String, String> cfg) {
+        String weatherHost = normalizeApiHost(cfg.get("WEATHER_API_HOST"));
+        if (StrUtil.isBlank(weatherHost)) {
+            throw new BusinessException("请配置和风 API Host（控制台「设置」专属域名，如 https://xxx.re.qweatherapi.com）");
+        }
+        String url = weatherHost + "/v7/weather/now?location=" + URLUtil.encode(location.locationParam());
+        String body = authorizedGet(url, cfg);
+        JSONObject json = parseQWeatherJson(body, "实时天气");
+        String code = json.getStr("code");
+        if (!"200".equals(code)) {
+            throw new BusinessException("和风实时天气失败：" + describeQWeatherCode(code, json));
+        }
+        JSONObject now = json.getJSONObject("now");
+        if (now == null) {
+            throw new BusinessException("和风实时天气失败：响应缺少 now 数据，请检查 API Host 与凭据");
+        }
+        KindMeta kind = mapQWeatherIcon(now.getStr("icon"), now.getStr("text"));
+        WeatherNowResp resp = new WeatherNowResp();
+        resp.setCity(location.city());
+        resp.setKind(kind.code());
+        resp.setLabel(StrUtil.blankToDefault(now.getStr("text"), kind.label()));
+        resp.setTemp(NumberUtil.parseInt(StrUtil.blankToDefault(now.getStr("temp"), "0"), 0));
+        resp.setHumidity(Math.max(0, Math.min(100, NumberUtil.parseInt(StrUtil.blankToDefault(now.getStr("humidity"), "50"), 50))));
+        resp.setWindLevel(parseWindScale(now.getStr("windScale")));
+        resp.setProvider(PROVIDER_QWEATHER);
+        return resp;
+    }
+
+    private String authorizedGet(String url, Map<String, String> cfg) {
+        String jwt = resolveBearerToken(cfg);
+        // 和风始终返回 Gzip（即使未声明 Accept-Encoding），需可靠解压后再解析 JSON
+        var response = HttpRequest.get(url)
+            .header(Header.AUTHORIZATION, "Bearer " + jwt)
+            .header(Header.ACCEPT_ENCODING, "gzip")
+            .setConnectionTimeout(HTTP_CONNECT_TIMEOUT_MS)
+            .setReadTimeout(HTTP_READ_TIMEOUT_MS)
+            .execute();
+        int status = response.getStatus();
+        String body = decodeQWeatherBody(response.bodyBytes());
+        if (status < 200 || status >= 300) {
+            String preview = StrUtil.maxLength(StrUtil.blankToDefault(body, "").replaceAll("\\s+", " "), 120);
+            throw new BusinessException("和风 HTTP " + status + (StrUtil.isBlank(preview) ? "" : "：" + preview));
+        }
+        return body;
+    }
+
+    /** 若响应仍是 Gzip 魔数，手动解压（兼容未自动解压的客户端行为）。 */
+    static String decodeQWeatherBody(byte[] raw) {
+        if (raw == null || raw.length == 0) {
+            return "";
+        }
+        byte[] data = raw;
+        if (raw.length >= 2 && raw[0] == (byte) 0x1f && raw[1] == (byte) 0x8b) {
+            try (GZIPInputStream gzip = new GZIPInputStream(new ByteArrayInputStream(raw))) {
+                data = IoUtil.readBytes(gzip);
+            } catch (Exception e) {
+                throw new BusinessException("和风响应 Gzip 解压失败");
+            }
+        }
+        return new String(data, StandardCharsets.UTF_8);
+    }
+
+    private static JSONObject parseQWeatherJson(String body, String scene) {
+        if (StrUtil.isBlank(body)) {
+            throw new BusinessException("和风" + scene + "失败：响应为空，请检查 API Host 是否可访问");
+        }
+        String trimmed = body.trim();
+        if (!(trimmed.startsWith("{") || trimmed.startsWith("["))) {
+            String preview = StrUtil.maxLength(trimmed.replaceAll("\\s+", " "), 120);
+            throw new BusinessException("和风" + scene + "失败：非 JSON 响应，请确认 API Host（控制台项目地址）。预览：" + preview);
+        }
+        try {
+            return JSONUtil.parseObj(trimmed);
+        } catch (Exception e) {
+            throw new BusinessException("和风" + scene + "失败：JSON 解析错误");
+        }
+    }
+
+    private static String describeQWeatherCode(String code, JSONObject json) {
+        if (StrUtil.isBlank(code)) {
+            return "响应无 code，请填写控制台「API Host」（如 https://xxx.qweatherapi.com），并确认 JWT 凭据正确";
+        }
+        String message = json.getStr("message");
+        return switch (code) {
+            case "401", "402", "403" -> "鉴权失败（" + code + "），请检查凭据 ID / 项目 ID / 私钥是否匹配";
+            case "404" -> "查询的数据或路径不存在（404），请检查 API Host 与 Location";
+            case "429" -> "请求过于频繁（429），请稍后再试";
+            case "500" -> "和风服务异常（500）";
+            default -> StrUtil.blankToDefault(message, "code=" + code);
+        };
+    }
+
+    private WeatherNowResp mockWeather(String city) {
+        String[] kinds = {"sunny", "cloudy", "rainy", "storm", "thunder", "hail", "snow", "fog", "sand"};
+        String[] labels = {"晴", "多云", "雨", "暴雨", "雷电", "冰雹", "暴雪", "大雾", "沙尘"};
+        int idx = ThreadLocalRandom.current().nextInt(kinds.length);
+        WeatherNowResp resp = new WeatherNowResp();
+        resp.setCity(StrUtil.blankToDefault(city, DEFAULT_CITY));
+        resp.setKind(kinds[idx]);
+        resp.setLabel(labels[idx]);
+        resp.setTemp(-15 + ThreadLocalRandom.current().nextInt(58));
+        resp.setHumidity(3 + ThreadLocalRandom.current().nextInt(97));
+        resp.setWindLevel(ThreadLocalRandom.current().nextInt(13));
+        resp.setProvider(PROVIDER_MOCK);
+        return resp;
+    }
+
+    static KindMeta mapQWeatherIcon(String icon, String text) {
+        int code = NumberUtil.parseInt(StrUtil.blankToDefault(icon, "-1"), -1);
+        if (StrUtil.contains(text, "雹")) {
+            return new KindMeta("hail", "冰雹");
+        }
+        if (StrUtil.containsAny(text, "雷")) {
+            return new KindMeta("thunder", "雷电");
+        }
+        if (code == 100 || code == 150) {
+            return new KindMeta("sunny", "晴");
+        }
+        if ((code >= 101 && code <= 104) || (code >= 151 && code <= 153)) {
+            return new KindMeta("cloudy", "多云");
+        }
+        if (code == 304) {
+            return new KindMeta("hail", "冰雹");
+        }
+        if (code == 302 || code == 303) {
+            return new KindMeta("thunder", "雷电");
+        }
+        if (code == 308 || code == 310 || code == 311 || code == 312) {
+            return new KindMeta("storm", "暴雨");
+        }
+        if (code >= 300 && code <= 399) {
+            return new KindMeta("rainy", "雨");
+        }
+        if (code == 402 || code == 403 || code == 410) {
+            return new KindMeta("snow", "暴雪");
+        }
+        if (code >= 400 && code <= 499) {
+            return new KindMeta("snow", "雪");
+        }
+        if ((code >= 500 && code <= 502) || code == 509 || code == 510 || code == 511 || code == 514 || code == 515) {
+            return new KindMeta("fog", "大雾");
+        }
+        if ((code >= 503 && code <= 508) || code == 512 || code == 513) {
+            return new KindMeta("sand", "沙尘");
+        }
+        return new KindMeta("cloudy", StrUtil.blankToDefault(text, "多云"));
+    }
+
+    static int parseWindScale(String windScale) {
+        if (StrUtil.isBlank(windScale)) {
+            return 0;
+        }
+        String first = StrUtil.subBefore(windScale, '-', false);
+        return Math.max(0, Math.min(12, NumberUtil.parseInt(StrUtil.trim(first), 0)));
+    }
+
+    private record ResolvedLocation(String city, String locationParam) {
+    }
+
+    private record CityLookup(String name, String locationId) {
+    }
+
+    record KindMeta(String code, String label) {
+    }
+}

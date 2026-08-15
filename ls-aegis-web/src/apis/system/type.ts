@@ -397,6 +397,31 @@ export interface LoginConfig {
   LOGIN_CAPTCHA_ENABLED: OptionResp
 }
 
+/** 天气配置类型 */
+export interface WeatherConfig {
+  WEATHER_ENABLED: OptionResp
+  WEATHER_CITY_MODE: OptionResp
+  WEATHER_CITY: OptionResp
+  WEATHER_REFRESH_INTERVAL: OptionResp
+  WEATHER_PROVIDER: OptionResp
+  WEATHER_JWT_KID: OptionResp
+  WEATHER_JWT_PROJECT_ID: OptionResp
+  WEATHER_JWT_PRIVATE_KEY: OptionResp
+  WEATHER_API_HOST: OptionResp
+  WEATHER_GEO_HOST: OptionResp
+}
+
+/** 运营中枢实时天气 */
+export interface WeatherNowResp {
+  city: string
+  kind: string
+  label: string
+  temp: number
+  humidity: number
+  windLevel: number
+  provider: string
+}
+
 /** 系统消息类型 */
 export interface MessageResp {
   id: string

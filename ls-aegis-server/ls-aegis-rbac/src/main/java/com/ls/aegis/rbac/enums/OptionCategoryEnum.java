@@ -43,4 +43,9 @@ public enum OptionCategoryEnum {
      * 登录配置
      */
     LOGIN,
+
+    /**
+     * 天气配置（运营中枢顶栏）
+     */
+    WEATHER,
 }

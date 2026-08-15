@@ -18,8 +18,10 @@ package com.ls.aegis.rbac.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.annotation.SaMode;
+import cn.hutool.extra.servlet.JakartaServletUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,7 +36,9 @@ import com.ls.aegis.rbac.model.req.MailTestReq;
 import com.ls.aegis.rbac.model.req.OptionReq;
 import com.ls.aegis.rbac.model.req.OptionValueResetReq;
 import com.ls.aegis.rbac.model.resp.OptionResp;
+import com.ls.aegis.rbac.model.resp.WeatherNowResp;
 import com.ls.aegis.rbac.service.OptionService;
+import com.ls.aegis.rbac.service.WeatherService;
 
 import java.util.List;
 
@@ -51,10 +55,11 @@ import java.util.List;
 public class OptionController {
 
     private final OptionService baseService;
+    private final WeatherService weatherService;
 
     @Operation(summary = "查询参数列表", description = "查询参数列表")
     @SaCheckPermission(value = {"system:siteConfig:get", "system:securityConfig:get", "system:loginConfig:get",
-        "system:mailConfig:get"}, mode = SaMode.OR)
+        "system:mailConfig:get", "system:weatherConfig:get"}, mode = SaMode.OR)
     @GetMapping
     public List<OptionResp> list(@Valid OptionQuery query) {
         return baseService.list(query);
@@ -62,18 +67,26 @@ public class OptionController {
 
     @Operation(summary = "修改参数", description = "修改参数")
     @SaCheckPermission(value = {"system:siteConfig:update", "system:securityConfig:update", "system:loginConfig:update",
-        "system:mailConfig:update"}, mode = SaMode.OR)
+        "system:mailConfig:update", "system:weatherConfig:update"}, mode = SaMode.OR)
     @PutMapping
     public void update(@RequestBody @Valid List<OptionReq> options) {
         baseService.update(options);
+        // 天气凭据变更后清进程内 JWT，避免仍用旧令牌
+        boolean weatherChanged = options.stream().anyMatch(o -> o.getCode() != null && o.getCode().startsWith("WEATHER_"));
+        if (weatherChanged) {
+            weatherService.clearTokenCache();
+        }
     }
 
     @Operation(summary = "重置参数", description = "重置参数")
     @SaCheckPermission(value = {"system:siteConfig:update", "system:securityConfig:update", "system:loginConfig:update",
-        "system:mailConfig:update"}, mode = SaMode.OR)
+        "system:mailConfig:update", "system:weatherConfig:update"}, mode = SaMode.OR)
     @PatchMapping("/value")
     public void resetValue(@RequestBody @Valid OptionValueResetReq req) {
         baseService.resetValue(req);
+        if (req.getCategory() != null && "WEATHER".equalsIgnoreCase(req.getCategory())) {
+            weatherService.clearTokenCache();
+        }
     }
 
     @Operation(summary = "发送测试邮件", description = "使用当前邮件配置向指定邮箱发送一封测试邮件")
@@ -81,5 +94,19 @@ public class OptionController {
     @PostMapping("/mail/test")
     public void sendTestMail(@RequestBody @Valid MailTestReq req) {
         baseService.sendTestMail(req.getTo());
+    }
+
+    @Operation(summary = "立即刷新天气", description = "不等待刷新间隔，立即拉取当前天气（不清 JWT）")
+    @SaCheckPermission(value = {"system:weatherConfig:get", "system:weatherConfig:update"}, mode = SaMode.OR)
+    @PostMapping("/weather/refresh")
+    public WeatherNowResp refreshWeather(HttpServletRequest request) {
+        return weatherService.now(JakartaServletUtil.getClientIP(request), null, null);
+    }
+
+    @Operation(summary = "测试天气连接", description = "按已保存配置实测拉取天气（和风不回退模拟）")
+    @SaCheckPermission(value = {"system:weatherConfig:get", "system:weatherConfig:update"}, mode = SaMode.OR)
+    @PostMapping("/weather/test")
+    public WeatherNowResp testWeather(HttpServletRequest request) {
+        return weatherService.testConnection(JakartaServletUtil.getClientIP(request));
     }
 }

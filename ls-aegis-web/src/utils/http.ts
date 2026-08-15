@@ -9,6 +9,13 @@ import messageErrorWrapper from '@/utils/message-error-wrapper'
 import notificationErrorWrapper from '@/utils/notification-error-wrapper'
 import router from '@/router'
 
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    /** 为 true 时不弹出全局错误提示（可选接口降级用） */
+    skipErrorMessage?: boolean
+  }
+}
+
 interface ICodeMessage {
   [propName: number]: string
 }
@@ -109,19 +116,24 @@ http.interceptors.response.use(
           await router.replace(`/login?redirect=${encodeURIComponent(currentPath)}`)
         },
       })
-    } else {
+    } else if (!response.config.skipErrorMessage) {
       handleError(msg)
     }
     return Promise.reject(new Error(msg || '服务器端错误'))
   },
   (error: AxiosError) => {
+    const skipErrorMessage = Boolean(error.config?.skipErrorMessage)
     if (!error.response) {
-      handleError('网络连接失败，请检查您的网络')
+      if (!skipErrorMessage) {
+        handleError('网络连接失败，请检查您的网络')
+      }
       return Promise.reject(error)
     }
-    const status = error.response?.status
-    const errorMsg = StatusCodeMessage[status] || '服务器暂时未响应，请刷新页面并重试。若无法解决，请联系管理员'
-    handleError(errorMsg)
+    if (!skipErrorMessage) {
+      const status = error.response?.status
+      const errorMsg = StatusCodeMessage[status] || '服务器暂时未响应，请刷新页面并重试。若无法解决，请联系管理员'
+      handleError(errorMsg)
+    }
     return Promise.reject(error)
   },
 )

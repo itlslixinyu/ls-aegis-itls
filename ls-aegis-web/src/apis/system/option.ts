@@ -24,3 +24,13 @@ export function resetOptionValue(query: T.OptionQuery) {
 export function sendTestMail(to: string) {
   return http.post(`${BASE_URL}/mail/test`, { to })
 }
+
+/** @desc 立即拉取天气（不等待刷新间隔，不清 JWT） */
+export function refreshWeatherNow() {
+  return http.post<T.WeatherNowResp>(`${BASE_URL}/weather/refresh`)
+}
+
+/** @desc 测试天气连接 */
+export function testWeatherConnection() {
+  return http.post<T.WeatherNowResp>(`${BASE_URL}/weather/test`)
+}

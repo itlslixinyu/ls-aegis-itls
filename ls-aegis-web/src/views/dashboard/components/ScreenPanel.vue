@@ -55,7 +55,7 @@ withDefaults(
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  padding: 8px 12px 10px;
+  padding: 6px 12px 8px;
   background: linear-gradient(180deg, rgba(11, 37, 69, 0.88) 0%, rgba(8, 24, 52, 0.88) 100%);
   border: 1px solid rgba(64, 159, 255, 0.2);
   border-radius: 4px;
@@ -191,7 +191,7 @@ withDefaults(
   &__head {
     display: flex;
     align-items: center;
-    height: 28px;
+    height: 24px;
     margin-bottom: 2px;
     flex-shrink: 0;
   }
@@ -209,7 +209,7 @@ withDefaults(
   }
 
   &__title {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     letter-spacing: 2px;
     color: #e6f2ff;

@@ -21,11 +21,13 @@ import com.ls.aegis.biz.file.model.resp.file.FileUploadResp;
 
 import cn.dev33.satoken.annotation.SaIgnore;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.servlet.JakartaServletUtil;
 import com.alicp.jetcache.anno.Cached;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.dromara.x.file.storage.core.FileInfo;
@@ -41,8 +43,10 @@ import org.springframework.web.multipart.MultipartFile;
 import com.ls.aegis.redis.constant.CacheConstants;
 import com.ls.aegis.rbac.enums.OptionCategoryEnum;
 import com.ls.aegis.rbac.model.query.OptionQuery;
+import com.ls.aegis.rbac.model.resp.WeatherNowResp;
 import com.ls.aegis.rbac.service.DictItemService;
 import com.ls.aegis.rbac.service.OptionService;
+import com.ls.aegis.rbac.service.WeatherService;
 import top.continew.starter.core.util.validation.ValidationUtils;
 import top.continew.starter.extension.crud.model.resp.LabelValueResp;
 import top.continew.starter.extension.tenant.annotation.TenantIgnore;
@@ -69,6 +73,7 @@ public class CommonController {
     private final FileService fileService;
     private final DictItemService dictItemService;
     private final OptionService optionService;
+    private final WeatherService weatherService;
 
     @Operation(summary = "上传文件", description = "上传文件")
     @Parameter(name = "parentPath", description = "上级目录", example = "/", in = ParameterIn.QUERY)
@@ -109,10 +114,39 @@ public class CommonController {
 
     @TenantIgnore
     @SaIgnore
+    @Operation(summary = "查询天气配置参数", description = "运营中枢顶栏天气展示用（不含敏感密钥）")
+    @GetMapping("/dict/option/weather")
+    @Cached(key = "'WEATHER'", name = CacheConstants.OPTION_KEY_PREFIX)
+    public List<LabelValueResp<String>> listWeatherOptionDict() {
+        OptionQuery optionQuery = new OptionQuery();
+        optionQuery.setCategory(OptionCategoryEnum.WEATHER.name());
+        return optionService.list(optionQuery)
+            .stream()
+            .filter(option -> !"WEATHER_API_KEY".equals(option.getCode())
+                && !"WEATHER_JWT_PRIVATE_KEY".equals(option.getCode()))
+            .map(option -> new LabelValueResp<>(option.getCode(), StrUtil.nullToDefault(option.getValue(), option
+                .getDefaultValue())))
+            .toList();
+    }
+
+    @TenantIgnore
+    @SaIgnore
     @Operation(summary = "查询租户开启状态", description = "查询租户开启状态")
     @GetMapping("/dict/option/tenant")
     public Boolean tenantEnabled() {
         // 读配置开关，禁止缓存：否则改 enabled 后 Redis 旧值会导致前端仍调 /tenant/**
         return TenantContextHolder.isTenantEnabled();
+    }
+
+    @TenantIgnore
+    @SaIgnore
+    @Operation(summary = "查询实时天气", description = "运营中枢顶栏：支持本地模拟 / 和风天气（JWT）；城市可自动定位")
+    @Parameter(name = "lat", description = "纬度（浏览器定位可选）", example = "39.9", in = ParameterIn.QUERY)
+    @Parameter(name = "lon", description = "经度（浏览器定位可选）", example = "116.4", in = ParameterIn.QUERY)
+    @GetMapping("/weather/now")
+    public WeatherNowResp weatherNow(@RequestParam(required = false) Double lat,
+                                     @RequestParam(required = false) Double lon,
+                                     HttpServletRequest request) {
+        return weatherService.now(JakartaServletUtil.getClientIP(request), lat, lon);
     }
 }
