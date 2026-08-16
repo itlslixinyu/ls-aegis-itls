@@ -217,9 +217,9 @@
   &__weather {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     box-sizing: border-box;
-    height: 42px;
+    height: 34px;
     min-width: max-content;
     max-width: none;
     padding: 0;
@@ -228,9 +228,10 @@
     border: none;
     box-shadow: none;
     color: #cfe2ff;
-    font-size: clamp(16px, 1.35vw, 22px);
-    font-weight: 700;
-    letter-spacing: 2px;
+    /* 1920: ~17px；相对标题约 0.55，作次级信息 */
+    font-size: clamp(13px, 0.9vw, 17px);
+    font-weight: 600;
+    letter-spacing: 1px;
     white-space: nowrap;
     overflow: visible;
 
@@ -243,15 +244,15 @@
     .ops-screen__weather-label,
     .ops-screen__weather-temp,
     .ops-screen__weather-metric {
-      font-weight: 700;
-      letter-spacing: 1.5px;
+      font-weight: 600;
+      letter-spacing: 1px;
       font-variant-numeric: tabular-nums;
-      line-height: 1.25;
+      line-height: 1.2;
       background: linear-gradient(180deg, #ffffff 0%, #6ab4ff 50%, #409fff 100%);
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 0 22px rgba(64, 159, 255, 0.28));
+      filter: drop-shadow(0 0 14px rgba(64, 159, 255, 0.22));
       animation: ops-title-glow 3.2s ease-in-out infinite;
     }
 
@@ -307,12 +308,12 @@
   }
 
   &__weather-icon-img {
-    width: 26px;
-    height: 26px;
+    width: 20px;
+    height: 20px;
     flex-shrink: 0;
     display: block;
     object-fit: contain;
-    filter: drop-shadow(0 0 8px rgba(64, 159, 255, 0.28));
+    filter: drop-shadow(0 0 6px rgba(64, 159, 255, 0.24));
   }
 
   &__title-wrap {
@@ -371,8 +372,8 @@
       justify-content: center;
       gap: 6px;
       box-sizing: border-box;
-      height: 42px;
-      padding: 0 14px;
+      height: 34px;
+      padding: 0 12px;
       border-radius: 6px;
       background: rgba(12, 36, 72, 0.38);
       border: 1px solid rgba(64, 159, 255, 0.22);
@@ -384,17 +385,18 @@
     }
 
     .current-time {
-      font-weight: 700;
-      font-size: clamp(16px, 1.35vw, 22px);
-      letter-spacing: 2px;
+      font-weight: 600;
+      /* 与天气同档：1920 ≈ 17px，标题仍居主视觉 */
+      font-size: clamp(13px, 0.9vw, 17px);
+      letter-spacing: 1px;
       font-variant-numeric: tabular-nums;
-      line-height: 1.25;
+      line-height: 1.2;
       white-space: nowrap;
       background: linear-gradient(180deg, #ffffff 0%, #6ab4ff 50%, #409fff 100%);
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 0 22px rgba(64, 159, 255, 0.28));
+      filter: drop-shadow(0 0 14px rgba(64, 159, 255, 0.22));
       animation: ops-title-glow 3.2s ease-in-out infinite;
     }
   }
@@ -644,6 +646,10 @@
     min-height: 0;
     flex: 1 1 0;
     overflow: hidden;
+  }
+
+  &__bottom.is-no-notice {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

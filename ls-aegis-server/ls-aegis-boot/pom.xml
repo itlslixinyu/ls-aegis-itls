@@ -39,13 +39,11 @@
             <groupId>com.ls</groupId>
             <artifactId>ls-aegis-biz-open</artifactId>
         </dependency>
-        <!-- 暂不启用多租户：注释启动依赖；模块源码保留便于回滚 -->
-        <!--
+        <!-- 租户管理 API；行级隔离仍由 continew-starter.tenant.enabled 控制（默认 false） -->
         <dependency>
             <groupId>com.ls</groupId>
             <artifactId>ls-aegis-biz-tenant</artifactId>
         </dependency>
-        -->
         <dependency>
             <groupId>com.ls</groupId>
             <artifactId>ls-aegis-biz-schedule</artifactId>

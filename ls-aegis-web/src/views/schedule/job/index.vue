@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <GiPageLayout>
     <GiTable
       row-key="id"
@@ -56,7 +56,7 @@
           v-model="record.jobStatus"
           :checked-value="1"
           :unchecked-value="0"
-          :disabled="!has.hasPerm('tool:job:update')"
+          :disabled="!has.hasPerm('schedule:job:update')"
           @change="onUpdateStatus(record)"
         />
       </template>
@@ -131,8 +131,9 @@ const columns: TableInstance['columns'] = [
   { title: '修改时间', dataIndex: 'updateDt', width: 180, show: false },
   {
     title: '操作',
+    dataIndex: 'action',
     slotName: 'action',
-    width: 160,
+    width: 220,
     align: 'center',
     fixed: !isMobile() ? 'right' : undefined,
     show: has.hasPermOr([
@@ -144,16 +145,23 @@ const columns: TableInstance['columns'] = [
   },
 ]
 
-const groupList = ref()
+const groupList = ref<{ label: string, value: string }[]>([])
 // 查询任务组列表
 const getGroupList = async () => {
-  const { data } = await listGroup()
-  groupList.value = data?.map((item: string) => ({
-    label: item,
-    value: item,
-  }))
-  queryForm.groupName = groupList.value[0].label
-  search()
+  try {
+    const { data } = await listGroup()
+    groupList.value = (data || []).map((item: string) => ({
+      label: item,
+      value: item,
+    }))
+    queryForm.groupName = groupList.value[0]?.value || ''
+    if (queryForm.groupName) {
+      search()
+    }
+  } catch {
+    groupList.value = []
+    queryForm.groupName = ''
+  }
 }
 
 // 重置

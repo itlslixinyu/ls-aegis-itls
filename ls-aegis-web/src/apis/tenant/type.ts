@@ -5,8 +5,8 @@ export interface TenantResp {
   code: string
   domain: string
   expireTime: string
-  description: number
-  status: string
+  description: string
+  status: number | string
   packageId: string
   createUser: string
   createTime: string

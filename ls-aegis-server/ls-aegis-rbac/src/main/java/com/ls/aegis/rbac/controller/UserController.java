@@ -42,6 +42,7 @@ import com.ls.aegis.rbac.model.req.user.UserImportReq;
 import com.ls.aegis.rbac.model.req.user.UserPasswordResetReq;
 import com.ls.aegis.rbac.model.req.user.UserReq;
 import com.ls.aegis.rbac.model.req.user.UserRoleUpdateReq;
+import com.ls.aegis.rbac.model.resp.user.UserCreateResp;
 import com.ls.aegis.rbac.model.resp.user.UserDetailResp;
 import com.ls.aegis.rbac.model.resp.user.UserImportParseResp;
 import com.ls.aegis.rbac.model.resp.user.UserImportResp;
@@ -63,9 +64,21 @@ import java.io.IOException;
 @Validated
 @RestController
 @RequiredArgsConstructor
-@CrudRequestMapping(value = "/system/user", api = {Api.PAGE, Api.LIST, Api.GET, Api.CREATE, Api.UPDATE,
-    Api.BATCH_DELETE, Api.EXPORT, Api.DICT})
+@CrudRequestMapping(value = "/system/user", api = {Api.PAGE, Api.LIST, Api.GET, Api.UPDATE, Api.BATCH_DELETE,
+    Api.EXPORT, Api.DICT})
 public class UserController extends BaseController<UserService, UserResp, UserDetailResp, UserQuery, UserReq> {
+
+    /**
+     * 自定义创建（不要用 Continew 默认 Api.CREATE）：
+     * 父类 create 带 @Validated(Create.class)，且 Create 继承 Default，
+     * 会触发「密码不能为空」等创建分组校验，无法支持「密码留空自动生成」。
+     */
+    @Operation(summary = "创建用户", description = "密码可留空由系统自动生成；成功时一次性返回明文初始密码，并强制首登改密")
+    @SaCheckPermission("system:user:create")
+    @PostMapping
+    public UserCreateResp createUser(@Valid @RequestBody UserReq req) {
+        return baseService.createUser(req);
+    }
 
     @Operation(summary = "下载导入模板", description = "下载导入模板")
     @SaCheckPermission("system:user:import")

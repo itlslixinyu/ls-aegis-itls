@@ -55,6 +55,25 @@ const handleError = (msg: string) => {
   })
 }
 
+/** 与后端 SaTokenConfiguration 强制改密文案一致 */
+const PWD_EXPIRED_MSG = '密码已过期，请修改密码'
+
+/** 防止多个业务接口同时失败时重复跳转 / 弹窗 */
+let pwdExpiredRedirecting = false
+
+const redirectToPwdExpired = (msg: string) => {
+  const userStore = useUserStore()
+  userStore.userInfo.pwdExpired = true
+  if (pwdExpiredRedirecting || router.currentRoute.value.path === '/pwdExpired') {
+    return
+  }
+  pwdExpiredRedirecting = true
+  handleError(msg)
+  router.replace('/pwdExpired').finally(() => {
+    pwdExpiredRedirecting = false
+  })
+}
+
 // 请求拦截器
 http.interceptors.request.use(
   (config: AxiosRequestConfig) => {
@@ -116,6 +135,9 @@ http.interceptors.response.use(
           await router.replace(`/login?redirect=${encodeURIComponent(currentPath)}`)
         },
       })
+    } else if (msg === PWD_EXPIRED_MSG) {
+      // 初始口令 / 口令过期：后端拒绝业务接口时踢回强制改密页
+      redirectToPwdExpired(msg)
     } else if (!response.config.skipErrorMessage) {
       handleError(msg)
     }

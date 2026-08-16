@@ -5,7 +5,7 @@
 | 项 | 说明 |
 |---|---|
 | 产品名 | LS・Aegis（雷铄御警）安全应用构建平台 |
-| 当前版本 | [`VERSION`](./VERSION)（权威版本号，当前 **v1.3.4**） |
+| 当前版本 | [`VERSION`](./VERSION)（权威版本号，当前 **v1.6.0**） |
 | 后端 | `ls-aegis-server`（JDK 21 / Spring Boot 3，启动模块 `ls-aegis-boot`） |
 | 前端 | `ls-aegis-web`（Vue 3 + Vite + Arco Design） |
 | 部署 | `docker/`（MySQL / Redis / 后端 / Nginx） |
@@ -43,7 +43,7 @@ LS-Aegis/
 │   ├── ls-aegis-biz-notice/     # 公告与站内消息
 │   ├── ls-aegis-biz-open/       # 开放能力
 │   ├── ls-aegis-biz-schedule/   # 任务调度（SnailJob）
-│   ├── ls-aegis-biz-tenant/     # 多租户（默认不接入）
+│   ├── ls-aegis-biz-tenant/     # 租户管理（中间件默认开，产品开关见功能模块）
 │   └── docs/sql/init.sql        # 部署用 SQL（表结构 + 种子 + 插件）
 ├── ls-aegis-web/                # 前端（Vue 3 + Vite + Arco）
 ├── docker/                      # Compose、Nginx、运行时挂载
@@ -70,7 +70,8 @@ LS-Aegis/
 ```bash
 cd ls-aegis-server
 mvn -pl ls-aegis-boot -am package -DskipTests
-# 本地可直接运行 ls-aegis-boot，或将 jar 放入 docker/ls-aegis-server/bin/ 后用 Compose
+# 本地可直接运行 ls-aegis-boot，或将 `ls-aegis-server.jar` 放入 `docker/ls-aegis-server/bin/` 后用 Compose
+# 容器名：ls-aegis-mysql / ls-aegis-redis / ls-aegis-server / ls-aegis-web
 ```
 
 ### 前端开发

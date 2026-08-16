@@ -21,7 +21,7 @@ export function getUser(id: string) {
 
 /** @desc 新增用户 */
 export function addUser(data: any) {
-  return http.post(`${BASE_URL}`, data)
+  return http.post<T.UserCreateResp>(`${BASE_URL}`, data)
 }
 
 /** @desc 修改用户 */

@@ -149,7 +149,7 @@ const emitColumnsChange = () => {
         ...originalCol,
         show: localCol.show,
         fixed: localCol.fixed,
-        width: localCol.width || originalCol.width,
+        width: originalCol.width || localCol.width,
       }
     }
     return originalCol
@@ -215,7 +215,7 @@ const visibleColumns = computed(() => {
         return {
           ...col,
           fixed: localCol.fixed,
-          width: localCol.width || col.width,
+          width: col.width || localCol.width,
         }
       }
       return col
@@ -306,7 +306,7 @@ const loadSettingsFromStorage = () => {
           title: typeof originalColumn.title === 'string' ? originalColumn.title : String(item.key),
           dataIndex: originalColumn.dataIndex as string,
           disabled: props.disabledKeys.includes(item.key),
-          width: item.width || originalColumn.width as number,
+          width: (originalColumn.width as number) || item.width,
         }
 
         if (newItem.fixed === 'left') {

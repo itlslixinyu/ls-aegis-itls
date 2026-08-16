@@ -23,6 +23,12 @@ export interface UserResp {
 export type UserDetailResp = UserResp & {
   pwdResetTime?: string
 }
+/** 用户创建响应（含一次性初始密码） */
+export interface UserCreateResp {
+  id: string
+  initialPassword?: string
+  generated?: boolean
+}
 export interface UserImportResp {
   importKey: string
   totalRows: number
@@ -409,6 +415,26 @@ export interface WeatherConfig {
   WEATHER_JWT_PRIVATE_KEY: OptionResp
   WEATHER_API_HOST: OptionResp
   WEATHER_GEO_HOST: OptionResp
+}
+
+/** 大屏配置类型（运营中枢） */
+export interface DashboardConfig {
+  DASHBOARD_TITLE: OptionResp
+  DASHBOARD_SHOW_CLOCK: OptionResp
+  DASHBOARD_SHOW_STATUS: OptionResp
+  DASHBOARD_SHOW_KPI: OptionResp
+  DASHBOARD_SHOW_NOTICE: OptionResp
+  DASHBOARD_SHOW_FS_TIP: OptionResp
+  DASHBOARD_SHOW_DECOR: OptionResp
+  DASHBOARD_DEFAULT_DAYS: OptionResp
+  DASHBOARD_REFRESH_INTERVAL: OptionResp
+}
+
+/** 功能模块总开关 */
+export interface ModuleConfig {
+  MODULE_TENANT_ENABLED: OptionResp
+  MODULE_OPEN_ENABLED: OptionResp
+  MODULE_SCHEDULE_ENABLED: OptionResp
 }
 
 /** 运营中枢实时天气 */

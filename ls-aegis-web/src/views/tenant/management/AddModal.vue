@@ -112,6 +112,8 @@ const columns: ColumnItem[] = reactive([
     required: true,
     props: {
       maxLength: 32,
+      autocomplete: 'new-password',
+      placeholder: '请输入管理员密码',
     },
     hide: () => {
       return isUpdate.value
@@ -123,9 +125,6 @@ const columns: ColumnItem[] = reactive([
     type: 'select',
     span: 24,
     required: true,
-    hide: () => {
-      return isUpdate.value
-    },
     props: {
       options: packageList,
     },

@@ -1,6 +1,6 @@
 import { Button, Message, Notification, Space } from '@arco-design/web-vue'
 import NProgress from 'nprogress'
-import type { Router } from 'vue-router'
+import type { NavigationGuardNext, Router } from 'vue-router'
 import { useAppStore, useRouteStore, useUserStore } from '@/stores'
 import { getToken } from '@/utils/auth'
 import { isHttp } from '@/utils/validate'
@@ -72,10 +72,27 @@ const compareTag = async () => {
 /** 免登录白名单 */
 const whiteList = ['/login', '/pwdExpired', '/forgot-password']
 
+/** 强制改密提示（初始随机密码 / 口令过期） */
+const PWD_EXPIRED_TIP = '密码已过期或为初始密码，请先修改后再使用系统'
+
 /** 是否已经生成过路由表 */
 let hasRouteFlag = false
 export const resetHasRouteFlag = () => {
   hasRouteFlag = false
+}
+
+/** 初始口令或密码过期时，除改密页外一律拦截 */
+const redirectIfPwdExpired = (
+  userStore: ReturnType<typeof useUserStore>,
+  toPath: string,
+  next: NavigationGuardNext,
+) => {
+  if (userStore.userInfo.pwdExpired && toPath !== '/pwdExpired') {
+    Message.warning(PWD_EXPIRED_TIP)
+    next('/pwdExpired')
+    return true
+  }
+  return false
 }
 
 /** 初始化路由守卫 */
@@ -99,10 +116,9 @@ export const setupRouterGuard = (router: Router) => {
             } catch {
               // 偏好拉取失败不阻断登录，继续使用本地缓存/默认配置
             }
-            if (userStore.userInfo.pwdExpired && to.path !== '/pwdExpired') {
-              Message.warning('密码已过期或为初始密码，请先修改后再使用系统')
-              hasRouteFlag = true
-              next('/pwdExpired')
+            // 先标记已拉取，避免反复 getInfo；后续导航仍会检查 pwdExpired
+            hasRouteFlag = true
+            if (redirectIfPwdExpired(userStore, to.path, next)) {
               return
             }
             const accessRoutes = await routeStore.generateRoutes()
@@ -111,7 +127,6 @@ export const setupRouterGuard = (router: Router) => {
                 router.addRoute(route) // 动态添加可访问路由表
               }
             })
-            hasRouteFlag = true
             // 确保添加路由已完成
             // 设置 replace: true, 因此导航将不会留下历史记录
             next({ ...to, replace: true })
@@ -121,6 +136,10 @@ export const setupRouterGuard = (router: Router) => {
             next(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
           }
         } else {
+          // 二次导航也必须拦截未改密（含 ErrorPage「返回首页」绕过）
+          if (redirectIfPwdExpired(userStore, to.path, next)) {
+            return
+          }
           next()
         }
       }

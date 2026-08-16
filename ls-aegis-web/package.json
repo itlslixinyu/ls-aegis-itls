@@ -78,7 +78,7 @@
     "unplugin-auto-import": "^0.16.4",
     "unplugin-vue-components": "^0.25.1",
     "vite": "^5.1.5",
-    "vite-plugin-mock": "^2.9.8",
+    "vite-plugin-mock": "^3.0.2",
     "vite-plugin-style-import": "^2.0.0",
     "vite-plugin-svg-icons": "^2.0.1",
     "vite-plugin-vue-devtools": "^7.0.27",

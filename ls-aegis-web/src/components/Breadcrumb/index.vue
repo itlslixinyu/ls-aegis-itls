@@ -1,7 +1,7 @@
 <template>
   <a-breadcrumb>
     <transition-group name="breadcrumb">
-      <div v-for="(item, index) in breadcrumbList" :key="item.meta.title">
+      <div v-for="(item, index) in breadcrumbList" :key="item.path || `${index}-${item.meta?.title}`">
         <a-breadcrumb-item v-bind="attrs">
           <span
             v-if="item.redirect === 'noRedirect' || item.redirect === '' || index === breadcrumbList.length - 1"

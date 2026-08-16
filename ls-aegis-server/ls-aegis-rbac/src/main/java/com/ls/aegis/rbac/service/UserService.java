@@ -26,6 +26,7 @@ import com.ls.aegis.rbac.model.req.user.UserImportReq;
 import com.ls.aegis.rbac.model.req.user.UserPasswordResetReq;
 import com.ls.aegis.rbac.model.req.user.UserReq;
 import com.ls.aegis.rbac.model.req.user.UserRoleUpdateReq;
+import com.ls.aegis.rbac.model.resp.user.UserCreateResp;
 import com.ls.aegis.rbac.model.resp.user.UserDetailResp;
 import com.ls.aegis.rbac.model.resp.user.UserImportParseResp;
 import com.ls.aegis.rbac.model.resp.user.UserImportResp;
@@ -42,6 +43,14 @@ import java.util.List;
  * @since 2022/12/21 21:48
  */
 public interface UserService extends BaseService<UserResp, UserDetailResp, UserQuery, UserReq>, IService<UserDO> {
+
+    /**
+     * 创建用户（支持自动生成初始密码，并强制首登改密）
+     *
+     * @param req 请求参数
+     * @return 创建结果（含一次性初始明文密码）
+     */
+    UserCreateResp createUser(UserReq req);
 
     /**
      * 下载导入模板

@@ -1,10 +1,11 @@
-# Compose 工程名：Docker Desktop / docker compose ls 中显示为 ls-aegis
-# 容器默认命名：ls-aegis-<服务名>-1（不要写死 container_name，否则会脱离项目分组）
+# Compose 工程名：ls-aegis
+# 服务名 = 容器名 = ls-aegis-<组件>（Docker Desktop 列表与 jar 命名一致）
 # 密钥请放 docker/.env（已 gitignore），模板见 docker/.env.example
 name: ls-aegis
 
 services:
-  mysql:
+  ls-aegis-mysql:
+    container_name: ls-aegis-mysql
     image: mysql:8.0.42
     restart: always
     ports:
@@ -30,7 +31,8 @@ services:
       timeout: 5s
       retries: 20
 
-  redis:
+  ls-aegis-redis:
+    container_name: ls-aegis-redis
     image: redis:7.2.8
     restart: always
     ports:
@@ -52,7 +54,9 @@ services:
       timeout: 3s
       retries: 20
 
-  server:
+  ls-aegis-server:
+    container_name: ls-aegis-server
+    image: ls-aegis-server
     build: ./ls-aegis-server
     restart: always
     ports:
@@ -67,12 +71,13 @@ services:
     environment:
       TZ: Asia/Shanghai
       APPLICATION_URL: ${APPLICATION_URL:-http://localhost:8080}
-      DB_HOST: mysql
+      # 与 Compose 服务名一致（容器内 DNS）
+      DB_HOST: ls-aegis-mysql
       DB_PORT: 3306
       DB_USER: root
       DB_PWD: ${DB_PWD}
       DB_NAME: ls_aegis
-      REDIS_HOST: redis
+      REDIS_HOST: ls-aegis-redis
       REDIS_PORT: 6379
       REDIS_PWD: ${REDIS_PWD}
       REDIS_DB: 0
@@ -92,17 +97,19 @@ services:
       SCHEDULE_USERNAME: ${SCHEDULE_USERNAME:-}
       SCHEDULE_PASSWORD: ${SCHEDULE_PASSWORD:-}
       JUSTAUTH_ENABLED: ${JUSTAUTH_ENABLED:-false}
-      # 与 application.yml 一致：关闭多租户
-      CONTINEW_STARTER_TENANT_ENABLED: 'false'
+      # 中间件默认开；产品开关见「功能模块 - 租户管理」。运维硬关时改为 false
+      CONTINEW_STARTER_TENANT_ENABLED: 'true'
     depends_on:
-      mysql:
+      ls-aegis-mysql:
         condition: service_healthy
-      redis:
+      ls-aegis-redis:
         condition: service_healthy
     networks:
       - net
 
-  web:
+  ls-aegis-web:
+    container_name: ls-aegis-web
+    image: ls-aegis-web
     build:
       # 上下文为仓库根，多阶段构建前端并打入 Nginx 镜像（裸 clone 开箱可用）
       context: ..
@@ -116,7 +123,7 @@ services:
     environment:
       TZ: Asia/Shanghai
     depends_on:
-      - server
+      - ls-aegis-server
     networks:
       - net
 

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <GiPageLayout>
     <div>
       <a-radio-group v-model="viewType" type="button" size="small" style="margin-bottom: 16px;">
@@ -171,7 +171,7 @@ const columns: TableInstance['columns'] = [
     title: '操作',
     dataIndex: 'action',
     slotName: 'action',
-    width: 160,
+    width: 220,
     align: 'center',
     fixed: !isMobile() ? 'right' : undefined,
     show: has.hasPermOr(['system:dept:update', 'system:dept:delete', 'system:dept:create']),

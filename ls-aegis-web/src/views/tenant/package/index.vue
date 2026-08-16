@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <GiPageLayout>
     <GiTable
       row-key="id"
@@ -98,7 +98,7 @@ const columns: TableInstance['columns'] = [
     title: '操作',
     dataIndex: 'action',
     slotName: 'action',
-    width: 160,
+    width: 220,
     align: 'center',
     fixed: !isMobile() ? 'right' : undefined,
     show: has.hasPermOr(['tenant:package:get', 'tenant:package:update', 'tenant:package:delete']),

@@ -45,6 +45,7 @@ import com.ls.aegis.rbac.enums.OptionCategoryEnum;
 import com.ls.aegis.rbac.model.query.OptionQuery;
 import com.ls.aegis.rbac.model.resp.WeatherNowResp;
 import com.ls.aegis.rbac.service.DictItemService;
+import com.ls.aegis.rbac.service.ModuleService;
 import com.ls.aegis.rbac.service.OptionService;
 import com.ls.aegis.rbac.service.WeatherService;
 import top.continew.starter.core.util.validation.ValidationUtils;
@@ -73,6 +74,7 @@ public class CommonController {
     private final FileService fileService;
     private final DictItemService dictItemService;
     private final OptionService optionService;
+    private final ModuleService moduleService;
     private final WeatherService weatherService;
 
     @Operation(summary = "上传文件", description = "上传文件")
@@ -131,11 +133,26 @@ public class CommonController {
 
     @TenantIgnore
     @SaIgnore
-    @Operation(summary = "查询租户开启状态", description = "查询租户开启状态")
+    @Operation(summary = "查询大屏配置参数", description = "运营中枢标题与展示开关")
+    @GetMapping("/dict/option/dashboard")
+    @Cached(key = "'DASHBOARD'", name = CacheConstants.OPTION_KEY_PREFIX)
+    public List<LabelValueResp<String>> listDashboardOptionDict() {
+        OptionQuery optionQuery = new OptionQuery();
+        optionQuery.setCategory(OptionCategoryEnum.DASHBOARD.name());
+        return optionService.list(optionQuery)
+            .stream()
+            .map(option -> new LabelValueResp<>(option.getCode(), StrUtil.nullToDefault(option.getValue(), option
+                .getDefaultValue())))
+            .toList();
+    }
+
+    @TenantIgnore
+    @SaIgnore
+    @Operation(summary = "查询租户开启状态", description = "中间件已装载且功能模块「租户管理」开启时，登录页显示租户编码框")
     @GetMapping("/dict/option/tenant")
     public Boolean tenantEnabled() {
-        // 读配置开关，禁止缓存：否则改 enabled 后 Redis 旧值会导致前端仍调 /tenant/**
-        return TenantContextHolder.isTenantEnabled();
+        // 禁止缓存：YAML 或模块开关变更后须立即生效
+        return TenantContextHolder.isTenantEnabled() && moduleService.isTenantEnabled();
     }
 
     @TenantIgnore

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <GiPageLayout>
     <GiTable
       v-model:selectedKeys="selectedKeys"
@@ -98,7 +98,7 @@ const columns: TableInstance['columns'] = [
   { title: '模块包名', dataIndex: 'packageName', ellipsis: true, tooltip: true },
   { title: '配置时间', dataIndex: 'createTime', width: 180 },
   { title: '修改时间', dataIndex: 'updateTime', width: 180 },
-  { title: '操作', dataIndex: 'action', slotName: 'action', width: 160, align: 'center', fixed: !isMobile() ? 'right' : undefined },
+  { title: '操作', dataIndex: 'action', slotName: 'action', width: 220, align: 'center', fixed: !isMobile() ? 'right' : undefined },
 ]
 
 // 重置

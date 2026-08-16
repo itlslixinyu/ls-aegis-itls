@@ -70,7 +70,7 @@ const save = async () => {
     const isInvalid = await formRef.value?.formRef?.validate()
     if (isInvalid) return false
     await resetUserPwd({ newPassword: await encryptTransport(form.newPassword) || '' }, dataId.value)
-    Message.success('重置成功')
+    Message.success('重置成功，用户下次登录须修改密码')
     emit('save-success')
     return true
   } catch (error) {

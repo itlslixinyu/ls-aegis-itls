@@ -39,12 +39,14 @@ import com.ls.aegis.rbac.model.resp.ClientResp;
 import com.ls.aegis.rbac.model.resp.MenuResp;
 import com.ls.aegis.rbac.service.ClientService;
 import com.ls.aegis.rbac.service.MenuService;
+import com.ls.aegis.rbac.service.ModuleService;
 import com.ls.aegis.rbac.service.RoleService;
 import top.continew.starter.core.util.validation.ValidationUtils;
 import top.continew.starter.extension.crud.annotation.TreeField;
 import top.continew.starter.extension.crud.autoconfigure.CrudProperties;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -63,6 +65,7 @@ public class AuthServiceImpl implements AuthService {
     private final ClientService clientService;
     private final RoleService roleService;
     private final MenuService menuService;
+    private final ModuleService moduleService;
     private final CrudProperties crudProperties;
 
     @Override
@@ -99,6 +102,7 @@ public class AuthServiceImpl implements AuthService {
             roleSet.forEach(r -> menuSet.addAll(menuService.listByRoleId(r.getId())));
         }
         List<MenuResp> menuList = menuSet.stream().filter(m -> !MenuTypeEnum.BUTTON.equals(m.getType())).toList();
+        menuList = filterByModuleSwitch(menuList);
         if (CollUtil.isEmpty(menuList)) {
             return new ArrayList<>(0);
         }
@@ -122,5 +126,26 @@ public class AuthServiceImpl implements AuthService {
             tree.putExtra("permission", m.getPermission());
         });
         return BeanUtil.copyToList(treeList, RouteResp.class);
+    }
+
+    /**
+     * 按功能模块总开关剔除已关闭模块的菜单树
+     */
+    private List<MenuResp> filterByModuleSwitch(List<MenuResp> menuList) {
+        Set<Long> disabledRoots = moduleService.disabledMenuRootIds();
+        if (CollUtil.isEmpty(disabledRoots)) {
+            return menuList;
+        }
+        Set<Long> excludeIds = new HashSet<>(disabledRoots);
+        boolean changed = true;
+        while (changed) {
+            changed = false;
+            for (MenuResp menu : menuList) {
+                if (excludeIds.contains(menu.getParentId()) && excludeIds.add(menu.getId())) {
+                    changed = true;
+                }
+            }
+        }
+        return menuList.stream().filter(m -> !excludeIds.contains(m.getId())).toList();
     }
 }

@@ -44,6 +44,8 @@ const columns: ColumnItem[] = reactive([
     required: true,
     props: {
       maxLength: 32,
+      autocomplete: 'new-password',
+      placeholder: '请输入新密码',
     },
   },
 ])

@@ -11,12 +11,16 @@
     <a-alert v-if="isSystemUser" type="info" style="margin-bottom: 16px">
       系统内置用户：角色与状态不可变更；昵称、手机号、邮箱、性别、部门、描述可修改
     </a-alert>
+    <a-alert v-if="!isUpdate" type="warning" style="margin-bottom: 16px">
+      密码可留空：系统将自动生成初始密码，创建成功后仅展示一次；用户首次登录须修改密码
+    </a-alert>
     <GiForm ref="formRef" v-model="form" :columns="columns" />
   </a-drawer>
 </template>
 
 <script setup lang="ts">
-import { Message, type TreeNodeData } from '@arco-design/web-vue'
+import { h } from 'vue'
+import { Message, Modal, Typography, type TreeNodeData } from '@arco-design/web-vue'
 import { useWindowSize } from '@vueuse/core'
 import { addUser, getUser, updateUser } from '@/apis/system/user'
 import { type ColumnItem, GiForm } from '@/components/GiForm'
@@ -85,11 +89,13 @@ const columns: ColumnItem[] = reactive([
     field: 'password',
     type: 'input-password',
     span: 24,
-    required: true,
+    required: false,
+    rules: [],
     props: {
       maxLength: 32,
       showWordLimit: true,
       autocomplete: 'new-password',
+      placeholder: '留空则自动生成初始密码',
     },
     hide: () => isUpdate.value,
   },
@@ -205,6 +211,22 @@ const normalizeEmail = (email?: string | null) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : undefined
 }
 
+/** 展示一次性初始密码 */
+const showInitialPassword = (password: string, username?: string) => {
+  Modal.success({
+    title: '用户创建成功',
+    content: () => h('div', { style: 'line-height: 1.7' }, [
+      h('p', `用户名：${username || ''}`),
+      h('p', { style: 'margin: 8px 0 4px' }, '初始密码（仅展示一次，请立即复制并告知用户）：'),
+      h(Typography.Paragraph, { copyable: true, style: 'font-size: 16px; font-weight: 600; margin-bottom: 8px' }, () => password),
+      h('p', { style: 'color: var(--color-text-3); font-size: 13px' }, '用户首次登录须修改密码后方可进入系统。'),
+    ]),
+    okText: '已保存',
+    maskClosable: false,
+    escToClose: false,
+  })
+}
+
 // 重置
 const reset = () => {
   formRef.value?.formRef?.resetFields()
@@ -217,10 +239,9 @@ const save = async () => {
   try {
     const isInvalid = await formRef.value?.formRef?.validate()
     if (isInvalid) return false
-    const payload = {
+    const payload: Record<string, unknown> = {
       nickname: form.nickname,
       username: form.username,
-      password: form.password,
       phone: form.phone || null,
       email: form.email || null,
       gender: form.gender,
@@ -233,11 +254,17 @@ const save = async () => {
       await updateUser(payload, dataId.value)
       Message.success('修改成功')
     } else {
-      if (rawPassword) {
-        payload.password = await encryptTransport(rawPassword) || ''
+      const pwd = (rawPassword || '').trim()
+      if (pwd) {
+        payload.password = await encryptTransport(pwd) || ''
       }
-      await addUser(payload)
-      Message.success('新增成功')
+      // 留空不传 password，由后端自动生成
+      const { data } = await addUser(payload)
+      if (data?.generated && data.initialPassword) {
+        showInitialPassword(data.initialPassword, form.username)
+      } else {
+        Message.success('新增成功，用户首次登录须修改密码')
+      }
     }
     emit('save-success')
     return true

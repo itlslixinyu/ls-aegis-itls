@@ -3,14 +3,13 @@
     <template #left>
       <DeptTree @node-click="handleSelectDept" />
     </template>
-    <GiTable
+    <BaseTable
       row-key="id"
-      table-id="system-user-v5"
+      table-id="system-user-v6"
       class="user-table"
       :data="dataList"
       :columns="columns"
       :loading="loading"
-      :scroll="{ x: tableScrollX, y: '100%' }"
       :pagination="pagination"
       :disabled-tools="['size']"
       :disabled-column-keys="['nickname']"
@@ -82,7 +81,7 @@
       </template>
       <template #action="{ record }">
         <div class="table-action">
-          <a-space :size="0">
+          <a-space :size="0" :wrap="false">
             <a-link v-permission="['system:user:get']" title="详情" @click="onDetail(record)">详情</a-link>
             <a-link v-permission="['system:user:update']" title="修改" @click="onUpdate(record)">修改</a-link>
             <a-dropdown>
@@ -120,7 +119,7 @@
           </a-space>
         </div>
       </template>
-    </GiTable>
+    </BaseTable>
 
     <AddDrawer ref="AddDrawerRef" @save-success="search" />
     <ImportDrawer ref="ImportDrawerRef" @save-success="search" />
@@ -140,6 +139,7 @@ import PwdResetModal from './PwdResetModal.vue'
 import RoleUpdateModal from './RoleUpdateModal.vue'
 import { type UserResp, deleteUser, exportUser, listUser } from '@/apis/system/user'
 import { DisEnableStatusList } from '@/constant/common'
+import { TableCol } from '@/constant/table-col'
 import { useDownload, useResetReactive, useTable } from '@/hooks'
 import has from '@/utils/has'
 
@@ -225,7 +225,7 @@ const columns: TableInstance['columns'] = [
     title: '操作',
     dataIndex: 'action',
     slotName: 'action',
-    width: 148,
+    width: TableCol.actionM,
     align: 'center',
     show: has.hasPermOr([
       'system:user:get',
@@ -236,16 +236,6 @@ const columns: TableInstance['columns'] = [
     ]),
   },
 ]
-
-const tableScrollX = computed(() =>
-  columns.reduce((sum, col) => {
-    if (col.show === false) return sum
-    return sum + (Number(col.width) || 0)
-  }, 0),
-)
-
-const tableScrollXPx = computed(() => `${tableScrollX.value}px`)
-
 // 重置
 const reset = () => {
   resetForm()
@@ -312,20 +302,12 @@ const onUpdateRole = (record: UserResp) => {
   :deep(.gi-table__toolbar) {
     margin-bottom: 8px;
   }
-
-  :deep(.arco-table-td) {
-    vertical-align: middle;
-  }
-
-  // 锁住列宽：容器更宽时右侧留白，不把空白均分进各列
-  :deep(.arco-table-element) {
-    width: v-bind(tableScrollXPx) !important;
-  }
 }
 
 .table-action {
   display: inline-flex;
   justify-content: center;
+  white-space: nowrap;
 
   :deep(.arco-link) {
     padding: 0 6px;

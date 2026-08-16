@@ -1,12 +1,18 @@
 <template>
-  <div ref="screenRef" class="ops-screen" :class="{ 'is-fullscreen': isFullscreen }">
-    <div class="ops-screen__frame frame-tl" aria-hidden="true" />
-    <div class="ops-screen__frame frame-tr" aria-hidden="true" />
-    <div class="ops-screen__frame frame-bl" aria-hidden="true" />
-    <div class="ops-screen__frame frame-br" aria-hidden="true" />
-    <div class="ops-screen__frame frame-t" aria-hidden="true" />
-    <div class="ops-screen__frame frame-b" aria-hidden="true" />
-    <div class="ops-screen__scan" aria-hidden="true" />
+  <div
+    ref="screenRef"
+    class="ops-screen"
+    :class="{ 'is-fullscreen': isFullscreen, 'is-plain': !showDecor }"
+  >
+    <template v-if="showDecor">
+      <div class="ops-screen__frame frame-tl" aria-hidden="true" />
+      <div class="ops-screen__frame frame-tr" aria-hidden="true" />
+      <div class="ops-screen__frame frame-bl" aria-hidden="true" />
+      <div class="ops-screen__frame frame-br" aria-hidden="true" />
+      <div class="ops-screen__frame frame-t" aria-hidden="true" />
+      <div class="ops-screen__frame frame-b" aria-hidden="true" />
+      <div class="ops-screen__scan" aria-hidden="true" />
+    </template>
 
     <header class="ops-screen__header anim-fade-down">
       <div
@@ -24,8 +30,8 @@
             class="ops-screen__weather-icon-img"
             :src="weather.iconSrc"
             :alt="weather.label"
-            width="26"
-            height="26"
+            width="20"
+            height="20"
           >
           <span class="ops-screen__weather-label">{{ weather.label }}</span>
         </span>
@@ -51,7 +57,7 @@
         <h1 class="ops-screen__title">{{ screenTitle }}</h1>
         <span class="ops-screen__title-dot">·</span>
       </div>
-      <div class="ops-screen__clock">
+      <div v-if="showClock" class="ops-screen__clock">
         <span class="current-time-glass">
           <span class="current-time">{{ nowParts.date }}</span>
           <span class="ops-screen__weather-pipe">|</span>
@@ -60,6 +66,7 @@
           <span class="current-time">{{ nowParts.week }}</span>
         </span>
       </div>
+      <div v-else class="ops-screen__clock ops-screen__clock--empty" aria-hidden="true" />
     </header>
 
     <div class="ops-screen__fs-dock" :class="{ 'is-tipping': showFsTip }">
@@ -96,7 +103,7 @@
         </a-radio-group>
       </div>
       <div class="toolbar-right">
-        <div class="ops-screen__status ops-screen__status--inline">
+        <div v-if="showStatus" class="ops-screen__status ops-screen__status--inline">
           <span class="dot" :class="`is-${runStatus}`" :title="runStatusLabel" />
           <span>{{ runStatusLabel }}</span>
         </div>
@@ -104,7 +111,7 @@
       </div>
     </div>
 
-    <section class="ops-screen__kpi">
+    <section v-if="showKpi" class="ops-screen__kpi">
       <div
         v-for="(item, idx) in kpiList"
         :key="item.key"
@@ -158,11 +165,11 @@
       </ScreenPanel>
     </section>
 
-    <section class="ops-screen__bottom">
+    <section class="ops-screen__bottom" :class="{ 'is-no-notice': !showNotice }">
       <ScreenPanel title="终端系统排行 TOP10" enter-delay="0.62s" :connectors="false">
         <Chart :option="osRankOption" height="100%" />
       </ScreenPanel>
-      <ScreenPanel title="最新公告" enter-delay="0.7s" :connectors="false">
+      <ScreenPanel v-if="showNotice" title="最新公告" enter-delay="0.7s" :connectors="false">
         <div v-if="!noticeList.length && !loading" class="notice-ticker__empty">暂无公告</div>
         <div
           v-else
@@ -233,9 +240,11 @@ import {
   type DashboardWeather,
   type WeatherRuntimeConfig,
 } from '../utils/weather'
-import { getWeatherNow, listWeatherOptionDict } from '@/apis/system'
+import { getWeatherNow, listDashboardOptionDict, listWeatherOptionDict } from '@/apis/system'
 
 defineOptions({ name: 'Analysis' })
+
+const DEFAULT_SCREEN_TITLE = 'LS-Aegis 雷铄御警安全应用运营中枢'
 
 const router = useRouter()
 const screenRef = ref<HTMLElement | null>(null)
@@ -243,6 +252,17 @@ const { isFullscreen, enter: enterFullscreen, toggle } = useFullscreen(screenRef
 const showFsTip = ref(false)
 let fsTipTimer: ReturnType<typeof setTimeout> | undefined
 let fsHotkeyBound = false
+let dashboardRefreshTimer: ReturnType<typeof setInterval> | undefined
+
+/** 大屏展示配置（系统配置 · 大屏配置） */
+const screenTitle = ref(DEFAULT_SCREEN_TITLE)
+const showClock = ref(true)
+const showStatus = ref(true)
+const showKpi = ref(true)
+const showNotice = ref(true)
+const showFsTipEnabled = ref(true)
+const showDecor = ref(true)
+const dashboardRefreshInterval = ref(60)
 
 const trendDays = ref<7 | 30>(7)
 const WEEK_LABELS = ['日', '一', '二', '三', '四', '五', '六'] as const
@@ -464,9 +484,34 @@ const axisText = 'rgba(180, 210, 240, 0.65)'
 const splitLine = 'rgba(64, 169, 255, 0.12)'
 const chartColors = ['#3fd0ff', '#1677ff', '#36cfc9', '#73d13d', '#ff9f43', '#9254de', '#f759ab', '#597ef7']
 
-const screenTitle = computed(() => {
-  return 'LS-Aegis 雷铄御警安全应用运营中枢'
-})
+const loadDashboardConfig = async () => {
+  try {
+    const { data } = await listDashboardOptionDict()
+    const map = Object.fromEntries((data || []).map((i) => [i.label, i.value]))
+    const title = String(map.DASHBOARD_TITLE || '').trim()
+    screenTitle.value = title || DEFAULT_SCREEN_TITLE
+    showClock.value = String(map.DASHBOARD_SHOW_CLOCK ?? '1') !== '0'
+    showStatus.value = String(map.DASHBOARD_SHOW_STATUS ?? '1') !== '0'
+    showKpi.value = String(map.DASHBOARD_SHOW_KPI ?? '1') !== '0'
+    showNotice.value = String(map.DASHBOARD_SHOW_NOTICE ?? '1') !== '0'
+    showFsTipEnabled.value = String(map.DASHBOARD_SHOW_FS_TIP ?? '1') !== '0'
+    showDecor.value = String(map.DASHBOARD_SHOW_DECOR ?? '1') !== '0'
+    const days = Number(map.DASHBOARD_DEFAULT_DAYS || 7)
+    trendDays.value = days === 30 ? 30 : 7
+    const interval = Number(map.DASHBOARD_REFRESH_INTERVAL)
+    dashboardRefreshInterval.value = Number.isFinite(interval) ? Math.max(0, interval) : 60
+  } catch {
+    screenTitle.value = DEFAULT_SCREEN_TITLE
+    showClock.value = true
+    showStatus.value = true
+    showKpi.value = true
+    showNotice.value = true
+    showFsTipEnabled.value = true
+    showDecor.value = true
+    trendDays.value = 7
+    dashboardRefreshInterval.value = 60
+  }
+}
 
 const moduleVisitTotal = computed(() => moduleList.value.reduce((sum, i) => sum + (i.value || 0), 0))
 const moduleTop = computed(() => [...moduleList.value].sort((a, b) => (b.value || 0) - (a.value || 0))[0])
@@ -806,12 +851,23 @@ const refreshAll = async () => {
   }
 }
 
+const restartDashboardRefreshTimer = () => {
+  if (dashboardRefreshTimer) clearInterval(dashboardRefreshTimer)
+  dashboardRefreshTimer = undefined
+  const sec = dashboardRefreshInterval.value
+  if (!sec || sec <= 0) return
+  dashboardRefreshTimer = setInterval(() => {
+    void refreshAll()
+  }, Math.max(10, sec) * 1000)
+}
+
 onMounted(async () => {
   window.addEventListener('online', onBrowserOnline)
   window.addEventListener('offline', onBrowserOffline)
   systemOnline.value = navigator.onLine
-  await loadWeatherConfig()
-  refreshAll()
+  await Promise.all([loadDashboardConfig(), loadWeatherConfig()])
+  await refreshAll()
+  restartDashboardRefreshTimer()
   clockTimer = setInterval(() => {
     nowParts.value = formatNowParts()
   }, 1000)
@@ -834,6 +890,10 @@ onDeactivated(() => {
 
 /** 进入大屏时在右下角提示全屏入口，并短暂点亮按钮 */
 function tipFullscreenDock() {
+  if (!showFsTipEnabled.value) {
+    showFsTip.value = false
+    return
+  }
   showFsTip.value = true
   if (fsTipTimer) clearTimeout(fsTipTimer)
   fsTipTimer = setTimeout(() => {
@@ -891,6 +951,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('offline', onBrowserOffline)
   if (clockTimer) clearInterval(clockTimer)
   if (weatherTimer) clearInterval(weatherTimer)
+  if (dashboardRefreshTimer) clearInterval(dashboardRefreshTimer)
   if (fsTipTimer) clearTimeout(fsTipTimer)
   unbindFsHotkey()
   noticeResizeObserver?.disconnect()

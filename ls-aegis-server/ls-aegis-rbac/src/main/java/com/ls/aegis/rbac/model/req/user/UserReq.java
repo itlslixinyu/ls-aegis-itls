@@ -28,7 +28,6 @@ import com.ls.aegis.common.constant.RegexConstants;
 import com.ls.aegis.common.enums.DisEnableStatusEnum;
 import com.ls.aegis.common.enums.GenderEnum;
 import top.continew.starter.validation.constraints.Mobile;
-import top.continew.starter.extension.crud.validation.CrudValidationGroup;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -64,10 +63,9 @@ public class UserReq implements Serializable {
     private String nickname;
 
     /**
-     * 密码
+     * 密码（创建时可选；留空则后端自动生成随机初始密码，仅响应一次明文）
      */
-    @Schema(description = "密码", example = "RSA 公钥加密的密码")
-    @NotBlank(message = "密码不能为空", groups = CrudValidationGroup.Create.class)
+    @Schema(description = "密码（创建时可选，留空则自动生成）", example = "SM2 公钥加密的密码")
     private String password;
 
     /**

@@ -1,12 +1,12 @@
-<template>
+﻿<template>
   <GiPageLayout>
-    <GiTable
+    <BaseTable
       ref="tableRef"
       row-key="id"
+      table-id="system-menu-v2"
       :data="dataList"
       :columns="columns"
       :loading="loading"
-      :scroll="{ x: '100%', y: '100%', minWidth: 1700 }"
       :pagination="false"
       :disabled-column-keys="['title']"
       @refresh="search"
@@ -80,20 +80,31 @@
         <a-tag v-else color="red" size="small">否</a-tag>
       </template>
       <template #action="{ record }">
-        <a-space>
-          <a-link v-permission="['system:menu:update']" title="修改" @click="onUpdate(record)">修改</a-link>
-          <a-link v-permission="['system:menu:delete']" status="danger" title="删除" @click="onDelete(record)">删除</a-link>
-          <a-link
-            v-permission="['system:menu:create']"
-            :disabled="![1, 2].includes(record.type)"
-            :title="![1, 2].includes(record.type) ? '不可添加下级菜单' : '新增'"
-            @click="onAdd(record.id)"
-          >
-            新增
-          </a-link>
-        </a-space>
+        <a-dropdown
+          v-if="has.hasPermOr(['system:menu:update', 'system:menu:create', 'system:menu:delete'])"
+          trigger="click"
+        >
+          <a-button type="text" size="mini" title="更多">
+            <template #icon>
+              <icon-more :size="16" />
+            </template>
+          </a-button>
+          <template #content>
+            <a-doption v-permission="['system:menu:update']" @click="onUpdate(record)">修改</a-doption>
+            <a-doption
+              v-permission="['system:menu:create']"
+              :disabled="![1, 2].includes(record.type)"
+              @click="onAdd(record.id)"
+            >
+              新增下级
+            </a-doption>
+            <a-doption v-permission="['system:menu:delete']">
+              <a-link status="danger" title="删除" @click="onDelete(record)">删除</a-link>
+            </a-doption>
+          </template>
+        </a-dropdown>
       </template>
-    </GiTable>
+    </BaseTable>
 
     <AddModal ref="AddModalRef" :menus="dataList" @save-success="search" />
   </GiPageLayout>
@@ -104,9 +115,8 @@ import type { TableInstance } from '@arco-design/web-vue'
 import { Message, Modal } from '@arco-design/web-vue'
 import AddModal from './AddModal.vue'
 import { type MenuResp, clearMenuCache, deleteMenu, listMenu } from '@/apis/system/menu'
-import type GiTable from '@/components/GiTable/index.vue'
+import { TableCol } from '@/constant/table-col'
 import { useTable } from '@/hooks'
-import { isMobile } from '@/utils'
 import has from '@/utils/has'
 
 defineOptions({ name: 'SystemMenu' })
@@ -118,15 +128,14 @@ const {
   handleDelete,
 } = useTable(() => listMenu(), { immediate: true })
 
-// 过滤树
-const searchData = (title: string, path: string, permission: string) => {
+const searchData = (menuTitle: string, menuPath: string, menuPermission: string) => {
   const loop = (data: MenuResp[]) => {
     const result = [] as MenuResp[]
     data.forEach((item: MenuResp) => {
       if (
-        (!title || item.title?.toLowerCase().includes(title.toLowerCase()))
-        && (!path || item.path?.toLowerCase().includes(path.toLowerCase()))
-        && (!permission || item.permission?.toLowerCase().includes(permission.toLowerCase()))
+        (!menuTitle || item.title?.toLowerCase().includes(menuTitle.toLowerCase()))
+        && (!menuPath || item.path?.toLowerCase().includes(menuPath.toLowerCase()))
+        && (!menuPermission || item.permission?.toLowerCase().includes(menuPermission.toLowerCase()))
       ) {
         result.push({ ...item })
       } else if (item.children) {
@@ -153,38 +162,36 @@ const dataList = computed(() => {
 })
 
 const columns: TableInstance['columns'] = [
-  { title: '菜单标题', dataIndex: 'title', slotName: 'title', width: 170, fixed: !isMobile() ? 'left' : undefined },
-  { title: '类型', dataIndex: 'type', slotName: 'type', align: 'center' },
-  { title: '状态', dataIndex: 'status', slotName: 'status', align: 'center' },
-  { title: '排序', dataIndex: 'sort', slotName: 'sort', align: 'center', width: 90 },
-  { title: '路由地址', dataIndex: 'path', ellipsis: true, tooltip: true },
-  { title: '组件名称', dataIndex: 'name', ellipsis: true, tooltip: true },
-  { title: '组件路径', dataIndex: 'component', minWidth: 180, ellipsis: true, tooltip: true },
-  { title: '权限标识', dataIndex: 'permission', minWidth: 180, ellipsis: true, tooltip: true },
-  { title: '外链', dataIndex: 'isExternal', slotName: 'isExternal', align: 'center', show: false },
-  { title: '隐藏', dataIndex: 'isHidden', slotName: 'isHidden', align: 'center' },
-  { title: '缓存', dataIndex: 'isCache', slotName: 'isCache', align: 'center', show: false },
-  { title: '创建人', dataIndex: 'createUserString', ellipsis: true, tooltip: true, show: false },
-  { title: '创建时间', dataIndex: 'createTime', width: 180 },
-  { title: '修改人', dataIndex: 'updateUserString', ellipsis: true, tooltip: true, show: false },
-  { title: '修改时间', dataIndex: 'updateTime', width: 180, show: false },
+  { title: '菜单标题', dataIndex: 'title', slotName: 'title', width: TableCol.name, fixed: 'left' },
+  { title: '类型', dataIndex: 'type', slotName: 'type', width: TableCol.type },
+  { title: '状态', dataIndex: 'status', slotName: 'status', width: TableCol.status },
+  { title: '排序', dataIndex: 'sort', slotName: 'sort', width: TableCol.qty },
+  { title: '路由地址', dataIndex: 'path', width: TableCol.codeMin },
+  { title: '组件名称', dataIndex: 'name', width: TableCol.codeMinSm },
+  { title: '组件路径', dataIndex: 'component', width: TableCol.name },
+  { title: '权限标识', dataIndex: 'permission', width: TableCol.name },
+  { title: '外链', dataIndex: 'isExternal', slotName: 'isExternal', width: TableCol.typeSm, show: false },
+  { title: '隐藏', dataIndex: 'isHidden', slotName: 'isHidden', width: TableCol.typeSm },
+  { title: '缓存', dataIndex: 'isCache', slotName: 'isCache', width: TableCol.typeSm, show: false },
+  { title: '创建人', dataIndex: 'createUserString', width: 100, show: false },
+  { title: '创建时间', dataIndex: 'createTime', width: TableCol.date },
+  { title: '修改人', dataIndex: 'updateUserString', width: 100, show: false },
+  { title: '修改时间', dataIndex: 'updateTime', width: TableCol.date, show: false },
   {
     title: '操作',
     dataIndex: 'action',
     slotName: 'action',
-    width: 160,
-    align: 'center',
-    fixed: !isMobile() ? 'right' : undefined,
-    show: has.hasPermOr(['system:menu:update', 'system:menu:delete', 'system:menu:create']),
+    width: TableCol.actionIcon,
+    show: has.hasPermOr(['system:menu:update', 'system:menu:create', 'system:menu:delete']),
   },
 ]
 
-// 重置
 const reset = () => {
   title.value = ''
+  path.value = ''
+  permission.value = ''
 }
 
-// 删除
 const onDelete = (record: MenuResp) => {
   return handleDelete(() => deleteMenu(record.id), {
     content: `是否确定菜单「${record.title}」？`,
@@ -192,7 +199,6 @@ const onDelete = (record: MenuResp) => {
   })
 }
 
-// 清除缓存
 const onClearCache = () => {
   Modal.warning({
     title: '提示',
@@ -207,20 +213,17 @@ const onClearCache = () => {
 }
 
 const isExpanded = ref(false)
-const tableRef = ref<InstanceType<typeof GiTable>>()
-// 展开/折叠
+const tableRef = ref<{ tableRef?: { expandAll: (expanded: boolean) => void } }>()
 const onExpanded = () => {
   isExpanded.value = !isExpanded.value
   tableRef.value?.tableRef?.expandAll(isExpanded.value)
 }
 
 const AddModalRef = ref<InstanceType<typeof AddModal>>()
-// 新增
 const onAdd = (parentId?: string) => {
   AddModalRef.value?.onAdd(parentId)
 }
 
-// 修改
 const onUpdate = (record: MenuResp) => {
   AddModalRef.value?.onUpdate(record.id)
 }

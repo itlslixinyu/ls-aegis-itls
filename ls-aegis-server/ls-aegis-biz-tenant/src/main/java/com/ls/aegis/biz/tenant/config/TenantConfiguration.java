@@ -17,7 +17,6 @@
 package com.ls.aegis.biz.tenant.config;
 
 import org.springdoc.core.models.GroupedOpenApi;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import com.ls.aegis.common.config.TenantExtensionProperties;
@@ -27,21 +26,14 @@ import top.continew.starter.extension.tenant.config.TenantProvider;
 
 /**
  * 租户配置
+ * <p>TenantExtensionProperties 仅由 ls-aegis-starter 的 @EnableConfigurationProperties 注册，
+ * 此处禁止再声明 @Bean，否则会出现双实例，登录写 Session 时 SpringUtil.getBean 失败。</p>
  *
  * @author Charles7c
  * @since 2025/7/12 13:30
  */
 @Configuration
 public class TenantConfiguration {
-
-    /**
-     * 租户扩展配置属性（主注册在 ls-aegis-starter；此处兜底，避免重复 Bean）
-     */
-    @Bean
-    @ConditionalOnMissingBean
-    public TenantExtensionProperties tenantExtensionProperties() {
-        return new TenantExtensionProperties();
-    }
 
     /**
      * 租户提供者

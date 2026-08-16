@@ -21,6 +21,13 @@ export function listWeatherOptionDict() {
   })
 }
 
+/** @desc 查询大屏配置参数（运营中枢标题与展示开关；失败静默降级） */
+export function listDashboardOptionDict() {
+  return http.get<LabelValueState[]>(`${BASE_URL}/dict/option/dashboard`, undefined, {
+    skipErrorMessage: true,
+  })
+}
+
 /** @desc 查询实时天气（后端代理；失败静默降级） */
 export function getWeatherNow(params?: { lat?: number, lon?: number }) {
   return http.get<WeatherNowResp>(`${BASE_URL}/weather/now`, params, {

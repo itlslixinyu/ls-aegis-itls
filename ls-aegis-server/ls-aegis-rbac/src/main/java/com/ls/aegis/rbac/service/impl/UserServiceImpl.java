@@ -59,6 +59,8 @@ import com.ls.aegis.common.context.UserContext;
 import com.ls.aegis.common.context.UserContextHolder;
 import com.ls.aegis.common.enums.DisEnableStatusEnum;
 import com.ls.aegis.common.enums.GenderEnum;
+import com.ls.aegis.common.constant.UserConstants;
+import com.ls.aegis.common.util.PasswordUtils;
 import com.ls.aegis.common.util.SecureUtils;
 import com.ls.aegis.rbac.enums.OptionCategoryEnum;
 import com.ls.aegis.rbac.mapper.user.UserMapper;
@@ -73,6 +75,7 @@ import com.ls.aegis.rbac.model.req.user.UserImportRowReq;
 import com.ls.aegis.rbac.model.req.user.UserPasswordResetReq;
 import com.ls.aegis.rbac.model.req.user.UserReq;
 import com.ls.aegis.rbac.model.req.user.UserRoleUpdateReq;
+import com.ls.aegis.rbac.model.resp.user.UserCreateResp;
 import com.ls.aegis.rbac.model.resp.user.UserDetailResp;
 import com.ls.aegis.rbac.model.resp.user.UserImportParseResp;
 import com.ls.aegis.rbac.model.resp.user.UserImportResp;
@@ -149,6 +152,9 @@ public class UserServiceImpl extends BaseServiceImpl<UserMapper, UserDO, UserRes
     @Value("${avatar.path}")
     private String avatarPath;
 
+    /** 创建过程中暂存自动生成的明文初始密码（仅当前线程、创建响应一次） */
+    private static final ThreadLocal<String> GENERATED_INITIAL_PASSWORD = new ThreadLocal<>();
+
     @Override
     public PageResp<UserResp> page(UserQuery query, PageQuery pageQuery) {
         QueryWrapper<UserDO> queryWrapper = this.buildQueryWrapper(query);
@@ -161,9 +167,27 @@ public class UserServiceImpl extends BaseServiceImpl<UserMapper, UserDO, UserRes
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public UserCreateResp createUser(UserReq req) {
+        try {
+            Long id = this.create(req);
+            String initialPassword = GENERATED_INITIAL_PASSWORD.get();
+            return new UserCreateResp(id, initialPassword, StrUtil.isNotBlank(initialPassword));
+        } finally {
+            GENERATED_INITIAL_PASSWORD.remove();
+        }
+    }
+
+    @Override
     public void beforeCreate(UserReq req) {
-        String password = SecureUtils.decryptPasswordByRsaPrivateKey(req.getPassword(), "密码解密失败", true);
-        req.setPassword(password);
+        if (StrUtil.isBlank(req.getPassword())) {
+            String generated = PasswordUtils.generateRandomPassword();
+            req.setPassword(generated);
+            GENERATED_INITIAL_PASSWORD.set(generated);
+        } else {
+            String password = SecureUtils.decryptPasswordByRsaPrivateKey(req.getPassword(), "密码解密失败", true);
+            req.setPassword(password);
+        }
         this.checkUsernameRepeat(req.getUsername(), null);
         this.checkEmailRepeat(req.getEmail(), null, "邮箱为 [{}] 的用户已存在");
         this.checkPhoneRepeat(req.getPhone(), null, "手机号为 [{}] 的用户已存在");
@@ -172,7 +196,11 @@ public class UserServiceImpl extends BaseServiceImpl<UserMapper, UserDO, UserRes
     @Override
     public void afterCreate(UserReq req, UserDO user) {
         Long userId = user.getId();
-        baseMapper.lambdaUpdate().set(UserDO::getPwdResetTime, LocalDateTime.now()).eq(UserDO::getId, userId).update();
+        // 写入初始口令哨兵时间，强制首次登录改密
+        baseMapper.lambdaUpdate()
+            .set(UserDO::getPwdResetTime, UserConstants.INITIAL_PASSWORD_RESET_TIME)
+            .eq(UserDO::getId, userId)
+            .update();
         // 保存用户和角色关联
         userRoleService.assignRolesToUser(req.getRoleIds(), userId);
     }
@@ -368,7 +396,8 @@ public class UserServiceImpl extends BaseServiceImpl<UserMapper, UserDO, UserRes
             }
             UserDO userDO = BeanUtil.toBeanIgnoreError(row, UserDO.class);
             userDO.setStatus(req.getDefaultStatus());
-            userDO.setPwdResetTime(LocalDateTime.now());
+            // 导入新建同样强制首登改密；更新行保持后续自行改密时间逻辑（此处仍写哨兵，避免导入重置口令后不改密）
+            userDO.setPwdResetTime(UserConstants.INITIAL_PASSWORD_RESET_TIME);
             userDO.setGender(EnumUtil.getBy(GenderEnum::getDescription, row.getGender(), GenderEnum.UNKNOWN));
             userDO.setDeptId(deptMap.get(row.getDeptName()));
             // 修改 or 新增
@@ -392,7 +421,7 @@ public class UserServiceImpl extends BaseServiceImpl<UserMapper, UserDO, UserRes
         this.getById(id);
         baseMapper.lambdaUpdate()
             .set(UserDO::getPassword, req.getNewPassword())
-            .set(UserDO::getPwdResetTime, LocalDateTime.now())
+            .set(UserDO::getPwdResetTime, UserConstants.INITIAL_PASSWORD_RESET_TIME)
             .eq(UserDO::getId, id)
             .update();
     }

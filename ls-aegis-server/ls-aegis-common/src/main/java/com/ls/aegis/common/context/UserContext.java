@@ -18,10 +18,12 @@ package com.ls.aegis.common.context;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import com.ls.aegis.common.config.TenantExtensionProperties;
 import com.ls.aegis.common.constant.GlobalConstants;
+import com.ls.aegis.common.constant.UserConstants;
 import com.ls.aegis.common.enums.RoleCodeEnum;
 import top.continew.starter.core.util.CollUtils;
 
@@ -115,27 +117,33 @@ public class UserContext implements Serializable {
     }
 
     /**
-     * 密码是否已过期
+     * 密码是否已过期（运行时计算，勿写入 Sa-Token Session）
      *
      * @return 是否过期
      */
+    @JsonIgnore
     public boolean isPasswordExpired() {
-        // 永久有效
-        if (this.passwordExpirationDays == null || this.passwordExpirationDays <= GlobalConstants.Boolean.NO) {
-            return false;
-        }
         // 初始密码（第三方登录用户）暂不提示修改
         if (this.pwdResetTime == null) {
+            return false;
+        }
+        // 初始口令哨兵时间：无论有效期是否关闭，均强制首登/重置后改密
+        if (!this.pwdResetTime.isAfter(UserConstants.INITIAL_PASSWORD_RESET_TIME)) {
+            return true;
+        }
+        // 永久有效
+        if (this.passwordExpirationDays == null || this.passwordExpirationDays <= GlobalConstants.Boolean.NO) {
             return false;
         }
         return this.pwdResetTime.plusDays(this.passwordExpirationDays).isBefore(LocalDateTime.now());
     }
 
     /**
-     * 是否为超级管理员
+     * 是否为超级管理员（运行时计算，勿写入 Sa-Token Session）
      *
      * @return true：是；false：否
      */
+    @JsonIgnore
     public boolean isSuperAdmin() {
         if (CollUtil.isEmpty(roleCodes)) {
             return false;
@@ -144,10 +152,11 @@ public class UserContext implements Serializable {
     }
 
     /**
-     * 是否为租户管理员
+     * 是否为租户管理员（运行时计算，勿写入 Sa-Token Session；避免序列化时查 Spring）
      *
      * @return true：是；false：否
      */
+    @JsonIgnore
     public boolean isTenantAdmin() {
         if (CollUtil.isEmpty(roleCodes)) {
             return false;

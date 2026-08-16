@@ -27,6 +27,11 @@ import directives from './directives'
 // 状态管理
 import pinia from '@/stores'
 
+// 测试包可按需启用生产 mock（VITE_BUILD_MOCK=true）
+if (import.meta.env.VITE_BUILD_MOCK === 'true') {
+  void import('./mock').then(({ setupProdMockServer }) => setupProdMockServer())
+}
+
 // 对特定组件进行默认配置
 Card.props.bordered = false
 

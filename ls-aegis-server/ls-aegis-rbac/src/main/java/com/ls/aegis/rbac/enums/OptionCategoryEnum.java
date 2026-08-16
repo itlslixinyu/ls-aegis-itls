@@ -48,4 +48,14 @@ public enum OptionCategoryEnum {
      * 天气配置（运营中枢顶栏）
      */
     WEATHER,
+
+    /**
+     * 大屏配置（运营中枢展示）
+     */
+    DASHBOARD,
+
+    /**
+     * 功能模块总开关（租户 / 应用 / 任务调度）
+     */
+    MODULE,
 }

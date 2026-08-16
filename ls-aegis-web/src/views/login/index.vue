@@ -143,12 +143,19 @@ const formatNow = () => {
 }
 
 const onGetTenant = async () => {
-  const { data } = await getTenantStatus()
-  tenantStore.setTenantEnable(data)
-  if (data) {
-    const domain = window.location.hostname
-    const { data: tenantId } = await getTenantIdByDomain(domain)
-    tenantStore.setTenantId(tenantId)
+  const { data: enabled } = await getTenantStatus()
+  tenantStore.setTenantEnable(enabled)
+  if (!enabled) {
+    tenantStore.resetTenantId()
+    return
+  }
+  // 域名解析仅预填默认租户，不决定编码框显隐
+  const domain = window.location.hostname
+  const { data: tenantId } = await getTenantIdByDomain(domain)
+  if (tenantId) {
+    tenantStore.setTenantId(String(tenantId))
+  } else {
+    tenantStore.resetTenantId()
   }
 }
 

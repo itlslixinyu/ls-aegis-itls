@@ -16,7 +16,7 @@
 | ls-aegis-biz-file | `com.ls.aegis.biz.file` | 文件与存储 |
 | ls-aegis-biz-notice | `com.ls.aegis.biz.notice` | 公告与站内消息 |
 | ls-aegis-biz-open | `com.ls.aegis.biz.open` | 开放能力示例 |
-| ls-aegis-biz-tenant | `com.ls.aegis.biz.tenant` | 多租户（默认不接入启动） |
+| ls-aegis-biz-tenant | `com.ls.aegis.biz.tenant` | 租户管理；中间件默认开（`continew-starter.tenant.enabled`），产品开关见「功能模块」 |
 | ls-aegis-biz-schedule | `com.ls.aegis.biz.schedule` | 任务调度 |
 | ls-aegis-boot | `com.ls.aegis.boot` | 启动入口 `LsAegisApplication` |
 

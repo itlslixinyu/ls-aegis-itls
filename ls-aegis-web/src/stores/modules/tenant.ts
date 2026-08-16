@@ -12,10 +12,8 @@ export const useTenantStore = defineStore('tenant', () => {
     tenantId.value = id
   }
 
-  // 判断是否需要用户输入租户编码
-  const needInputTenantCode = computed(() => {
-    return tenantEnabled.value && !tenantId.value
-  })
+  // 多租户开启即显示租户编码框（与域名解析解耦）
+  const needInputTenantCode = computed(() => tenantEnabled.value)
 
   // 判断租户是否已正确配置
   const isTenantConfigured = computed(() => {
