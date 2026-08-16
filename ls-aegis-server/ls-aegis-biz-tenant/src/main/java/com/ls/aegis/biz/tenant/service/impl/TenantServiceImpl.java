@@ -41,6 +41,7 @@ import com.ls.aegis.biz.tenant.model.query.TenantQuery;
 import com.ls.aegis.biz.tenant.model.req.TenantReq;
 import com.ls.aegis.biz.tenant.model.resp.TenantDetailResp;
 import com.ls.aegis.biz.tenant.model.resp.TenantResp;
+import com.ls.aegis.biz.tenant.service.PackageMenuService;
 import com.ls.aegis.biz.tenant.service.PackageService;
 import com.ls.aegis.biz.tenant.service.TenantService;
 import top.continew.starter.cache.redisson.util.RedisUtils;
@@ -49,6 +50,7 @@ import top.continew.starter.core.util.validation.CheckUtils;
 import top.continew.starter.extension.tenant.util.TenantUtils;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,6 +69,7 @@ public class TenantServiceImpl extends BaseServiceImpl<TenantMapper, TenantDO, T
     private final Map<String, TenantDataApi> tenantDataApiMap = SpringUtil.getBeansOfType(TenantDataApi.class);
     private final TenantExtensionProperties tenantExtensionProperties;
     private final PackageService packageService;
+    private final PackageMenuService packageMenuService;
     private final IdGeneratorProvider idGeneratorProvider;
     private final RoleMenuApi roleMenuApi;
     private final RoleApi roleApi;
@@ -75,6 +78,7 @@ public class TenantServiceImpl extends BaseServiceImpl<TenantMapper, TenantDO, T
     public Long create(TenantReq req) {
         this.checkNameRepeat(req.getName(), null);
         this.checkDomainRepeat(req.getDomain(), null);
+        this.checkExpireTime(req.getExpireTime(), null);
         // 检查套餐
         packageService.checkStatus(req.getPackageId());
         // 生成租户编码
@@ -88,10 +92,25 @@ public class TenantServiceImpl extends BaseServiceImpl<TenantMapper, TenantDO, T
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void update(TenantReq req, Long id) {
+        TenantDO tenant = super.getById(id);
+        Long oldPackageId = tenant.getPackageId();
+        super.update(req, id);
+        // 变更套餐后，按新套餐菜单同步该租户权限
+        if (!oldPackageId.equals(req.getPackageId())) {
+            List<Long> menuIds = packageMenuService.listMenuIdsByPackageId(req.getPackageId());
+            this.syncTenantMenus(id, menuIds);
+            RedisUtils.deleteByPattern(CacheConstants.ROLE_MENU_KEY_PREFIX + StringConstants.ASTERISK);
+        }
+    }
+
+    @Override
     public void beforeUpdate(TenantReq req, Long id) {
         this.checkNameRepeat(req.getName(), id);
         this.checkDomainRepeat(req.getDomain(), id);
         TenantDO tenant = super.getById(id);
+        this.checkExpireTime(req.getExpireTime(), tenant.getExpireTime());
         // 变更套餐
         if (!tenant.getPackageId().equals(req.getPackageId())) {
             packageService.checkStatus(req.getPackageId());
@@ -159,23 +178,48 @@ public class TenantServiceImpl extends BaseServiceImpl<TenantMapper, TenantDO, T
         if (CollUtil.isEmpty(tenantIdList)) {
             return;
         }
-        // 所有租户角色：删除旧菜单
-        tenantIdList.forEach(tenantId -> TenantUtils.execute(tenantId, () -> {
-            // 删除旧菜单
-            roleMenuApi.deleteByNotInMenuIds(newMenuIds);
-            // 更新在线用户上下文
-            Set<Long> roleIdSet = roleMenuApi.listRoleIdByNotInMenuIds(newMenuIds);
-            roleIdSet.forEach(roleApi::updateUserContext);
-        }));
-        // 租户管理员：新增菜单
-        tenantIdList.forEach(tenantId -> TenantUtils.execute(tenantId, () -> {
-            Long roleId = roleApi.getIdByCode(RoleCodeEnum.TENANT_ADMIN.getCode());
-            roleMenuApi.add(newMenuIds, roleId);
-            // 更新在线用户上下文
-            roleApi.updateUserContext(roleId);
-        }));
+        tenantIdList.forEach(tenantId -> this.syncTenantMenus(tenantId, newMenuIds));
         // 删除缓存
         RedisUtils.deleteByPattern(CacheConstants.ROLE_MENU_KEY_PREFIX + StringConstants.ASTERISK);
+    }
+
+    /**
+     * 同步单个租户的菜单权限（清理不在套餐内的菜单，并为租户管理员补齐套餐菜单）
+     *
+     * @param tenantId   租户 ID
+     * @param newMenuIds 套餐菜单 ID 列表
+     */
+    private void syncTenantMenus(Long tenantId, List<Long> newMenuIds) {
+        TenantUtils.execute(tenantId, () -> {
+            // 所有角色：删除不在新套餐内的菜单
+            roleMenuApi.deleteByNotInMenuIds(newMenuIds);
+            Set<Long> roleIdSet = roleMenuApi.listRoleIdByNotInMenuIds(newMenuIds);
+            roleIdSet.forEach(roleApi::updateUserContext);
+            // 租户管理员：补齐套餐菜单
+            Long roleId = roleApi.getIdByCode(RoleCodeEnum.TENANT_ADMIN.getCode());
+            roleMenuApi.add(newMenuIds, roleId);
+            roleApi.updateUserContext(roleId);
+        });
+    }
+
+    /**
+     * 校验过期时间：新增必须为未来；修改允许保留原已过期值，不允许改为新的过去时间
+     *
+     * @param expireTime    请求过期时间
+     * @param oldExpireTime 原过期时间（新增时为 null）
+     */
+    private void checkExpireTime(LocalDateTime expireTime, LocalDateTime oldExpireTime) {
+        if (expireTime == null) {
+            return;
+        }
+        if (expireTime.isAfter(LocalDateTime.now())) {
+            return;
+        }
+        CheckUtils.throwIf(oldExpireTime == null || !isSameDateTime(expireTime, oldExpireTime), "过期时间必须是未来时间");
+    }
+
+    private boolean isSameDateTime(LocalDateTime left, LocalDateTime right) {
+        return left.truncatedTo(ChronoUnit.SECONDS).equals(right.truncatedTo(ChronoUnit.SECONDS));
     }
 
     @Override

@@ -17,7 +17,6 @@
 package com.ls.aegis.biz.open.model.req;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
@@ -50,10 +49,9 @@ public class AppReq implements Serializable {
     private String name;
 
     /**
-     * 失效时间
+     * 失效时间（空表示永不过期；具体未来时间校验在 Service 层，以支持编辑时保留已过期值）
      */
-    @Schema(description = "失效时间", example = "2023-08-08 23:59:59", type = "string")
-    @Future(message = "失效时间必须是未来时间")
+    @Schema(description = "失效时间", example = "2026-08-08 23:59:59", type = "string")
     private LocalDateTime expireTime;
 
     /**

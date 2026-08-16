@@ -17,7 +17,6 @@
 package com.ls.aegis.biz.tenant.model.req;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -62,10 +61,9 @@ public class TenantReq implements Serializable {
     private String domain;
 
     /**
-     * 过期时间
+     * 过期时间（空表示永不过期；具体未来时间校验在 Service 层，以支持编辑时保留已过期值）
      */
-    @Schema(description = "过期时间", example = "2023-08-08 08:08:08", type = "string")
-    @Future(message = "过期时间必须是未来时间")
+    @Schema(description = "过期时间", example = "2026-08-08 08:08:08", type = "string")
     private LocalDateTime expireTime;
 
     /**

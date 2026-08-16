@@ -60,7 +60,7 @@ public class TenantController extends BaseController<TenantService, TenantResp, 
     public void updateAdminUserPwd(@RequestBody @Valid TenantAdminUserPwdUpdateReq req, @PathVariable Long id) {
         TenantDO tenant = baseService.getById(id);
         TenantUtils.execute(id, () -> {
-            String password = SecureUtils.decryptPasswordByRsaPrivateKey(req.getPassword(), "新密码解密失败");
+            String password = SecureUtils.decryptPasswordByRsaPrivateKey(req.getPassword(), "新密码解密失败", true);
             userApi.resetPassword(password, tenant.getAdminUser());
         });
     }

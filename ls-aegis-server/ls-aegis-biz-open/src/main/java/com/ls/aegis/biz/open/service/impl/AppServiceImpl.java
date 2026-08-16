@@ -30,6 +30,10 @@ import com.ls.aegis.biz.open.model.resp.AppResp;
 import com.ls.aegis.biz.open.model.resp.AppSecretResp;
 import com.ls.aegis.biz.open.service.AppService;
 import top.continew.starter.core.constant.StringConstants;
+import top.continew.starter.core.util.validation.CheckUtils;
+
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 /**
  * 应用业务实现
@@ -43,11 +47,38 @@ public class AppServiceImpl extends BaseServiceImpl<AppMapper, AppDO, AppResp, A
 
     @Override
     public void beforeCreate(AppReq req) {
+        this.checkExpireTime(req.getExpireTime(), null);
         req.setAccessKey(Base64.encode(IdUtil.fastSimpleUUID())
             .replace(StringConstants.SLASH, StringConstants.EMPTY)
             .replace(StringConstants.PLUS, StringConstants.EMPTY)
             .substring(0, 30));
         req.setSecretKey(this.generateSecret());
+    }
+
+    @Override
+    public void beforeUpdate(AppReq req, Long id) {
+        AppDO app = super.getById(id);
+        this.checkExpireTime(req.getExpireTime(), app.getExpireTime());
+    }
+
+    /**
+     * 校验失效时间：新增必须为未来；修改允许保留原已过期值，不允许改为新的过去时间
+     *
+     * @param expireTime    请求失效时间
+     * @param oldExpireTime 原失效时间（新增时为 null）
+     */
+    private void checkExpireTime(LocalDateTime expireTime, LocalDateTime oldExpireTime) {
+        if (expireTime == null) {
+            return;
+        }
+        if (expireTime.isAfter(LocalDateTime.now())) {
+            return;
+        }
+        CheckUtils.throwIf(oldExpireTime == null || !isSameDateTime(expireTime, oldExpireTime), "失效时间必须是未来时间");
+    }
+
+    private boolean isSameDateTime(LocalDateTime left, LocalDateTime right) {
+        return left.truncatedTo(ChronoUnit.SECONDS).equals(right.truncatedTo(ChronoUnit.SECONDS));
     }
 
     @Override

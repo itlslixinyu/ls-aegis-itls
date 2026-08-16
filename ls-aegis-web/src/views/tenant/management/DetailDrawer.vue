@@ -36,9 +36,7 @@
 <script setup lang="ts">
 import { useWindowSize } from '@vueuse/core'
 import { type TenantResp, getTenant as getDetail } from '@/apis/tenant/management'
-import { useMenu } from '@/hooks/app'
 
-const { menuList, getTenantPackageMenuList } = useMenu()
 const { width } = useWindowSize()
 
 const dataId = ref('')
@@ -54,9 +52,6 @@ const getDataDetail = async () => {
 // 打开
 const onOpen = async (id: string) => {
   dataId.value = id
-  if (!menuList.value.length) {
-    await getTenantPackageMenuList()
-  }
   await getDataDetail()
   visible.value = true
 }

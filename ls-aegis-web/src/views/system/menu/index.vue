@@ -3,7 +3,7 @@
     <BaseTable
       ref="tableRef"
       row-key="id"
-      table-id="system-menu-v2"
+      table-id="system-menu-v4"
       :data="dataList"
       :columns="columns"
       :loading="loading"
@@ -80,29 +80,22 @@
         <a-tag v-else color="red" size="small">否</a-tag>
       </template>
       <template #action="{ record }">
-        <a-dropdown
-          v-if="has.hasPermOr(['system:menu:update', 'system:menu:create', 'system:menu:delete'])"
-          trigger="click"
-        >
-          <a-button type="text" size="mini" title="更多">
-            <template #icon>
-              <icon-more :size="16" />
-            </template>
-          </a-button>
-          <template #content>
-            <a-doption v-permission="['system:menu:update']" @click="onUpdate(record)">修改</a-doption>
-            <a-doption
+        <div class="table-action">
+          <a-space :size="0" :wrap="false">
+            <a-link v-permission="['system:menu:update']" title="修改" @click="onUpdate(record)">修改</a-link>
+            <a-link
               v-permission="['system:menu:create']"
               :disabled="![1, 2].includes(record.type)"
+              :title="![1, 2].includes(record.type) ? '按钮类型不支持新增下级' : '新增下级'"
               @click="onAdd(record.id)"
             >
               新增下级
-            </a-doption>
-            <a-doption v-permission="['system:menu:delete']">
-              <a-link status="danger" title="删除" @click="onDelete(record)">删除</a-link>
-            </a-doption>
-          </template>
-        </a-dropdown>
+            </a-link>
+            <a-link v-permission="['system:menu:delete']" status="danger" title="删除" @click="onDelete(record)">
+              删除
+            </a-link>
+          </a-space>
+        </div>
       </template>
     </BaseTable>
 
@@ -181,7 +174,7 @@ const columns: TableInstance['columns'] = [
     title: '操作',
     dataIndex: 'action',
     slotName: 'action',
-    width: TableCol.actionIcon,
+    width: TableCol.actionL,
     show: has.hasPermOr(['system:menu:update', 'system:menu:create', 'system:menu:delete']),
   },
 ]
@@ -229,4 +222,14 @@ const onUpdate = (record: MenuResp) => {
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.table-action {
+  display: inline-flex;
+  justify-content: center;
+  white-space: nowrap;
+
+  :deep(.arco-link) {
+    padding: 0 6px;
+  }
+}
+</style>
