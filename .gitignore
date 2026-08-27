@@ -9,6 +9,8 @@ build/
 
 # spring-boot-maven-plugin fat-jar 打包临时目录
 tmp-jar/
+# 误解压 fat-jar 到仓库根目录时的内部目录（勿入库）
+BOOT-INF/
 
 # maven 本地生成文件
 pom.xml.tag
