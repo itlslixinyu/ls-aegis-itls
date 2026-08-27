@@ -47,7 +47,11 @@ const updateOutLine = (editor: AiEditor) => {
     child.classList.add(`aie-title${outline.level}`)
     child.style.marginLeft = `${14 * (outline.level - 1)}px`
     child.style.padding = `4px 0`
-    child.innerHTML = `<a href="#${outline.id}">${outline.text}</a>`
+    child.innerHTML = ''
+    const link = document.createElement('a')
+    link.href = `#${outline.id}`
+    link.textContent = outline.text
+    child.appendChild(link)
     child.addEventListener('click', (e) => {
       e.preventDefault()
       const el = editor.innerEditor.view.dom.querySelector(`#${outline.id}`) as HTMLElement

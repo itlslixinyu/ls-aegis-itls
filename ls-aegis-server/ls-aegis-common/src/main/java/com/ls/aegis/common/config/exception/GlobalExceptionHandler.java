@@ -57,11 +57,15 @@ public class GlobalExceptionHandler {
 
     /**
      * 自定义异常
+     * <p>
+     * 兜底处理 BaseException（BadRequestException/BusinessException 有独立 handler），
+     * 此处捕获的是非预期框架级异常，消息可能含类路径/SQL 片段等内部细节，返回通用提示。
+     * </p>
      */
     @ExceptionHandler(BaseException.class)
     public R handleBaseException(BaseException e, HttpServletRequest request) {
         log.error("[{}] {}", request.getMethod(), request.getRequestURI(), e);
-        return R.fail(String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()), e.getMessage());
+        return R.fail(String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()), "系统异常，请联系管理员");
     }
 
     /**
@@ -171,8 +175,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MultipartException.class)
     public R handleMultipartException(MultipartException e, HttpServletRequest request) {
         log.error("[{}] {}", request.getMethod(), request.getRequestURI(), e);
+        R defaultFail = R.fail(String.valueOf(HttpStatus.BAD_REQUEST.value()), "文件上传失败，请检查文件大小是否超过限制");
         String msg = e.getMessage();
-        R defaultFail = R.fail(String.valueOf(HttpStatus.BAD_REQUEST.value()), msg);
         if (CharSequenceUtil.isBlank(msg)) {
             return defaultFail;
         }

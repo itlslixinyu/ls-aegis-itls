@@ -76,6 +76,7 @@ public class AuthController {
     private final ObjectProvider<IGmCrypto> gmCryptoProvider;
 
     @SaIgnore
+    @Log(ignore = true)
     @Operation(summary = "国密公钥", description = "获取 SM2 公钥（不下发私钥），供前端传输加密")
     @GetMapping("/gm/public-key")
     public GmPublicKeyResp gmPublicKey() {
